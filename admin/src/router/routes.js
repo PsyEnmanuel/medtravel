@@ -417,6 +417,184 @@ export const asyncRoutes = [
       },
     ],
   },
+
+  {
+    path: path.setting_speciality,
+    name: "speciality",
+    component: MainLayout,
+    meta: { nav: 2, title: "speciality", icon: 'fa-duotone fa-solid fa-stethoscope' },
+    children: [
+      {
+        path: "",
+        name: "speciality_index",
+        component: () => import("pages/setting/speciality/speciality-index.vue"),
+      }
+    ]
+  },
+  {
+    path: path.setting_ICD10,
+    name: "ICD10",
+    component: MainLayout,
+    meta: { title: "ICD10", nav: 2, icon: 'fa-duotone fa-solid fa-stethoscope' },
+    children: [
+      {
+        path: "",
+        name: "ICD10_index",
+        component: () => import("pages/setting/ICD10/ICD10-index.vue"),
+      },
+    ],
+  },
+  {
+    path: path.setting_CPT,
+    name: "CPT",
+    component: MainLayout,
+    meta: { title: "CPT", nav: 2, icon: 'fa-duotone fa-solid fa-stethoscope' },
+    children: [
+      {
+        path: "",
+        name: "CPT_index",
+        component: () => import("pages/setting/CPT/CPT-index.vue"),
+      },
+    ],
+  },
+  {
+    path: path.setting_category,
+    name: "category",
+    component: MainLayout,
+    meta: { title: "category", nav: 2, icon: 'fa-duotone fa-solid fa-list-tree' },
+    children: [
+      {
+        path: "",
+        name: "setting_category_index",
+        component: () => import("pages/setting/category/category-index.vue"),
+      },
+    ],
+  },
+  {
+    path: path.setting_poll,
+    name: "poll",
+    component: MainLayout,
+    meta: { title: "poll", nav: 2, icon: 'fa-duotone fa-solid fa-poll-people' },
+    children: [
+      {
+        path: "",
+        name: "setting_poll_index",
+        component: () => import("pages/setting/poll/poll-index.vue"),
+      },
+      {
+        path: `${path.setting_poll_consult}/:id`,
+        name: "setting_poll_consult",
+        props: true,
+        component: () => import("pages/setting/poll/poll-view.vue"),
+      },
+    ],
+  },
+  {
+    path: path.libraries_group,
+    name: "libraries_group",
+    component: MainLayout,
+    meta: { title: "librerias", nav: 1, icon: 'fa-duotone fa-solid fa-books', children: ['speciality','ICD10', 'CPT', 'category', 'poll'] },
+    children: [
+      {
+        path: "",
+        name: "libraries_group_index",
+        component: () => import("pages/setting/speciality/speciality-index.vue"),
+      }
+    ]
+  },
+
+  {
+    path: path.setting_log,
+    name: "log",
+    component: MainLayout,
+    meta: { title: "user", nav: 2, icon: 'fa-duotone fa-rectangle-terminal' },
+    children: [
+      {
+        path: "",
+        name: "setting_log_index",
+        component: () => import("pages/setting/log/log-index.vue"),
+      },
+    ],
+  },
+  {
+    path: path.setting_user,
+    name: "user",
+    component: MainLayout,
+    meta: { title: "user", nav: 2, icon: 'fa-duotone fa-solid fa-user-lock' },
+    children: [
+      {
+        path: "",
+        name: "user_index",
+        component: () => import("pages/user/user-index.vue"),
+      },
+    ],
+  },
+  {
+    path: path.setting_role,
+    name: "role",
+    component: MainLayout,
+    meta: { title: "role", nav: 2, icon: 'fa-duotone fa-solid fa-shield-halved' },
+    children: [
+      {
+        path: "",
+        name: "role_index",
+        component: () => import("pages/setting/role/role-index.vue"),
+      },
+    ],
+  },
+  {
+    path: path.setting_accessrole,
+    name: "accessrole",
+    component: MainLayout,
+    meta: { title: "role_access", nav: 2, icon: 'fa-duotone fa-solid fa-key' },
+    children: [
+      {
+        path: "",
+        name: "accessrole_index",
+        component: () => import("pages/setting/access/accessrole-index.vue"),
+      },
+    ],
+  },
+  {
+    path: path.setting_permission,
+    name: "permission",
+    component: MainLayout,
+    meta: { title: "permission", nav: 2, icon: 'fa-duotone fa-solid fa-user-group-simple' },
+    children: [
+      {
+        path: "",
+        name: "permission_index",
+        component: () => import("pages/setting/access/permission-index.vue"),
+      },
+    ],
+  },
+  {
+    path: path.setting_privilege,
+    name: "privilege",
+    component: MainLayout,
+    meta: { title: "privilege", nav: 2, icon: 'fa-duotone fa-solid fa-lock' },
+    children: [
+      {
+        path: "",
+        name: "privilege_index",
+        component: () => import("pages/setting/access/privilege-index.vue"),
+      },
+    ],
+  },
+  {
+    path: path.access_group,
+    name: "access_group",
+    component: MainLayout,
+    meta: { title: "accesos", nav: 1, icon: 'fa-duotone fa-solid fa-building-lock', children: ['user', 'role', 'accessrole', 'permission', 'log'] },
+    children: [
+      {
+        path: "",
+        name: "access_group_index",
+        component: () => import("pages/setting/log/log-index.vue"),
+      }
+    ]
+  },
+
   {
     path: path.setting,
     name: "setting",
@@ -441,90 +619,7 @@ export const asyncRoutes = [
             meta: { title: "files" },
             component: () => import("pages/setting/general/file-index.vue"),
           },
-          {
-            path: path.setting_category,
-            name: "setting_category_index",
-            meta: { title: "category" },
-            component: () =>
-              import("pages/setting/category/category-index.vue"),
-          },
-          {
-            path: path.setting_speciality,
-            name: "setting_speciality_index",
-            meta: { title: "speciality" },
-            component: () => import("pages/setting/speciality/speciality-index.vue"),
-          },
-          {
-            path: path.setting_ICD10,
-            name: "setting_ICD10_index",
-            meta: { title: "ICD10" },
-            component: () =>
-              import("pages/setting/ICD10/ICD10-index.vue"),
-          },
-          {
-            path: path.setting_ICD10,
-            name: "setting_ICD10_index",
-            meta: { title: "ICD10" },
-            component: () =>
-              import("pages/setting/ICD10/ICD10-index.vue"),
-          },
-          {
-            path: path.setting_CPT,
-            name: "setting_CPT_index",
-            meta: { title: "CPT" },
-            component: () =>
-              import("pages/setting/CPT/CPT-index.vue"),
-          },
-          {
-            path: path.setting_log,
-            name: "setting_log_index",
-            meta: { title: "user" },
-            component: () => import("pages/setting/log/log-index.vue"),
-          },
-          {
-            path: path.setting_user,
-            name: "setting_user_index",
-            meta: { title: "user" },
-            component: () => import("pages/user/user-index.vue"),
-          },
-          {
-            path: path.setting_role,
-            name: "setting_role_index",
-            meta: { title: "role" },
-            component: () => import("pages/setting/role/role-index.vue"),
-          },
-          {
-            path: path.setting_accessrole,
-            name: "setting_accessrole_index",
-            meta: { title: "accessrole" },
-            component: () =>
-              import("pages/setting/access/accessrole-index.vue"),
-          },
-          {
-            path: path.setting_permission,
-            name: "setting_permission_index",
-            meta: { title: "permission" },
-            component: () =>
-              import("pages/setting/access/permission-index.vue"),
-          },
-          {
-            path: path.setting_privilege,
-            name: "setting_privilege_index",
-            meta: { title: "privilege" },
-            component: () => import("pages/setting/access/privilege-index.vue"),
-          },
-          {
-            path: path.setting_poll,
-            name: "setting_poll_index",
-            meta: { title: "poll" },
-            component: () => import("pages/setting/poll/poll-index.vue"),
-          },
-          {
-            path: `${path.setting_poll_consult}/:id`,
-            name: "setting_poll_consult",
-            props: true,
-            component: () => import("pages/setting/poll/poll-view.vue"),
-          },
+
           {
             path: path.setting_tool_policy,
             name: "setting_tool_policy",

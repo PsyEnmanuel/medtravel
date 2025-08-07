@@ -71,8 +71,8 @@ const state = reactive({
   },
 
   item: {
-    email: '',
-    password: ''
+    email: 'enmanuelpsy@gmail.com',
+    password: 'Paladines40.'
   }
 
 })

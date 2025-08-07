@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <q-page :class="!$isDesktop ? 'px-1.5 py-2' : insuredId ? 'px-2 py-3' : 'px-1.5 py-2 lg:px-5 lg:py-6'">
         <q-table class="overflow-auto" v-model:pagination="state.pagination" flat :rows="state.rows" :columns="state.columns" row-key="name"
             separator="vertical">
             <template v-slot:body="props">
@@ -10,7 +10,7 @@
                 </q-tr>
             </template>
         </q-table>
-    </div>
+    </q-page>
 </template>
   
 <script setup>
