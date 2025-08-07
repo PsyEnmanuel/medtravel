@@ -7,7 +7,7 @@ import apiRoutes from "../api/index.js";
 import { Server } from "socket.io";
 import { logError, returnError, isOperationalError } from "./errors.js";
 import { httpLogger } from "../utils/logger.js";` `
-import packageJson from "../../package.json" assert { type: "json" };
+// import packageJson from "../../package.json" assert { type: "json" };
 
 import { setDefaultOptions } from 'date-fns';
 import { es } from "date-fns/locale";
@@ -110,7 +110,7 @@ function createServer() {
     setTimeout(() => {
       io.emit("update", {
         table: "t_version",
-        version: packageJson.version,
+        // version: packageJson.version,
       });
     }, 30000);
   });

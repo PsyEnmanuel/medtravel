@@ -19,7 +19,7 @@
                 <UploadFileManager v-else :ref_id="state.item.id" table="t_doctor"
                     icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false" text="Subir foto de perfil"
                     file_type="FOTO PERFIL" />
-                <div class="card rounded-md flex flex-col py-2 px-3 mb-1 mt-1">
+                <div class="card rounded-md flex flex-col py-2 px-3 mb-1">
                     <div class="font-semibold text-xs">{{ state.item.description }}</div>
                     <div class="flex justify-between gap-2">
                         <div>{{ state.item.sex }}</div>
@@ -37,38 +37,13 @@
                             :class="state.tab == tab.value && 'shadow-left-primary bg-default text-primary'">
                             <div class="flex items-center justify-between w-full">
                                 <div class="flex items-center w-full">
-                                    <q-icon name="xmark"></q-icon>
+                                    <q-icon :name="tab.icon"></q-icon>
                                     <span class="ml-4 md:text-md font-bold pt-1.5">{{ tab.label }}</span>
                                 </div>
                             </div>
                         </q-btn>
                     </template>
                 </div>
-                <hr>
-                <div v-if="state.item.c_status & 4" class="border-2 border-dashed text-center p-2 font-bold mb-1">
-                    Activado
-                </div>
-                <div v-if="state.item.c_status & 1" class="border-2 border-dashed text-center p-2 font-bold mb-1">
-                    Desactivado
-                </div>
-                <q-btn v-if="state.item.c_status & 4" class="button-press bg-secondary text-white w-full text-xs"
-                    align="left" unelevated @click="onDeactivateRow()">
-                    <div class="flex items-center justify-between w-full">
-                        <div class="flex items-center w-full">
-                            <q-icon name="fa-solid fa-xmark"></q-icon>
-                            <span class="ml-4 md:text-md font-bold">Desactivar</span>
-                        </div>
-                    </div>
-                </q-btn>
-                <q-btn v-if="state.item.c_status & 1" class="button-press bg-primary text-white w-full text-xs"
-                    align="left" unelevated @click="onActivateRow()">
-                    <div class="flex items-center justify-between w-full">
-                        <div class="flex items-center w-full">
-                            <q-icon name="fa-solid fa-check"></q-icon>
-                            <span class="ml-4 md:text-md font-bold">Activar</span>
-                        </div>
-                    </div>
-                </q-btn>
             </div>
             <div class="w-full overflow-auto">
                 <q-tab-panels v-if="!state.loading" v-model="state.tab" class="bg-transparent">
@@ -94,7 +69,33 @@
                     </q-tab-panel>
                 </q-tab-panels>
             </div>
-            <div class="flex flex-col w-full  md:max-w-[250px] min-w-[250px]">
+            <div class="flex flex-col w-full  md:max-w-[250px] min-w-[250px]"><div
+                  v-if="$me.unixroles & 7"
+                  class="flex flex-col items-center justify-center w-full mb-1 q-pa-xs rounded-md border border-gray-300 bg-gray-50"
+                >
+                  <q-toggle
+                    v-model="state.item.c_status"
+                    :label="state.item.c_status & 4 ? 'Perfil Activo' : 'Perfil Inactivo'"
+                    color="primary"
+                    :true-value="4"
+                    :false-value="1"
+                    size="sm"
+                    keep-color
+                    class="text-sm font-bold"
+                    @update:model-value="handleToggle"
+                  >
+                    <template #thumb>
+                      <q-icon
+                        :name="state.item.c_status & 4 ? 'fa-solid fa-power-off' : 'fa-solid fa-check'"
+                        size="14px"
+                        class="q-mx-xs"
+                      />
+                    </template>
+                    <q-tooltip>
+                      {{ state.item.c_status & 4 ? 'Haz clic para desactivar este perfil' : 'Haz clic para activar este perfil' }}
+                    </q-tooltip>
+                  </q-toggle>
+                </div>
                 <template v-if="!state.loading">
                     <CommentTable refKey="t_doctor" :refId="state.item.id" />
                 </template>
@@ -130,7 +131,7 @@ const state = reactive({
     tabs: [
         { label: 'Editar Médico', value: 'edit', icon: 'fa-duotone fa-solid fa-user-pen', visible: 1 },
         { label: 'Coordinaciones', value: 'event', icon: 'fa-duotone fa-solid fa-calendar', visible: $me.unixroles & 3 ? 1 : 1 },
-        { label: 'Pacientes Vinculados', value: 'insured', icon: 'fa-duotone fa-solid fa-hospital-user', visible: $me.unixroles & 3 ? 1 : 1 },
+        { label: 'Pac. Vinculados', value: 'insured', icon: 'fa-duotone fa-solid fa-hospital-user', visible: $me.unixroles & 3 ? 1 : 1 },
         { label: 'Archivos', value: 'file', icon: 'fa-duotone fa-solid fa-image', visible: 1 },
     ],
     tab: 'edit',
@@ -161,6 +162,14 @@ watch(() => updateStore.table.t_doctor, (data) => {
 onMounted(() => {
     onInit()
 })
+
+function handleToggle(newVal) {
+  if (newVal & 4) {
+    onActivateRow()
+  } else {
+    onDeactivateRow()
+  }
+}
 
 async function onDeactivateRow() {
     await $api.delete(`doctor/${props.id}`)
