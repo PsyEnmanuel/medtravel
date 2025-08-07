@@ -19,6 +19,8 @@
                     <div class="bg-default p-1 mb-2 rounded-md text-center font-bold">&nbsp;</div>
                     <q-input class="mb-2" dense outlined v-model="state.item.description"
                         :label="$t('description') + '*'" :rules="[requiredInput]" hide-bottom-space></q-input>
+                    <q-checkbox class="mb-2" dense outlined :true-value="1" :false-value="0" v-model="state.item.has_vob"
+                        :label="$t('Tiene VOB')" :rules="[requiredInput]" hide-bottom-space></q-checkbox>
                 </div>
                 <div>
                     <div class="bg-default p-1 mb-2 rounded-md text-center font-bold">Plan</div>
@@ -58,8 +60,8 @@
                 </div>
             </div>
             <div v-if="isDrawer" class="fixed bottom-0 right-0 py-2 bg-white" :style="style">
-                <q-btn v-if="props.isEdit" class="button-press w-full text-lg bg-primary text-white" flat label="Guardar cambios"
-                    type="submit" />
+                <q-btn v-if="props.isEdit" class="button-press w-full text-lg bg-primary text-white" flat
+                    label="Guardar cambios" type="submit" />
                 <q-btn v-else class="button-press w-full text-lg bg-primary text-white" flat label="agregar"
                     type="submit" />
             </div>
@@ -80,6 +82,7 @@ const props = defineProps({ id: Number, isEdit: Boolean, width: String, isDrawer
 const initialItem = () => ({
     insurance_plan: [],
     insurance_plan_type: [],
+    has_vob: 1
 })
 
 const state = reactive({
@@ -184,6 +187,7 @@ async function onSubmit() {
 async function onInit() {
     if (props.isEdit) {
         state.item = await $api.get(`insurance/${props.id}`)
+        console.log(state.item);
     } else {
         if ($local.get(state.local)) {
             // state.item = $local.get(state.local)
