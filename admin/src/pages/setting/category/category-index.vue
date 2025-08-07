@@ -7,6 +7,8 @@
                     <q-icon name="search" />
                 </template>
             </q-input>
+            <q-btn v-if="$me.unixroles & 1" flat class="button h-full" label="Actualizar categorias"
+                @click="updateCats" />
             <q-btn v-if="$me.unixroles & 1" flat class="button h-full" icon="add" :label="$isDesktop && $t('add')"
                 @click="state.dialogCreate = true" />
             <q-btn v-if="state.selected.length && $me.unixroles & 1" flat class="button h-full bg-primary text-white"
@@ -103,8 +105,9 @@ import { useTable } from "src/use/table"
 import CategoryWrite from './CategoryWrite.vue'
 import CategoryList from './CategoryList.vue'
 import { useUpdateStore } from "src/stores/update";
-
+import useUpdateCategory from "src/use/useUpdateCategory"
 const $me = inject("$me")
+const { updateCats } = useUpdateCategory()
 
 const tableRef = ref()
 
