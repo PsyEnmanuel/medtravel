@@ -19,5 +19,8 @@ export default boot(async ({ app }) => {
     },
   });
   app.provide("$cats", ref(cats));
-  local.set("cats", cats);
+  local.set("cats", (data) => {
+    if (!data.cats) data.cats = {};
+    data.cats = cats
+  });
 });

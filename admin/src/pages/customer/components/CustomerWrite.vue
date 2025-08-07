@@ -140,11 +140,6 @@ const state = reactive({
     local: 'CustomerWrite',
 })
 
-watch(() => state.item, (val) => {
-    if (!props.isEdit) {
-        $local.set(state.local, val)
-    }
-}, { deep: true })
 
 watch(() => state.item.ident_no, async (val) => {
     if (props.isEdit) {

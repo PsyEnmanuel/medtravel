@@ -119,12 +119,6 @@ const state = reactive({
     local: 'prescription',
 })
 
-watch(() => state.item, (val) => {
-    if (!props.isEdit) {
-        $local.set(state.local, val)
-    }
-}, { deep: true })
-
 
 function onReset() {
     state.item = initialItem()

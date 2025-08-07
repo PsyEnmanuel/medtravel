@@ -145,12 +145,6 @@ const state = reactive({
     local: 'DoctorWrite',
 })
 
-watch(() => state.item, (val) => {
-    if (!props.isEdit) {
-        $local.set(state.local, val)
-    }
-}, { deep: true })
-
 const { addMinutes, subtractMinutes, nextDate, prevDate } = useInputDate(state)
 
 async function setProcedure(id, row) {

@@ -76,12 +76,6 @@ const state = reactive({
     routes
 })
 
-watch(() => state.item, (val) => {
-    if (!props.isEdit) {
-        $local.set(state.local, val)
-    }
-}, { deep: true })
-
 
 const style = computed(() => {
     return {

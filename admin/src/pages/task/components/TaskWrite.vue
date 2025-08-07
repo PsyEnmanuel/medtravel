@@ -142,12 +142,6 @@ const state = reactive({
     files: []
 })
 
-watch(() => state.item, (val) => {
-    if (!props.isEdit) {
-        $local.set(state.local, val)
-    }
-}, { deep: true })
-
 
 function addRowUser() {
     state.item.user.push({

@@ -154,7 +154,6 @@ async function onSubmit() {
         },
     });
     $cats.value = cats
-    $local.set("cats", cats);
 
     if (response) {
         $q.notify({

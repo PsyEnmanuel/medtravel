@@ -69,12 +69,6 @@ const state = reactive({
     roles: []
 })
 
-watch(() => state.item, (val) => {
-    if (!props.isEdit) {
-        $local.set(state.local, val)
-    }
-}, { deep: true })
-
 async function onInit() {
     state.roles = await getRoles()
     console.log(state.roles);

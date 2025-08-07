@@ -65,12 +65,6 @@ const style = computed(() => {
     }
 })
 
-watch(() => state.item, (val) => {
-    if (!props.isEdit) {
-        $local.set(state.local, val)
-    }
-}, { deep: true })
-
 async function onInit() {
     if (props.isEdit) {
         state.item = await $api.get(`log/${props.id}`)

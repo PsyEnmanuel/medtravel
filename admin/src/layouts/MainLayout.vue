@@ -83,7 +83,7 @@
               <q-slide-transition>
                 <div v-if="state.dropdownOpen[row.title]">
                   <router-link v-for="(child, j) in row.children" :key="j" :to="child.link" v-slot="{ isActive }">
-                    <div class="pl-5 py-2 text-sm flex items-center cursor-pointer border-b border-default text-xs" :class="isActive
+                    <div class="pl-5 py-2 flex items-center cursor-pointer border-b border-default text-xs" :class="isActive
                       ? 'border-r-primary border-r-4  text-primary font-bold'
                       : 'text-gray-700 hover:text-primary'">
                       <q-icon v-if="state.miniState" class="my-1" size="sm" :name="child.icon" />
@@ -287,13 +287,16 @@ import CustomerWrite from 'src/pages/customer/components/CustomerWrite.vue';
 import ContactWrite from 'src/pages/contact/components/ContactWrite.vue';
 import TaskWrite from 'src/pages/task/components/TaskWrite.vue';
 import { useUpdateStore } from "src/stores/update";
+import { useConstants } from "src/use/constants";
 import { useQuasar } from 'quasar';
 const updateStore = useUpdateStore()
 const $q = useQuasar()
 const $me = inject("$me")
+const $local = inject("$local")
 const $api = inject("$api")
 const $path = inject("$path")
 const $isDesktop = inject("$isDesktop")
+const { APP_SETTINGS_LOCAL } = useConstants()
 
 watch(() => userStore.me, (curr) => {
   if (!curr) {
@@ -375,6 +378,12 @@ function openDrawer() {
   } else {
     state.drawerWidth = 180
   }
+  
+  $local.set(APP_SETTINGS_LOCAL, (data) => {
+    if (!data.menu) data.menu = {};
+    data.menu.miniState = state.miniState;
+    data.menu.drawerWidth = state.miniState ? 60: 180
+  })
 }
 
 watch(() => updateStore.table.t_version, (data) => {
@@ -462,7 +471,18 @@ async function getTaskPending() {
   })
 }
 
+function getMenuSettings() {
+  const menuSetting = $local.get(APP_SETTINGS_LOCAL) || {}
+
+  if (menuSetting.menu) {
+    const { miniState, drawerWidth } = menuSetting.menu
+    state.miniState = miniState
+    state.drawerWidth = drawerWidth
+  }
+}
+
 onMounted(() => {
+  getMenuSettings()
   getTaskPending()
   state.navLinks = useNavLinks(router)
 

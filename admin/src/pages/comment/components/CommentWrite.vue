@@ -84,12 +84,6 @@ const state = reactive({
     local: 'CommentWrite',
 })
 
-watch(() => state.item, (val) => {
-    if (!props.isEdit) {
-        $local.set(state.local, val)
-    }
-}, { deep: true })
-
 async function removeRow() {
     try {
         const result = await $q.dialog({
