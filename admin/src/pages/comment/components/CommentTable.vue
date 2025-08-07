@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="flex flex-col gap-2">
-            <q-form ref="writeForm" class="flex flex-col gap-1" autofocus @submit="onSubmit" @reset="onReset">
+            <q-form v-if="grid" ref="writeForm" class="flex flex-col gap-1" autofocus @submit="onSubmit" @reset="onReset">
                 <div class="bg-default p-1 rounded-md text-center font-bold text-xs">
                     Comentarios Administrativos
                 </div>
@@ -14,18 +14,20 @@
             <div class="bg-default p-1 rounded-md text-center font-bold text-xs">
                 Listado de comentarios
             </div>
-            <div class="flex flex-col gap-2">
-                <div class="flex flex-nowrap w-full gap-2">
-                    <q-input class="w-full md:w-auto" dense outlined debounce="300" v-model="state.search"
+            <div class="gap-2 grid grid-cols-5" >
+                <div class="grid grid-cols-3 gap-1 w-full" :class="{ 'col-span-5': grid, 'col-span-2': !grid }">
+                    <q-input class="w-full md:w-auto" :class="{'col-span-3': grid, 'col-span-2': !grid}" dense outlined debounce="300" v-model="state.search"
                         :placeholder="$t('search')">
                         <template v-slot:append>
                             <q-icon name="search" />
                         </template>
                     </q-input>
-                    <q-btn v-if="state.selected.length" flat class="button h-full bg-primary text-white"
+                    <q-btn v-if="!grid" flat class="button h-full" :class="{'col-span-3': grid, 'col-span-1': !grid}" icon="add" :label="$isDesktop && $t('add')" @click="state.dialogWrite = true" />
+                    <q-btn v-if="grid && state.selected.length" flat class="button h-full bg-primary text-white" :class="{'col-span-3': grid, 'col-span-1': !grid}"
                         icon-right="sym_o_remove" :label="$isDesktop ? 'Remover' : ''" no-caps @click="onDeleteRows" />
                 </div>
-                <div v-if="$isDesktop" class="grid grid-cols-5 gap-2">
+                <div v-if="$isDesktop" :class="{ 'col-span-5': grid, 'col-span-3': !grid }">
+                  <div class="grid h-full items-center grid-cols-5 gap-2">
                     <q-btn class="button-icon bg-transparent text-xxs" flat no-caps>{{ itemsRange.start }} - {{
                         itemsRange.end
                         }} de {{ state.pagination.rowsNumber }}</q-btn>
@@ -37,10 +39,11 @@
                         @click="tableRef.nextPage()"></q-btn>
                     <q-btn class="button-icon bg-transparent" icon="sym_o_last_page" flat
                         @click="tableRef.lastPage()"></q-btn>
+                  </div>
                 </div>
             </div>
-            <q-table grid hide-pagination :rows="state.rows" :columns="state.columns" row-key="id" ref="tableRef"
-                @request="onRequest" flat selection="multiple" v-model:pagination="state.pagination"
+            <q-table :grid="grid" hide-pagination :rows="state.rows" :columns="state.columns" row-key="id" ref="tableRef"
+                @request="onRequest" flat selection="none" v-model:pagination="state.pagination"
                 v-model:selected="state.selected" :selected-rows-label="getSelectedString" :loading="state.loading"
                 rows-per-page-label="Lineas" :wrap-cells="true">
                 <template v-slot:no-data="{ icon, message, filter }">
@@ -51,7 +54,33 @@
                         <q-icon size="2em" :name="filter ? 'filter_b_and_w' : icon" />
                     </div>
                 </template>
+                <template v-slot:body="props">
+                  <q-tr
+                    :props="props"
+                  >
+                  <q-td key="action" :props="props">
+                    <q-btn flat class="button text-primary rounded-md" size="sm" label="Editar" no-caps
+                        @click="state.selectedId = props.row.id; state.dialogWrite = true;" />
+                    </q-td>
+                    <q-td key="text" :props="props">
+                      <div class="line-clamp-3 text-xs">
+                        {{ props.row.text }}
+                      </div>
+                    </q-td>
 
+                    <q-td key="comment_state" :props="props">
+                      <span class="text-xxs">{{ props.row.comment_state }}</span>
+                    </q-td>
+
+                    <q-td key="created_by" :props="props">
+                      <div class="flex flex-col">
+                        <span class="text-xxs">{{ props.row.created_by }}</span>
+                        <span class="text-xxs">{{ props.row.created_format }}</span>
+                      </div>
+                    </q-td>
+
+                  </q-tr>
+                </template>
                 <template v-slot:item="props">
                     <div class="q-py-xs col-xs-12" :style="props.selected ? 'transform: scale(0.95);' : ''">
                         <CommentCard :item="props.row" @open="state.selectedId = $event; state.dialogWrite = true" />
@@ -62,10 +91,10 @@
                 </template>
             </q-table>
         </div>
-        <q-dialog v-model="state.dialogWrite" :position="$isDesktop ? 'right' : 'standard'" full-height maximized
+        <q-dialog v-model="state.dialogWrite" @update:model-value="handleCommentDialog" :position="$isDesktop ? 'right' : 'standard'" full-height maximized
             :transition-duration="100">
             <q-card>
-                <CommentWrite @close="state.dialogWrite = false" isDrawer :id="state.selectedId" isEdit
+                <CommentWrite @close="state.dialogWrite = false; state.selectedId = 0" @submit="onSubmit" isDrawer :id="state.selectedId" :isEdit="state.selectedId > 0"
                     :width="$isDesktop ? '400px' : '100%'" />
             </q-card>
         </q-dialog>
@@ -80,7 +109,13 @@ import { useTable } from 'src/use/table';
 import { useUpdateStore } from 'src/stores/update';
 import CommentCard from './CommentCard.vue';
 import CommentWrite from './CommentWrite.vue';
-const props = defineProps({ refKey: String, refId: Number, comment_state: String, comment_state_id: Number })
+const props = defineProps({ 
+    refKey: String, 
+    grid: { type: Boolean, default: true }, 
+    refId: Number, 
+    comment_state: String, 
+    comment_state_id: Number
+ })
 const emit = defineEmits(['submit'])
 
 const $api = inject('$api');
@@ -94,7 +129,6 @@ const initialItem = () => ({
     ref_key: props.refKey,
     comment_state: props.comment_state,
     comment_state_id: props.comment_state_id
-
 })
 
 const state = reactive({
@@ -121,30 +155,68 @@ const state = reactive({
         }
     },
     columns: [
+      {
+          name: 'action',
+          required: true,
+          label: '',
+          align: 'left',
+          style: 'width: 40px;',
+      },
+      {
+          name: 'text',
+          label: 'Texto',
+          align: 'left',
+          sortable: true,
+          flex: 1,
+          style: 'min-width: 300px;',
+          headerStyle: 'height: 45px;',
+      },
+      {
+          name: 'comment_state',
+          label: 'Estado',
+          align: 'left',
+          sortable: true,
+          style: 'width: 200px;',
+          format: val => val || '—',
+      },
+      {
+          name: 'created_by',
+          label: 'Usuario',
+          align: 'left',
+          style: 'width: 200px;',
+          sortable: true,
+      },
     ],
-    rows: [
-    ]
+    rows: []
 })
 
-async function onSubmit() {
+function handleCommentDialog(value) {
+  state.dialogWrite = value
+  if (!value) {
+    state.selectedId = 0
+  }
+}
+
+function onReset() {
+    state.item = initialItem()
+    // $local.remove(state.local)
+    writeForm.value?.resetValidation()
+}
+
+async function onSubmit(text) {
     try {
-        const res = await $api.post(`comment`, state.item)
+        const res = await $api.post(`comment`, { ...state.item , text: text || state.item.text });
         if (res) {
             $q.notify({
                 type: 'success',
                 message: 'Comentario agregado'
             })
         }
+        state.dialogWrite = false
         onReset()
     } catch (error) {
         console.log(error);
     }
-}
-
-function onReset() {
-    state.item = initialItem()
-    // $local.remove(state.local)
-    writeForm.value.resetValidation()
 }
 
 const { onRequest, getSelectedString, onDeleteRows, addMore, itemsRange } = useTable(state, tableRef)
