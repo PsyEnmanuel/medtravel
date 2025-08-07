@@ -51,19 +51,7 @@ router.get("/:id", async function (req, res, next) {
       table,
       user,
     });
-
-    if (item.birthdate && _date.isValidDate(item.birthdate)) {
-      item.age = _date.calculateReadableAge(item.birthdate);
-      item.birthday = _date.isBirthday(item.birthdate);
-      item.birthdate = _date.intlDate(item.birthdate);
-    }
-
-    if (item.insurances) {
-      item.insurances = JSON.parse(item.insurances);
-    } else {
-      item.insurances = [];
-    }
-
+    
     item.files = await _query.getFiles({
       ref_id: item.id,
       ref_key: table,

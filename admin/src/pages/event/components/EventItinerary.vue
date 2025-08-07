@@ -303,12 +303,6 @@
                                 label="guardar cambios" type="submit" />
                         </div>
                     </div>
-                    <div v-else>
-                        <q-btn v-if="props.isEdit" :disabled="state.submitting"
-                            class="button-press w-full text-lg rounded-md" flat label="Guardar cambios" type="submit" />
-                        <q-btn v-else :disabled="state.submitting" class="button-press w-full text-lg rounded-md" flat
-                            label="agregar" type="submit" />
-                    </div>
                 </div>
             </q-form>
         </div>

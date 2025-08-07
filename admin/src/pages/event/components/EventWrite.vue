@@ -7,10 +7,10 @@
             <div class="flex flex-nowrap justify-between items-start gap-2 py-2">
                 <div v-if="isEdit">
                     <p v-if="state.item.c_status & 4" class="text-2xl text-info">Editar Coordinación {{ state.item.code
-                    }}</p>
+                        }}</p>
                     <div v-else-if="state.item.c_status & 2">
                         <p class="text-2xl text-info">Cancelada {{ state.item.code
-                        }} </p>
+                            }} </p>
                         <p>{{ state.item.cancelled_by }} - {{ state.item.cancelled_date_format }}</p>
                     </div>
                 </div>
@@ -293,7 +293,7 @@
                                                     class="w-full flex flex-start items-center justify-between border card shadow-none px-3 py-1">
                                                     <div class="uppercase pr-4 line-clamp-1">{{ format(d.from,
                                                         'EEE dd MMM yyyy')
-                                                        }} - {{ format(d.to,
+                                                    }} - {{ format(d.to,
                                                             'EEE dd MMM yyyy') }}
                                                     </div>
                                                 </div>
@@ -331,7 +331,45 @@
 
                             <div>
                                 <div class="flex flex-col gap-1">
+                                    <div class="bg-default p-1 rounded-md text-center font-bold text-xs">
+                                        Estado
+                                    </div>
 
+                                    <div class="grid grid-cols-2 gap-4">
+
+                                        <div>
+                                            <q-option-group size="xs" :options="options.event_state.slice(0, 4)"
+                                                type="radio" v-model="state.item.$event_state_id">
+                                                <template v-slot:label="opt">
+                                                    <div class="flex flex-nowrap items-center justify-between w-full">
+
+                                                        <span class="text-xs">{{ opt.label }}</span>
+
+                                                        <q-badge :style="{ background: opt.color }"
+                                                            class="flex justify-center font-bold text-xxs ml-2">
+                                                            {{ opt.event_category }}
+                                                        </q-badge>
+                                                    </div>
+                                                </template>
+                                            </q-option-group>
+                                        </div>
+                                        <div>
+                                            <q-option-group size="xs" :options="options.event_state.slice(4)"
+                                                type="radio" v-model="state.item.$event_state_id">
+                                                <template v-slot:label="opt">
+                                                    <div class="flex flex-nowrap items-center justify-between w-full">
+
+                                                        <span class="text-xs">{{ opt.label }}</span>
+
+                                                        <q-badge :style="{ background: opt.color }"
+                                                            class="flex justify-center font-bold text-xxs ml-2">
+                                                            {{ opt.event_category }}
+                                                        </q-badge>
+                                                    </div>
+                                                </template>
+                                            </q-option-group>
+                                        </div>
+                                    </div>
                                     <div class="bg-default p-1 rounded-md text-center font-bold text-xs">Proveedor
                                     </div>
                                     <ProviderSelect class="w-full" @setProvider="setProvider"
@@ -387,45 +425,7 @@
                                 </div>
                             </div>
                             <div class="flex flex-col gap-1">
-                                <div class="bg-default p-1 rounded-md text-center font-bold text-xs">
-                                    Estado
-                                </div>
 
-                                <div class="grid grid-cols-2 gap-4">
-
-                                    <div>
-                                        <q-option-group size="xs" :options="options.event_state.slice(0, 4)"
-                                            type="radio" v-model="state.item.$event_state_id">
-                                            <template v-slot:label="opt">
-                                                <div class="flex flex-nowrap items-center justify-between w-full">
-
-                                                    <span class="text-xs">{{ opt.label }}</span>
-
-                                                    <q-badge :style="{ background: opt.color }"
-                                                        class="flex justify-center font-bold text-xxs ml-2">
-                                                        {{ opt.event_category }}
-                                                    </q-badge>
-                                                </div>
-                                            </template>
-                                        </q-option-group>
-                                    </div>
-                                    <div>
-                                        <q-option-group size="xs" :options="options.event_state.slice(4)" type="radio"
-                                            v-model="state.item.$event_state_id">
-                                            <template v-slot:label="opt">
-                                                <div class="flex flex-nowrap items-center justify-between w-full">
-
-                                                    <span class="text-xs">{{ opt.label }}</span>
-
-                                                    <q-badge :style="{ background: opt.color }"
-                                                        class="flex justify-center font-bold text-xxs ml-2">
-                                                        {{ opt.event_category }}
-                                                    </q-badge>
-                                                </div>
-                                            </template>
-                                        </q-option-group>
-                                    </div>
-                                </div>
 
                                 <div class="bg-default p-1 rounded-md text-center font-bold text-xs">Pendientes</div>
                                 <div class="flex flex-nowrap items-center gap-1" v-for="(item, index) in pendingList"
@@ -440,8 +440,17 @@
                                     <q-badge :color="item.color" :style="{ background: item.color }"
                                         class="flex justify-center font-bold text-xxs w-[16px] h-[16px]"></q-badge>
                                 </div>
+                                <div class="flex flex-col w-full mb-2">
+                                    <template v-if="!state.loading">
+                                        <CommentTable :add="false" small refKey="t_event" :refId="state.item.id"
+                                            :comment_state="state.item.event_state"
+                                            :comment_state_id="state.item.$event_state_id"
+                                            @submit="state.item.admin_comments = $event" :limit="3" />
+                                    </template>
+                                </div>
                                 <template v-if="isEdit">
-                                    <q-btn flat class="button-icon h-[40px] bg-secondary text-white"
+                                    <q-btn v-if="state.item.c_status & 4" flat
+                                        class="button-icon h-[40px] bg-secondary text-white mt-20"
                                         @click="state.cancelDialog = true" label="Cancelar coordinación">
                                         <q-tooltip class="bg-default text-black text-xs">Cancelar
                                             coordinación</q-tooltip>
@@ -453,13 +462,6 @@
                     <div class="bg-default p-1 rounded-md text-center font-bold text-xs mb-1">Itinerarios</div>
                     <EventItinerary isEdit :id="state.item.id" @setItems="setItinerary"
                         @close="state.itineraryDialog = false" hideDetail />
-                    <div class="flex flex-col w-full mb-2">
-                        <template v-if="!state.loading">
-                            <CommentTable refKey="t_event" :grid="false" :refId="state.item.id"
-                                :comment_state="state.item.event_state" :comment_state_id="state.item.$event_state_id"
-                                @submit="state.item.admin_comments = $event" />
-                        </template>
-                    </div>
                     <template v-if="isEdit">
                         <UploadFileManager :ref_id="state.item.id" table="t_event" file_type="GENERAL" />
                         <FileManager :refId="state.item.id" refKey="t_event" />

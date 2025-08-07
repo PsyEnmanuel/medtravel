@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="flex flex-col gap-2">
-            <q-form v-if="grid" ref="writeForm" class="flex flex-col gap-1" autofocus @submit="onSubmit"
+            <q-form v-if="add" ref="writeForm" class="flex flex-col gap-1" autofocus @submit="onSubmit"
                 @reset="onReset">
                 <div class="bg-default p-1 rounded-md text-center font-bold text-xs">
                     Comentarios Administrativos
@@ -15,21 +15,18 @@
             <div class="bg-default p-1 rounded-md text-center font-bold text-xs">
                 Listado de comentarios administrativos
             </div>
-            <div class="flex flex-nowrap justify-between gap-2">
+            <div class="flex flex-col gap-2">
                 <div class="flex flex-nowrap w-full gap-1">
-                    <q-input class="w-full max-w-[200px] md:w-auto" dense outlined debounce="300" v-model="state.search"
+                    <q-input class="w-full md:w-auto" dense outlined debounce="300" v-model="state.search"
                         :placeholder="$t('search')" hide-bottom-space>
                         <template v-slot:append>
                             <q-icon name="search" />
                         </template>
                     </q-input>
-                    <q-btn v-if="!grid" flat class="button h-full" icon="add" :label="$isDesktop && $t('comentario')"
-                        @click="state.dialogWrite = true" />
-                    <q-btn v-if="grid && state.selected.length" flat class="button h-full bg-primary text-white"
-                        :class="{ 'col-span-3': grid, 'col-span-1': !grid }" icon-right="sym_o_remove"
-                        :label="$isDesktop ? 'Remover' : ''" no-caps @click="onDeleteRows" />
+                    <q-btn v-if="!add" flat class="button h-[40px]" icon="add" :label="$isDesktop && $t('comentario')"
+                        @click="state.dialogCreate = true" />
                 </div>
-                <div v-if="$isDesktop">
+                <div v-if="$isDesktop" class="ml-auto">
                     <PaginationTable :rowsNumber="state.pagination.rowsNumber" :itemsRange="itemsRange"
                         :tableRef="tableRef" />
                 </div>
@@ -81,11 +78,18 @@
                 </template>
             </q-table>
         </div>
-        <q-dialog v-model="state.dialogWrite" @update:model-value="handleCommentDialog"
+        <q-dialog v-model="state.dialogWrite" @update:model-value="state.dialogWrite = false"
             :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="100">
             <q-card>
                 <CommentWrite @close="state.dialogWrite = false; state.selectedId = 0" @submit="onSubmit" isDrawer
-                    :id="state.selectedId" :isEdit="state.selectedId > 0" :width="$isDesktop ? '400px' : '100%'" />
+                    :id="state.selectedId" isEdit :width="$isDesktop ? '400px' : '100%'" />
+            </q-card>
+        </q-dialog>
+        <q-dialog v-model="state.dialogCreate" @update:model-value="state.dialogCreate = false"
+            :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="100">
+            <q-card>
+                <CommentWrite @close="state.dialogCreate = false;" @submit="onSubmit" isDrawer
+                    :width="$isDesktop ? '400px' : '100%'" />
             </q-card>
         </q-dialog>
     </div>
@@ -101,6 +105,9 @@ import CommentCard from './CommentCard.vue';
 import CommentWrite from './CommentWrite.vue';
 import PaginationTable from 'src/components/table/PaginationTable.vue';
 const props = defineProps({
+    add: {
+        type: Boolean, default: true
+    },
     refKey: String,
     grid: { type: Boolean, default: true },
     refId: Number,
@@ -135,10 +142,10 @@ const state = reactive({
     dialogWidth: 400,
     selected: [],
     search: '',
-    search_key: 'orlike:id',
+    search_key: 'orlike:text,comment_state,created_by',
     pagination: {
         sortBy: 'id',
-        descending: false,
+        descending: true,
         page: 1,
         rowsPerPage: 20,
     },
@@ -187,13 +194,6 @@ const state = reactive({
     rows: []
 })
 
-function handleCommentDialog(value) {
-    state.dialogWrite = value
-    if (!value) {
-        state.selectedId = 0
-    }
-}
-
 function onReset() {
     state.item = initialItem()
     // $local.remove(state.local)
@@ -202,7 +202,7 @@ function onReset() {
 
 async function onSubmit(text) {
     try {
-        if (props.ref_id) {
+        if (props.refId) {
             const res = await $api.post(`comment`, { ...state.item, text: text || state.item.text });
             if (res) {
                 $q.notify({

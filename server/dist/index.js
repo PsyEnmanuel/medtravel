@@ -12708,16 +12708,6 @@ router$d.get("/:id", async function(req, res, next) {
       table: table$9,
       user
     });
-    if (item.birthdate && isValidDate$1(item.birthdate)) {
-      item.age = calculateReadableAge(item.birthdate);
-      item.birthday = isBirthday(item.birthdate);
-      item.birthdate = intlDate(item.birthdate);
-    }
-    if (item.insurances) {
-      item.insurances = JSON.parse(item.insurances);
-    } else {
-      item.insurances = [];
-    }
     item.files = await getFiles({
       ref_id: item.id,
       ref_key: table$9
