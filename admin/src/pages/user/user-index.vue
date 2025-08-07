@@ -43,7 +43,7 @@
                 <q-td :props="props">
                     <div class="flex gap-2">
                         <q-btn flat class="button bg-default text-primary rounded-md" label="consultar" no-caps size="sm"
-                            @click="$router.push(`${$path.user}/${$path.user_consult}/${props.row.id}`)" />
+                            :to="`${$path.user}/${$path.user_consult}/${props.row.id}`" />
                         <q-btn flat class="button bg-default text-primary rounded-md" size="sm" label="Editar" no-caps
                             @click="state.selectedId = props.row.id; state.dialogWrite = true;" />
                         <q-btn v-if="$me.unixroles & 3" flat class="button bg-default text-primary rounded-md" size="sm"

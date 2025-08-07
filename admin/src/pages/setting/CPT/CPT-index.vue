@@ -8,7 +8,7 @@
                         <q-icon name="search" />
                     </template>
                 </q-input>
-                <q-btn v-if="$me.unixroles & 1" flat class="button h-full" icon="add" :label="$isDesktop && $t('add')"
+                <q-btn v-if="$me.unixroles & 7" flat class="button h-full" icon="add" :label="$isDesktop && $t('add')"
                     @click="state.dialogCreate = true" />
             </div>
             <div v-if="$isDesktop" class="grid grid-flow-col auto-cols-max gap-2">

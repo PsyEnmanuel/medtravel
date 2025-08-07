@@ -14,20 +14,6 @@
                         </q-btn>
                     </template>
                 </div>
-                <!-- <div class="text-gray-800 my-2 subtitle font-bold text-center">
-                    Herramientas</div>
-                <div class="grid grid-cols-2 md:grid-cols-1 gap-1">
-                    <template v-for="tab in state.tabsTools" :key="tab.value">
-                        <q-btn v-if="tab.visible" class="button-tab hover:shadow-left-secondary w-full text-xs"
-                            align="left" unelevated @click="state.tab = tab.value; $router.push(tab.path)"
-                            :class="state.tab == tab.value && 'shadow-left-secondary'">
-                            <div class="flex items-center w-full">
-                                <q-icon :name="tab.icon"></q-icon>
-                                <span class="ml-4 text-xxs md:text-md">{{ tab.label }}</span>
-                            </div>
-                        </q-btn>
-                    </template>
-                </div> -->
             </div>
             <q-btn v-else flat class="button bg-primary-light w-full" no-caps @click="state.menuDialog = true">Menu de
                 Ajuste</q-btn>
@@ -67,11 +53,7 @@ const state = reactive({
     tab: 'general',
     tabsDic: [
         { label: t('generals'), value: 'general', path: `${$path.setting}/${$path.setting_general}`, icon: 'fa-duotone fa-solid fa-sliders-simple', visible: $me.unixroles & 3 ? 1 : 1 },
-        { label: t('files'), value: 'file', path: `${$path.setting}/${$path.setting_file}`, icon: 'fa-duotone fa-solid fa-sliders-simple', visible: $me.unixroles & 7 ? 1 : 1 },
     ],
-    // tabsTools: [
-    //     { label: t('Importar Polizas'), value: 'tools', path: `${$path.setting}/${$path.setting_tool_policy}`, icon: 'fa-duotone fa-solid fa-upload', visible: $me.unixroles & 3 ? 1 : 1 },
-    // ],
     item: {},
     loading: true,
 })

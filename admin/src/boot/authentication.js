@@ -24,7 +24,6 @@ export default boot(({ app, router }) => {
         }
 
         const me = await api.get("user/me");
-
         app.config.globalProperties.$me = me;
         app.provide("$me", me);
         user.setMe(me);
@@ -39,7 +38,6 @@ export default boot(({ app, router }) => {
           } else {
             router.removeRoute(asyncRoute.name);
           }
-          router.addRoute(asyncRoute);
         }
 
         NProgress.done();

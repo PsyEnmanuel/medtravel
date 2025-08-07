@@ -493,7 +493,7 @@ export const asyncRoutes = [
     path: path.libraries_group,
     name: "libraries_group",
     component: MainLayout,
-    meta: { title: "librerias", nav: 1, icon: 'fa-duotone fa-solid fa-books', children: ['speciality','ICD10', 'CPT', 'category', 'poll'] },
+    meta: { title: "librerias", nav: 1, icon: 'fa-duotone fa-solid fa-books', children: ['speciality', 'ICD10', 'CPT', 'category', 'poll'] },
     children: [
       {
         path: "",
@@ -507,25 +507,12 @@ export const asyncRoutes = [
     path: path.setting_log,
     name: "log",
     component: MainLayout,
-    meta: { title: "user", nav: 2, icon: 'fa-duotone fa-rectangle-terminal' },
+    meta: { title: "logs", nav: 2, icon: 'fa-duotone fa-rectangle-terminal' },
     children: [
       {
         path: "",
         name: "setting_log_index",
         component: () => import("pages/setting/log/log-index.vue"),
-      },
-    ],
-  },
-  {
-    path: path.setting_user,
-    name: "user",
-    component: MainLayout,
-    meta: { title: "user", nav: 2, icon: 'fa-duotone fa-solid fa-user-lock' },
-    children: [
-      {
-        path: "",
-        name: "user_index",
-        component: () => import("pages/user/user-index.vue"),
       },
     ],
   },
@@ -585,7 +572,7 @@ export const asyncRoutes = [
     path: path.access_group,
     name: "access_group",
     component: MainLayout,
-    meta: { title: "accesos", nav: 1, icon: 'fa-duotone fa-solid fa-building-lock', children: ['user', 'role', 'accessrole', 'permission', 'log'] },
+    meta: { title: "accesos", nav: 1, icon: 'fa-duotone fa-solid fa-building-lock', children: ['user', 'role', 'accessrole', 'privilege', 'permission', 'log'] },
     children: [
       {
         path: "",
@@ -602,31 +589,10 @@ export const asyncRoutes = [
     meta: { title: "Ajustes", nav: 1, icon: 'fa-duotone fa-solid fa-gears' },
     children: [
       {
-        path: "",
+        path: '',
         name: "setting_index",
         meta: { title: "Ajustes" },
-        component: () => import("pages/setting/setting-index.vue"),
-        children: [
-          {
-            path: path.setting_general,
-            name: "setting_general_index",
-            meta: { title: "general" },
-            component: () => import("pages/setting/general/general-index.vue"),
-          },
-          {
-            path: path.setting_file,
-            name: "setting_file_index",
-            meta: { title: "files" },
-            component: () => import("pages/setting/general/file-index.vue"),
-          },
-
-          {
-            path: path.setting_tool_policy,
-            name: "setting_tool_policy",
-            props: true,
-            component: () => import("pages/setting/tool/tool-policy.vue"),
-          },
-        ],
+        component: () => import("pages/setting/general/general-index.vue"),
       },
     ],
   },
