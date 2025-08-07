@@ -19,8 +19,12 @@
                     <div class="bg-default p-1 mb-2 rounded-md text-center font-bold">&nbsp;</div>
                     <q-input class="mb-2" dense outlined v-model="state.item.description"
                         :label="$t('description') + '*'" :rules="[requiredInput]" hide-bottom-space></q-input>
-                    <q-checkbox class="mb-2" dense outlined :true-value="1" :false-value="0" v-model="state.item.has_vob"
-                        :label="$t('Tiene VOB')" :rules="[requiredInput]" hide-bottom-space></q-checkbox>
+                    <div class="bg-default p-1 rounded-md text-center font-bold text-xs mb-2">
+                        Configuración
+                    </div>
+                    <q-checkbox class="mb-2" dense outlined :true-value="1" :false-value="0"
+                        v-model="state.item.has_vob" :label="$t('Requerido VOB')" :rules="[requiredInput]"
+                        hide-bottom-space></q-checkbox>
                 </div>
                 <div>
                     <div class="bg-default p-1 mb-2 rounded-md text-center font-bold">Plan</div>

@@ -35,10 +35,10 @@
                 ref="tableRef" @request="onRequest" flat selection="none" v-model:pagination="state.pagination"
                 v-model:selected="state.selected" :selected-rows-label="getSelectedString" :loading="state.loading"
                 rows-per-page-label="Lineas" :wrap-cells="true">
-                <template v-slot:no-data="{ icon, message, filter }">
+                <template v-slot:no-data="{ icon, filter }">
                     <div class="full-width row flex-center text-primary q-gutter-sm">
                         <span>
-                            {{ message }}
+                            Sin comentarios disponibles
                         </span>
                         <q-icon size="2em" :name="filter ? 'filter_b_and_w' : icon" />
                     </div>
