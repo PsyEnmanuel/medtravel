@@ -1,42 +1,26 @@
 <template>
-  <q-layout view="lHh Lpr lFr" class="bg-primary">
-    <q-header v-if="$isDesktop" class="transparent">
-      <q-toolbar
-        class="bg-primary text-white px-5 min-h-full flex flex-nowrap items-center justify-between gap-2 leading-none">
-        <div class="flex flex-1 flex-nowrap py-2">
-          <router-link to="/">
-            <q-img class="mr-2" src="~assets/logoWhite.png" spinner-color="white" width="32px" />
-          </router-link>
-          <div class="gap-1 font-bold w-[200px] line-clamp-1 flex">
+  <q-layout :class="'main'" view="lHh Lpr lFf">
+
+    <q-header v-if="$isDesktop" dense class="text-black bg-primary">
+      <q-toolbar class="flex justify-between transparent min-h-[20px]">
+        <div class="flex">
+          <q-btn class="text-white" flat dense round icon="menu" aria-label="Menu" @click="openDrawer" />
+          <div class="gap-1 font-bold w-[200px] line-clamp-1 flex text-white items-center leading-none ml-2">
             <span class="flex flex-col font-bold line-clamp-1 cursor-pointer" @click="state.userDialog = true">
-              <span>{{ $me.description }}</span>
+              <span class="text-xs">{{ $me.description }}</span>
               <span class="text-xxs">{{ $me.roles_format }}</span>
             </span>
           </div>
         </div>
-
-        <div class="flex justify-center gap-x-5 mx-auto">
-          <template v-for="m in state.menu" :key="m.label">
-            <router-link :to="m.path" activeClass="text-sky-200">
-              <div
-                class="flex flex-nowrap items-center font-bold text-md leading-none cursor-pointer hover:text-sky-200 py-1">
-                <q-icon :name="m.icon" size="16px" class="mr-1" />
-                <span class="pt-0.5">{{ m.label }}</span>
-              </div>
-            </router-link>
-          </template>
-        </div>
-
-        <div class="flex flex-nowrap items-center flex-1 gap-4 justify-end min-w-[150px]">
+        <div class="flex flex-nowrap items-center text-white flex-1 gap-4 justify-end min-w-[150px]">
           <div class="flex items-center cursor-pointer hover:text-sky-200" @click="userStore.logOut()">
             <span class="font-bold line-clamp-1 mr-2">Salir</span>
             <q-icon name="fa-duotone fa-solid fa-right-from-bracket"></q-icon>
           </div>
         </div>
-
       </q-toolbar>
 
-      <div class="flex justify-between flex-nowrap text-font px-4 py-2 bg-white">
+      <div class="flex justify-between flex-nowrap text-font px-2 py-2 bg-white">
         <div class="absolute bottom-13 right-14 opacity-20 text-xxs">Versión: {{ $me.version }}</div>
         <div class="flex flex-nowrap gap-5 w-full mx-auto">
           <template v-for="dialog in state.dialogs" :key="dialog.value">
@@ -66,13 +50,96 @@
               </div>
             </q-popup-proxy>
           </q-btn>
-
-
         </div>
       </div>
     </q-header>
 
-    <q-page-container class="pb-64 bg-white">
+    <q-drawer v-model="state.leftDrawerOpen" show-if-above bordered :width="state.drawerWidth"
+      @mouseenter="miniState = false" @mouseleave="miniState = true" transition-show="slide-right"
+      transition-hide="slide-left" class="border-[#ddd]">
+      <div class="flex flex-col h-full">
+        <q-img v-if="state.miniState" src="~assets/logo.png" spinner-color="white" :width="80" />
+        <q-img v-else src="~assets/logoText.png" spinner-color="white" :width="180" />
+
+        <div class="overflow-auto flex-1">
+          <div v-for="(row, i) in state.navLinks" :key="i" class="border-b border-default text-xs">
+            <div v-if="row.children?.length">
+              <div class=" flex justify-between items-center cursor-pointer"
+                :class="isParentActive(row.children) ? 'border-primary border-r-4 bg-primary/10 text-primary font-bold' : 'hover:border-primary hover:border-r-4 text-primary'"
+                @click="toggleDropdown(row.title)">
+                <div class="relative flex items-center px-2 py-2"
+                  :class="state.miniState ? 'justify-center w-full h-[42px] bg-default' : ''">
+                  <q-icon v-if="!state.miniState" class="mr-2" size="xs" :name="row.icon" />
+                  <q-icon v-else size="xs" :name="row.icon" />
+                  <div v-if="!state.miniState">{{ $t(row.title) }}</div>
+                  <div v-if="state.miniState"
+                    class="absolute bottom-0 right-0 w-0 h-0 border-l-[10px] border-b-[10px] border-l-transparent border-b-secondary">
+                  </div>
+                </div>
+                <q-icon class="pr-1" v-if="!state.miniState" :name="state.dropdownOpen[row.title] ? 'expand_less' : 'expand_more'"
+                  size="sm" />
+              </div>
+
+              <q-slide-transition>
+                <div v-if="state.dropdownOpen[row.title]">
+                  <template v-for="(child, j) in row.children" :key="j">
+                    <div
+                      v-if="!state.miniState && child.subtitle"
+                      class="pl-5 py-2 text-xs font-semibold text-gray-600 bg-gray-100 uppercase select-none"
+                    >
+                      {{ $t(child.subtitle) }}
+                    </div>
+                    <router-link
+                      v-else-if="child.title && child.link"
+                      :to="child.link"
+                      v-slot="{ isActive }"
+                    >
+                      <div
+                        class="pl-5 py-2 flex items-center cursor-pointer border-b border-default text-xs" 
+                        :class="isActive
+                          ? 'border-r-primary border-r-4 text-primary font-bold'
+                          : 'text-gray-700 hover:text-primary'"
+                      >
+                        <q-icon
+                          v-if="state.miniState"
+                          class="my-1"
+                          size="sm"
+                          :name="child.icon"
+                        />
+                        <q-icon
+                          v-else
+                          class="mr-2"
+                          size="xs"
+                          :name="child.icon"
+                        />
+                        <div v-if="!state.miniState">{{ $t(child.title) }}</div>
+                      </div>
+                    </router-link>
+                  </template>
+                </div>
+              </q-slide-transition>
+
+            </div>
+
+            <router-link v-else :to="row.link" v-slot="{ isActive }">
+              <div class="px-2 flex items-center py-2 cursor-pointer" :class="funNav(isActive)">
+                <q-icon v-if="state.miniState" class="my-1" size="sm" :name="row.icon" />
+                <q-icon v-else class="mr-2" size="xs" :name="row.icon" />
+                <div v-if="!state.miniState">{{ $t(row.title) }}</div>
+              </div>
+            </router-link>
+          </div>
+        </div>
+
+      </div>
+    </q-drawer>
+
+    <q-dialog class="q-pa-none left-0" v-model="state.eventDialogCreate" :transition-duration="0" full-height maximized
+      position="right">
+      <EventWrite isDrawer @close="state.eventDialogCreate = false" />
+    </q-dialog>
+
+    <q-page-container class="fit">
       <router-view />
     </q-page-container>
 
@@ -114,12 +181,12 @@
 
     <q-dialog v-model="state.menuDialog" position="bottom">
       <div class="grid grid-cols-3 gap-0.5 bg-white w-full">
-        <template v-for="m in state.menu" :key="m.label">
-          <router-link :to="m.path" activeClass="text-primary" v-slot="{ isActive }">
+        <template v-for="(row, i) in state.navLinks" :key="i">
+          <router-link :to="row.link" activeClass="text-primary" v-slot="{ isActive }">
             <div
               class="flex flex-col bg-default h-[48px] items-center justify-center font-bold text-md leading-none cursor-pointer">
-              <q-icon :name="m.icon" size="16px" class="mr-1" :class="isActive && 'text-primary'" />
-              <span class="mt-1 text-xs">{{ m.label }}</span>
+              <q-icon :name="row.icon" size="16px" class="mr-1" :class="isActive && 'text-primary'" />
+              <span class="mt-1 text-xs">{{ $t(row.title) }}</span>
             </div>
           </router-link>
         </template>
@@ -229,32 +296,33 @@
 </template>
 
 <script setup>
-import { inject, onMounted, reactive, ref, watch } from 'vue'
-import { useQuasar } from 'quasar';
+import { computed, inject, onMounted, reactive, watch } from 'vue'
+import { useRouter } from 'vue-router';
 import { useUserStore } from 'src/stores/user';
 const userStore = useUserStore();
-import { useRouter } from 'vue-router';
+const router = useRouter()
 import InsuredWrite from 'src/pages/insured/components/InsuredWrite.vue';
 import EventWrite from 'src/pages/event/components/EventWrite.vue';
 import ServiceWrite from 'src/pages/service/components/ServiceWrite.vue';
 import DoctorWrite from 'src/pages/doctor/components/DoctorWrite.vue';
 import PolicyWrite from 'src/pages/policy/components/PolicyWrite.vue';
 import UserWrite from 'src/pages/user/components/UserWrite.vue';
-import { useUpdateStore } from 'src/stores/update';
 import InsuranceWrite from 'src/pages/insurance/components/InsuranceWrite.vue';
 import ProviderWrite from 'src/pages/provider/components/ProviderWrite.vue';
 import CustomerWrite from 'src/pages/customer/components/CustomerWrite.vue';
 import ContactWrite from 'src/pages/contact/components/ContactWrite.vue';
 import TaskWrite from 'src/pages/task/components/TaskWrite.vue';
-const router = useRouter()
+import { useUpdateStore } from "src/stores/update";
+import { useConstants } from "src/use/constants";
+import { useQuasar } from 'quasar';
+const updateStore = useUpdateStore()
 const $q = useQuasar()
 const $me = inject("$me")
+const $local = inject("$local")
 const $api = inject("$api")
 const $path = inject("$path")
-console.log($me);
-defineOptions({
-  name: 'MainLayout'
-})
+const $isDesktop = inject("$isDesktop")
+const { APP_SETTINGS_LOCAL } = useConstants()
 
 watch(() => userStore.me, (curr) => {
   if (!curr) {
@@ -262,129 +330,18 @@ watch(() => userStore.me, (curr) => {
   }
 })
 
-function reloadPage() {
-  location.reload()
-}
-
 const state = reactive({
-  selectedId: null,
+  navLinks: [],
   pendingTasks: [],
-  taskDialogWrite: false,
-  userDialog: false,
-  menuDialog: false,
-  addDialog: false,
-  leftDrawer: false,
-  sideBar: false,
-  search: null,
+  leftDrawerOpen: $isDesktop ? true : false,
+  dropdownOpen: {},
+  drawerWidth: 200,
+  miniState: false,
   footer: {
     open: false,
     text: '',
     version: 1
   },
-  menu: [
-    {
-      label: 'Inicio',
-      icon: 'fa-duotone fa-solid fa-objects-column',
-      name: 'home_index',
-      path: $path.home,
-    },
-    {
-      label: 'Coordinaciones',
-      icon: 'fa-duotone fa-solid fa-calendar-lines',
-      name: 'event_index',
-      path: $path.event,
-    },
-    {
-      label: 'Itinerarios',
-      icon: 'fa-duotone fa-solid fa-calendar-days',
-      name: 'itinerary_index',
-      path: $path.itinerary,
-    },
-    {
-      label: 'Asegurados',
-      icon: 'fa-duotone fa-solid fa-hospital-user',
-      name: 'insured_index',
-      path: $path.insured,
-    },
-    {
-      label: 'Pólizas',
-      icon: 'fa-duotone fa-solid fa-heart-circle-plus',
-      name: 'policy_index',
-      path: $path.policy,
-    },
-    {
-      label: 'Aseguradoras',
-      icon: 'fa-duotone fa-solid fa-folder-medical',
-      name: 'insurance_index',
-      path: $path.insurance,
-    },
-    {
-      label: 'Proveedores',
-      icon: 'fa-duotone fa-solid fa-hospitals',
-      name: 'provider_index',
-      path: $path.provider,
-      visible: $me.unixroles & 31 ? 1 : 0,
-    },
-    {
-      label: 'Médicos',
-      icon: 'fa-duotone fa-solid fa-user-doctor',
-      name: 'doctor_index',
-      path: $path.doctor,
-    },
-    {
-      label: 'contactos',
-      icon: 'fa-duotone fa-solid fa-address-book',
-      path: $path.contact,
-    },
-    {
-      label: 'Conciliaciones',
-      icon: 'fa-duotone fa-solid fa-books',
-      name: 'conciliation_index',
-      path: $path.conciliation,
-    },
-    {
-      label: 'Clientes',
-      icon: 'fa-duotone fa-solid fa-address-book',
-      name: 'customer_index',
-      path: $path.customer,
-    },
-    {
-      label: 'Corredores',
-      icon: 'fa-duotone fa-solid fa-handshake',
-      name: 'broker_index',
-      path: $path.broker,
-    },
-    {
-      label: 'Hospedajes',
-      icon: 'fa-duotone fa-solid fa-hotel',
-      name: 'lodging_index',
-      path: `${$path.lodging}`,
-    },
-    {
-      label: 'Archivos',
-      icon: 'fa-duotone fa-solid fa-list-check',
-      name: 'setting_index',
-      path: `${$path.setting}/${$path.setting_file}`,
-    },
-    {
-      label: 'Gráficos',
-      icon: 'fa-duotone fa-solid fa-chart-pie-simple',
-      path: $me.unixroles & 3 ? `${$path.chart}/${$path.chart_event}` : `${$path.chart}`,
-      name: 'chart_index',
-    },
-    {
-      label: 'Solicitudes',
-      icon: 'fa-duotone fa-solid fa-list-check',
-      name: 'task_index',
-      path: `${$path.task}`,
-    },
-    {
-      label: 'Ajustes',
-      icon: 'fa-duotone fa-solid fa-gears',
-      path: `${$path.setting}/${$path.setting_general}`,
-      name: 'setting_index',
-    },
-  ],
   dialogs: [
     {
       label: 'Asegurado',
@@ -438,16 +395,22 @@ const state = reactive({
     //   visible: $me.unixroles & 3 ? 1 : 0,
     // },
   ]
-
 })
 
-const updateStore = useUpdateStore()
-watch(() => updateStore.table.t_printed, (data) => {
-  $q.notify({
-    type: 'warning',
-    message: 'Documento impreso'
+function openDrawer() {
+  state.miniState = !state.miniState
+  if (state.miniState) {
+    state.drawerWidth = 60
+  } else {
+    state.drawerWidth = 180
+  }
+  
+  $local.set(APP_SETTINGS_LOCAL, (data) => {
+    if (!data.menu) data.menu = {};
+    data.menu.miniState = state.miniState;
+    data.menu.drawerWidth = state.miniState ? 60: 180
   })
-}, { deep: true })
+}
 
 watch(() => updateStore.table.t_version, (data) => {
   if ($me.version === data.version) {
@@ -460,6 +423,70 @@ watch(() => updateStore.table.t_version, (data) => {
 
 function onReload() {
   location.reload()
+}
+
+function funNav(isActive) {
+  if (state.miniState) {
+    if (isActive) {
+      return 'justify-center border-primary border-r-4 bg-primary/10 text-primary font-bold'
+    } else {
+      return 'justify-center hover:border-primary hover:border-r-4 text-primary'
+    }
+  } else {
+
+    if (isActive) {
+      return 'border-primary border-r-4 bg-primary/10 text-primary font-bold'
+    } else {
+      return 'hover:border-primary hover:border-r-4 text-primary'
+    }
+  }
+}
+
+function toggleDropdown(title) {
+  state.dropdownOpen[title] = !state.dropdownOpen[title];
+}
+
+function isParentActive(children) {
+  return children.some(child => router.currentRoute.value.path.startsWith(child.link));
+}
+
+function useNavLinks(router) {
+  const routes = router.getRoutes();
+  const links = [];
+
+  for (const route of routes) {
+    if (route.meta?.nav === 1) {
+      const data = {
+        title: route.meta.title,
+        icon: route.meta.icon,
+        link: route.path,
+        children: []
+      };
+
+      if (Array.isArray(route.meta.children)) {
+        const _routes = routes.filter(r => route.meta.children.includes(r.name));
+
+        for (const _route of _routes) {
+          console.log({ _route });
+          if (_route.meta?.subtitle) {
+            data.children.push({
+              subtitle: _route.meta.subtitle
+            });
+          } else if (_route.meta?.title && _route.meta?.icon) {
+            data.children.push({
+              title: _route.meta.title,
+              icon: _route.meta.icon || 'fa-duotone fa-circle',
+              link: _route.path
+            });
+          }
+        }
+      }
+
+      links.push(data);
+    }
+  }
+
+  return links;
 }
 
 async function getTaskPending() {
@@ -476,15 +503,113 @@ async function getTaskPending() {
   })
 }
 
+function getMenuSettings() {
+  const menuSetting = $local.get(APP_SETTINGS_LOCAL) || {}
+
+  if (menuSetting.menu) {
+    const { miniState, drawerWidth } = menuSetting.menu
+    state.miniState = miniState
+    state.drawerWidth = drawerWidth
+  }
+}
+
 onMounted(() => {
+  getMenuSettings()
   getTaskPending()
-  state.menu = state.menu.filter(i => {
-    if(i.name) {
-      return $me.menu.includes(i.name.toUpperCase())
-    } else {
-      return false;
+  state.navLinks = useNavLinks(router)
+
+  state.navLinks.forEach((item) => {
+    if (item.children?.length && isParentActive(item.children)) {
+      state.dropdownOpen[item.title] = true
     }
   })
 })
 
+
+watch(() => updateStore.table.t_event, (data) => {
+  getTodayEvents()
+}, { deep: true })
 </script>
+
+<style lang="scss">
+.main.big {
+
+  .text-primary,
+  .text-md,
+  .text-sm {
+    font-size: 16px;
+  }
+
+  .text-xs {
+    font-size: 14px;
+  }
+
+  th,
+  td,
+  input,
+  .q-field__label,
+  .q-checkbox__label {
+    font-size: 12px !important;
+  }
+
+  .text-xxs,
+  button,
+  .q-badge {
+    font-size: 11.5px !important;
+  }
+}
+
+.main.medium {
+
+  .text-primary,
+  .text-md,
+  .text-sm {
+    font-size: 14px;
+  }
+
+  .text-xs {
+    font-size: 12px;
+  }
+
+  th,
+  td,
+  input,
+  .q-field__label,
+  .q-checkbox__label {
+    font-size: 11px !important;
+  }
+
+  .text-xxs,
+  button,
+  .q-badge {
+    font-size: 10.5px !important;
+  }
+}
+
+.main.small {
+
+  .text-primary,
+  .text-md,
+  .text-sm {
+    font-size: 13px;
+  }
+
+  .text-xs {
+    font-size: 11px;
+  }
+
+  th,
+  td,
+  input,
+  .q-field__label,
+  .q-checkbox__label {
+    font-size: 10px !important;
+  }
+
+  .text-xxs,
+  button,
+  .q-badge {
+    font-size: 9.5px !important;
+  }
+}
+</style>

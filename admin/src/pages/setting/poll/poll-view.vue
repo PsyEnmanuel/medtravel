@@ -1,44 +1,46 @@
 <template>
-    <div class="grid lg:grid-cols-2 gap-4">
-        <div>
-            <q-btn flat class="button-press bg-primary text-white rounded-md" size="sm" :label="state.item.description"
-                no-caps @click="state.diaglogPoll = true" />
-            <div class="subtitle py-1">Agregar Pregunta</div>
-            <q-input class="w-full border-none" dense outlined v-model="state.question.description"
-                :label="$t('question')" :rules="[requiredInput]" hide-bottom-space></q-input>
-            <q-btn flat class="button-press bg-primary text-white rounded-md my-2 w-full" size="sm" :label="$t('save')"
-                no-caps @click="onSubmitQuestion" />
-            <div v-for="question in state.questions" :key="question.id"
-                class="flex items-start flex-nowrap gap-1 mb-2 bg-neutral-100 p-2 rounded-md">
-                <div class="card px-1 mr-1">
-                    <q-icon name="fa-duotone fa-solid fa-question"></q-icon>
+    <q-page :class="!$isDesktop ? 'px-1.5 py-2' : insuredId ? 'px-2 py-3' : 'px-1.5 py-2 lg:px-5 lg:py-6'">
+        <div class="grid lg:grid-cols-2 gap-4">
+            <div>
+                <q-btn flat class="button-press bg-primary text-white rounded-md" size="sm" :label="state.item.description"
+                    no-caps @click="state.diaglogPoll = true" />
+                <div class="subtitle py-1">Agregar Pregunta</div>
+                <q-input class="w-full border-none" dense outlined v-model="state.question.description"
+                    :label="$t('question')" :rules="[requiredInput]" hide-bottom-space></q-input>
+                <q-btn flat class="button-press bg-primary text-white rounded-md my-2 w-full" size="sm" :label="$t('save')"
+                    no-caps @click="onSubmitQuestion" />
+                <div v-for="question in state.questions" :key="question.id"
+                    class="flex items-start flex-nowrap gap-1 mb-2 bg-neutral-100 p-2 rounded-md">
+                    <div class="card px-1 mr-1">
+                        <q-icon name="fa-duotone fa-solid fa-question"></q-icon>
+                    </div>
+                    <span class="text-xs">{{ question.description }}</span>
+                    <q-btn flat class="button-press bg-primary text-white rounded-md ml-auto" size="sm" :label="$t('edit')"
+                        no-caps @click="state.selectedQuestionId = question.id; state.diaglogQuestion = true;" />
                 </div>
-                <span class="text-xs">{{ question.description }}</span>
-                <q-btn flat class="button-press bg-primary text-white rounded-md ml-auto" size="sm" :label="$t('edit')"
-                    no-caps @click="state.selectedQuestionId = question.id; state.diaglogQuestion = true;" />
             </div>
+            <div v-for="(stat, key) in state.stats" :key="key" class="card mb-2">
+                <ChartPoll :key="`poll-${stat.description}`" :data="stat.answers" :name="`poll-${stat.description}`"
+                    :title="stat.description" :subtitle="``" />
+            </div>
+            <q-dialog class="q-pa-none left-0" no-refocus v-model="state.diaglogQuestion"
+                :position="$isDesktop ? 'right' : 'standard'" full-height maximized
+                :transition-duration="$isDesktop ? 100 : 0">
+                <q-card>
+                    <QuestionWrite @close="state.diaglogQuestion = false" isDrawer :id="state.selectedQuestionId" isEdit
+                        :width="$isDesktop ? '400px' : '100%'" />
+                </q-card>
+            </q-dialog>
+            <q-dialog class="q-pa-none left-0" no-refocus v-model="state.diaglogPoll"
+                :position="$isDesktop ? 'right' : 'standard'" full-height maximized
+                :transition-duration="$isDesktop ? 100 : 0">
+                <q-card>
+                    <PollWrite @close="state.diaglogPoll = false" isDrawer :id="props.id" isEdit
+                        :width="$isDesktop ? '400px' : '100%'" />
+                </q-card>
+            </q-dialog>
         </div>
-        <div v-for="(stat, key) in state.stats" :key="key" class="card mb-2">
-            <ChartPoll :key="`poll-${stat.description}`" :data="stat.answers" :name="`poll-${stat.description}`"
-                :title="stat.description" :subtitle="``" />
-        </div>
-        <q-dialog class="q-pa-none left-0" no-refocus v-model="state.diaglogQuestion"
-            :position="$isDesktop ? 'right' : 'standard'" full-height maximized
-            :transition-duration="$isDesktop ? 100 : 0">
-            <q-card>
-                <QuestionWrite @close="state.diaglogQuestion = false" isDrawer :id="state.selectedQuestionId" isEdit
-                    :width="$isDesktop ? '400px' : '100%'" />
-            </q-card>
-        </q-dialog>
-        <q-dialog class="q-pa-none left-0" no-refocus v-model="state.diaglogPoll"
-            :position="$isDesktop ? 'right' : 'standard'" full-height maximized
-            :transition-duration="$isDesktop ? 100 : 0">
-            <q-card>
-                <PollWrite @close="state.diaglogPoll = false" isDrawer :id="props.id" isEdit
-                    :width="$isDesktop ? '400px' : '100%'" />
-            </q-card>
-        </q-dialog>
-    </div>
+    </q-page>
 </template>
 
 <script setup>
