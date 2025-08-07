@@ -495,9 +495,6 @@ onMounted(() => {
 })
 
 
-watch(() => updateStore.table.t_event, (data) => {
-  getTodayEvents()
-}, { deep: true })
 </script>
 
 <style lang="scss">

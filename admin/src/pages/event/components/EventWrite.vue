@@ -377,61 +377,12 @@
                                 </div>
 
                                 <div class="flex flex-col gap-1">
-                                    <!-- <q-btn flat class="button bg-secondary text-white w-full" no-caps
-                                        @click="state.itineraryDialog = true" label="+ itinerario">
-                                        <q-tooltip class="bg-default text-black text-xs">Listado de
-                                            Itinerarios</q-tooltip>
-                                    </q-btn> -->
-
 
                                     <q-date class="card w-full" ref="itinerary_dates" flat
                                         :model-value="state.item.itinerary_dates" multiple
                                         @navigation="onDatePickeItinerary" years-in-month-view minimal
                                         :events="state.holidaysDates" event-color="orange"
                                         :options="disableDatesItinerary" />
-
-                                    <!-- <div class="flex flex-col text-xs">
-                                        <div class="flex flex-nowrap gap-1 mb-1"
-                                            v-for="(d, index) in state.item.itinerary" :key="d">
-                                            <div
-                                                class="w-full flex flex-start items-center justify-between border card shadow-none px-3 py-1">
-                                                <div class="flex flex-col">
-                                                    <div class="uppercase pr-4 line-clamp-1">{{
-                                                        format(d.attendance_date_format,
-                                                            'EEE dd MMM yyyy') }}, {{ d.attendance_time }} {{
-                                                            d.attendance_time_format }}
-                                                    </div>
-                                                    <div>P: {{ d.provider_description }}</div>
-                                                    <div>M: {{ d.doctor_description }}</div>
-                                                    <div class="bg-stone-100 rounded text-xxs px-2">Procedimientos</div>
-                                                    <div class="flex flex-nowrap gap-1"
-                                                        v-for="(item, index) in d.mprocedure" :key="item.id">
-                                                        <div
-                                                            class="w-full flex flex-col justify-between border card shadow-none px-3 py-1 text-xxs">
-                                                            <div class="text-xs uppercase pr-4 line-clamp-1">{{
-                                                                item.description
-                                                                }}
-                                                            </div>
-                                                            <div class="text-xs uppercase pr-4 line-clamp-1">{{
-                                                                item.code }}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="flex flex-col gap-1">
-                                                <q-btn flat
-                                                    class="button-icon bg-primary text-white text-[10px] h-[40px]"
-                                                    icon="fa-solid fa-pencil"
-                                                    @click="state.selectedItinerary = d.id; state.dialogWriteItinerary = true">
-                                                </q-btn>
-                                                <q-btn flat
-                                                    class="button-icon bg-primary text-white text-[10px] h-[40px]"
-                                                    icon="fa-solid fa-xmark" @click="removeRowItinerary(d)">
-                                                </q-btn>
-                                            </div>
-                                        </div>
-                                    </div> -->
 
                                 </div>
                             </div>
@@ -490,27 +441,28 @@
                                         class="flex justify-center font-bold text-xxs w-[16px] h-[16px]"></q-badge>
                                 </div>
                                 <template v-if="isEdit">
-                                  <q-btn flat class="button-icon h-[40px] bg-secondary text-white"
-                                      @click="state.cancelDialog = true" label="Cancelar coordinación">
-                                      <q-tooltip class="bg-default text-black text-xs">Cancelar
-                                          coordinación</q-tooltip>
-                                  </q-btn>
+                                    <q-btn flat class="button-icon h-[40px] bg-secondary text-white"
+                                        @click="state.cancelDialog = true" label="Cancelar coordinación">
+                                        <q-tooltip class="bg-default text-black text-xs">Cancelar
+                                            coordinación</q-tooltip>
+                                    </q-btn>
                                 </template>
                             </div>
                         </div>
                     </div>
                     <div class="bg-default p-1 rounded-md text-center font-bold text-xs mb-1">Itinerarios</div>
-                    <EventItinerary isEdit :id="state.item.id" @setItems="setItinerary" isDrawer
+                    <EventItinerary isEdit :id="state.item.id" @setItems="setItinerary"
                         @close="state.itineraryDialog = false" hideDetail />
                     <div class="flex flex-col w-full mb-2">
-                      <template v-if="!state.loading">
-                          <CommentTable refKey="t_event" :grid="false" :refId="state.item.id" :comment_state="state.item.event_state"
-                              :comment_state_id="state.item.$event_state_id" />
-                      </template>
+                        <template v-if="!state.loading">
+                            <CommentTable refKey="t_event" :grid="false" :refId="state.item.id"
+                                :comment_state="state.item.event_state" :comment_state_id="state.item.$event_state_id"
+                                @submit="state.item.admin_comments = $event" />
+                        </template>
                     </div>
                     <template v-if="isEdit">
-                      <UploadFileManager :ref_id="state.item.id" table="t_event" file_type="GENERAL" />
-                      <FileManager :refId="state.item.id" refKey="t_event" />
+                        <UploadFileManager :ref_id="state.item.id" table="t_event" file_type="GENERAL" />
+                        <FileManager :refId="state.item.id" refKey="t_event" />
                     </template>
                     <template v-if="!(state.item.blocked && state.item.blocked_by_id !== $me.id)">
                         <template v-if="!(state.item.c_status & 2)">
@@ -638,6 +590,7 @@ const props = defineProps({
 const $emit = defineEmits(['submit', 'close'])
 
 const initialItem = () => ({
+    admin_comments: [],
     pregnant: 0,
     pregnant_data: {},
     interval_clock: null,

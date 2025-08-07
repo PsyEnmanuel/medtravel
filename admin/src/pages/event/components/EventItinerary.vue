@@ -1,5 +1,5 @@
 <template>
-    <div :style="style" class="relative pb-32">
+    <div :style="style" class="relative" :class="isDrawer ? 'pb-32' : 'pb-4'">
         <div v-if="!hideDetail" class="flex flex-nowrap justify-between items-start gap-2 py-2">
             <div v-if="isEdit">
                 <p class="lg:text-2xl text-xl text-info">Editar Itinerario</p>

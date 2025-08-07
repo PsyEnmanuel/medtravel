@@ -735,6 +735,16 @@ router.post("/", async function (req, res, next) {
       });
     }
 
+    for (let i = 0; i < data.admin_comments.length; i++) {
+      const ac = data.admin_comments[i];
+      ac.ref_id = response.id;
+      await _query.insert({
+        user,
+        table: 't_comment',
+        data: ac
+      });
+    }
+
     req.io.emit("update", {
       table,
     });
