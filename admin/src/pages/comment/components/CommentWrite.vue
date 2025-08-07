@@ -6,7 +6,7 @@
                 <p class="text-xs">Los campos requeridos tienen un (*)</p>
             </div>
             <div v-else>
-                <p class="text-2xl text-info">Agregar <b class="font-bold text-brand">Médico</b></p>
+                <p class="text-2xl text-info">Agregar comentario</p>
                 <p>Los campos requeridos tienen un (*)</p>
             </div>
             <q-btn v-if="isDrawer" flat class="button" label="cerrar" @click="$emit('close')"></q-btn>
@@ -14,14 +14,14 @@
         <div class="subtitle mb-2 bg-primary p-0.5 rounded-none"></div>
         <q-form :class="isDrawer ?? 'pb-64'" ref="writeForm" @submit="onSubmit" @reset="onReset">
             <div class="grid grid-cols-1 gap-2">
-                <div class="bg-default p-1 rounded-md text-center font-bold mb-2">Médico</div>
+                <div class="bg-default p-1 rounded-md text-center font-bold mb-2">Administrativo</div>
                 <q-input dense outlined v-model="state.item.text" :label="$t('comment') + '*'" :rules="[requiredInput]"
                     hide-bottom-space type="textarea"></q-input>
-                <q-input readonly dense outlined v-model="state.item.comment_state" :label="$t('comment_state') + '*'"
+                <q-input v-if="props.isEdit" readonly dense outlined v-model="state.item.comment_state" :label="$t('comment_state') + '*'"
                     :rules="[requiredInput]" hide-bottom-space></q-input>
-                <q-input readonly dense outlined v-model="state.item.created_format" :label="$t('created') + '*'"
+                <q-input v-if="props.isEdit" readonly dense outlined v-model="state.item.created_format" :label="$t('created') + '*'"
                     :rules="[requiredInput]" hide-bottom-space></q-input>
-                <q-input readonly dense outlined v-model="state.item.created_by" :label="$t('created_by') + '*'"
+                <q-input v-if="props.isEdit" readonly dense outlined v-model="state.item.created_by" :label="$t('created_by') + '*'"
                     :rules="[requiredInput]" hide-bottom-space></q-input>
             </div>
             <div v-if="isDrawer" class="fixed bottom-0 lg:right-[10px] right-0 py-2 bg-white mt-10" :style="style">
@@ -55,7 +55,7 @@ const $local = inject('$local')
 const $q = useQuasar()
 const writeForm = ref();
 const props = defineProps({ id: Number, isEdit: Boolean, width: String, isDrawer: Boolean })
-const $emit = defineEmits(['close'])
+const $emit = defineEmits(['close', 'submit'])
 const $cats = inject('$cats');
 
 const options = reactive({
@@ -139,17 +139,15 @@ async function onSubmit() {
         if (response) {
             $q.notify({
                 type: 'success',
-                message: 'Médico Editado'
+                message: 'Comentario Editado'
             })
         }
     } else {
-        const response = await $api.post('comment', {
-            ...state.item,
-        });
+        const response = await $emit('submit', state.item.text);
         if (response) {
             $q.notify({
                 type: 'success',
-                message: 'Médico Agregado'
+                message: 'Comentario Agregado'
             })
             onReset()
         }

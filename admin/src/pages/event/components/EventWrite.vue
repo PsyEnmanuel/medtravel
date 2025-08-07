@@ -343,7 +343,6 @@
                             </div>
 
                             <div>
-
                                 <div class="flex flex-col gap-1">
 
                                     <div class="bg-default p-1 rounded-md text-center font-bold text-xs">Proveedor
@@ -504,22 +503,27 @@
                                         class="flex justify-center font-bold text-xxs w-[16px] h-[16px]"></q-badge>
                                 </div>
                                 <template v-if="isEdit">
-                                    <q-btn flat class="button-icon h-[40px] bg-secondary text-white"
-                                        @click="state.cancelDialog = true" label="Cancelar coordinación">
-                                        <q-tooltip class="bg-default text-black text-xs">Cancelar
-                                            coordinación</q-tooltip>
-                                    </q-btn>
+                                  <q-btn flat class="button-icon h-[40px] bg-secondary text-white"
+                                      @click="state.cancelDialog = true" label="Cancelar coordinación">
+                                      <q-tooltip class="bg-default text-black text-xs">Cancelar
+                                          coordinación</q-tooltip>
+                                  </q-btn>
                                 </template>
                             </div>
                         </div>
-
                     </div>
                     <div class="bg-default p-1 rounded-md text-center font-bold text-xs mb-1">Itinerarios</div>
                     <EventItinerary isEdit :id="state.item.id" @setItems="setItinerary" isDrawer
                         @close="state.itineraryDialog = false" hideDetail />
+                    <div class="flex flex-col w-full mb-2">
+                      <template v-if="!state.loading">
+                          <CommentTable refKey="t_event" :grid="false" :refId="state.item.id" :comment_state="state.item.event_state"
+                              :comment_state_id="state.item.$event_state_id" />
+                      </template>
+                    </div>
                     <template v-if="isEdit">
-                        <UploadFileManager :ref_id="state.item.id" table="t_event" file_type="GENERAL" />
-                        <FileManager :refId="state.item.id" refKey="t_event" />
+                      <UploadFileManager :ref_id="state.item.id" table="t_event" file_type="GENERAL" />
+                      <FileManager :refId="state.item.id" refKey="t_event" />
                     </template>
                     <template v-if="!(state.item.blocked && state.item.blocked_by_id !== $me.id)">
                         <template v-if="!(state.item.c_status & 2)">
@@ -616,6 +620,7 @@ const $q = useQuasar()
 const writeForm = ref();
 const mainInput = ref();
 
+import CommentTable from 'src/pages/comment/components/CommentTable.vue';
 import RowStatus from 'src/components/RowStatus.vue';
 import ProviderSelect from 'src/components/select/ProviderSelect.vue';
 import DiagnosisSelect from 'src/components/select/DiagnosisSelect.vue';
