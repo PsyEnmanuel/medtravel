@@ -7,7 +7,7 @@ import validate_json from "../middleware/validate-json.js";
 import { BaseError } from "../utils/errors.js";
 import { isAuthenticated } from "../middleware/auth.js";
 import { _query, _date, _utility, _comunication } from "../helpers/index.js";
-import packageJson from "../../package.json" assert { type: "json" };
+// import packageJson from "../../package.json" assert { type: "json" };
 import { format } from "date-fns";
 const router = express.Router();
 const table = "t_user";
@@ -302,7 +302,7 @@ router.get("/me", async function (req, res, next) {
     user.menu = Array.from(new Set(menu));
     user.roles_format = JSON.parse(user.roles).join(",")
 
-    user.version = packageJson.version;
+    // user.version = packageJson.version;
     res.status(200).send(user);
   } catch (error) {
     next(error);
