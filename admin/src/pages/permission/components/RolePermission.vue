@@ -1,0 +1,73 @@
+<template>
+    <div>
+        <q-table v-model:pagination="state.pagination" flat :rows="state.rows" :columns="state.columns" row-key="name"
+            separator="vertical">
+            <template v-slot:body="props">
+                <q-tr :props="props">
+                    <q-td key="label" :props="props">{{ $t(props.row.label) }}</q-td>
+                    <q-td v-for="row in role.items" :key="row.label" :props="props"><q-checkbox
+                            v-model="props.row[row.label]" @update:model-value="onChange(row, props)" /></q-td>
+                </q-tr>
+            </template>
+        </q-table>
+    </div>
+</template>
+  
+<script setup>
+import { useQuasar } from 'quasar';
+import { inject, onMounted, reactive } from 'vue';
+
+const props = defineProps({ table: Object, role: Object })
+const $api = inject('$api')
+const $q = useQuasar()
+const state = reactive({
+    columns: [],
+    rows: [],
+    pagination: {
+        sortBy: '',
+        descending: false,
+        page: 1,
+        rowsPerPage: 100,
+    },
+})
+
+onMounted(async () => {
+
+    state.columns = props.role.items.reduce((acc, curr) => {
+        acc.push({
+            name: curr.label,
+            label: `${curr.label} (${curr.id})`,
+            field: curr.label,
+            align: 'center'
+        })
+        return acc;
+    }, [{
+        name: 'label',
+        label: 'Tabla',
+        field: 'label',
+        classes: 'w-[100px]',
+        align: 'left'
+    }])
+
+    state.rows = props.table
+})
+
+async function onChange(role, props) {
+    if (props.row[role.label]) {
+        props.row.value = parseInt(props.row.value) + parseInt(role.id)
+    } else {
+        props.row.value = parseInt(props.row.value) - parseInt(role.id)
+    }
+    $api.put('permission/roles-permission', [{
+        c_group: props.row.value,
+        table: props.row.label
+    }]);
+
+    $q.notify({
+        type: 'success',
+        message: 'Permiso de Role actualizado'
+    })
+}
+
+</script>
+  

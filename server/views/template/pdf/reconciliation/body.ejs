@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title></title>
+    <style type="text/css" rel="stylesheet" media="all">
+      * {
+        box-sizing: border-box;
+        font-family: "Arial", sans-serif;
+      }
+
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        position: relative;
+        padding: 20px 5px 0;
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      td,
+      th {
+        border: 1px solid #ddd;
+        padding: 2px;
+        font-size: 9px;
+        vertical-align: top;
+      }
+
+      th {
+        text-align: left;
+      }
+
+      .border-none {
+        border: none;
+      }
+
+      .numeric {
+        text-align: right;
+      }
+
+      .red {
+        color: #ff6666;
+      }
+
+      .green {
+        color: #53c666;
+      }
+
+      .bold-500 {
+        font-weight: 500;
+      }
+
+      .bold {
+        font-weight: 600;
+      }
+
+      .bg-due {
+        background-color: #f5f4f3;
+      }
+
+      .flex {
+        display: flex;
+      }
+
+      .flex-between {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .flex-column {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .logo {
+        height: auto;
+        width: 100px;
+        object-fit: contain;
+        display: block;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="body">
+      <div class="header">
+        <div class="flex-between">
+          <img class="logo" src="<%= data.item.images.logoText %>" />
+          <div
+            style="
+              font-size: 14px;
+              font-weight: bold;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+            ">
+            <table>
+              <thead>
+                <tr style="background: #001c30; color: white">
+                  <td>CONCILIACIÓN</td>
+                </tr>
+                <tr style="background: #f3f1f1">
+                  <td>#<%= data.item.year %>-<%=data.item.code%></td>
+                </tr>
+              </thead>
+            </table>
+          </div>
+        </div>
+
+        <div class="flex-between">
+          <div class="flex-column">
+            <b><%= account.description %></b>
+            <span><%= account.ident_no %></span>
+            <span><%= account.phone %></span>
+            <span><%= account.email %></span>
+          </div>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr style="background: #f3f1f1">
+            <td><%= data.item.insured_description %></td>
+          </tr>
+        </thead>
+      </table>
+      <table>
+        <thead>
+          <tr style="background: #001c30; color: white">
+            <th style="width: 60px">FECHA</th>
+            <th style="width: 120px">PROVEEDOR</th>
+            <th style="width: 150px">CONCEPTO</th>
+            <th style="width: 70px">MONTO FACTURADO</th>
+            <th style="width: 70px">DESCUENTO DE AJUSTE</th>
+            <th style="width: 70px">MONTO A PROCESAR</th>
+            <th style="width: 70px">DEDUCIBLE / COPAGO</th>
+            <th style="width: 70px">CUBIERTO</th>
+            <th style="width: 70px">PAGO ASEGURADORA</th>
+            <th style="width: 70px">RESP. ASEGURADORA</th>
+            <th style="width: 100px">AUTORIZACIÓN</th>
+            <th style="width: 50px">NOTA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% data.items.forEach(function(row, index) { %>
+          <tr>
+            <td><%= row.book_date_format %></td>
+            <td><%= row.provider_description %></td>
+            <td><%= row.item_description %></td>
+            <td align="right"><%= row.billed_amount_format %></td>
+            <td align="right"><%= row.discount_format %></td>
+            <td align="right"><%= row.coverage_format %></td>
+            <td align="right"><%= row.deductible_format %></td>
+            <td align="right"><%= row.covered_format %></td>
+            <td align="right"><%= row.insurance_payment_format %></td>
+            <td align="right">
+              <%= row.insurance_responsability_format %>
+            </td>
+            <td><%= row.insurance_claim %></td>
+            <td><%= row.note %></td>
+          </tr>
+          <% }) %>
+          <% data.payments.forEach(function(row, index) { %>
+          <tr style="background-color: #f3f1f1">
+            <td><%= row.book_date_format %></td>
+            <td><%= row.description %></td>
+            <td><%= row.note %></td>
+            <td align="right"></td>
+            <td align="right"></td>
+            <td align="right"></td>
+            <td align="right"></td>
+            <td align="right"></td>
+            <td align="right"><%= row.insurance_payment_format %></td>
+            <td align="right">
+              <%= row.insurance_responsability_format %>
+            </td>
+            <td></td>
+            <td></td>
+          </tr>
+          <% }) %>
+          <tr style="background-color: #e1dfdf">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td align="right"><%= data.item.billed_amount_total_format %></td>
+            <td align="right"><%= data.item.discount_total_format %></td>
+            <td align="right"><%= data.item.coverage_total_format %></td>
+            <td align="right"><%= data.item.deductible_total_format %></td>
+            <td align="right"><%= data.item.covered_total_format %></td>
+            <td align="right">
+              <%= data.item.insurance_payment_total_format %>
+            </td>
+            <td align="right">
+              <%= data.item.insurance_responsability_total_format %>
+            </td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display: flex">
+      <table>
+        <thead>
+          <tr style="background: #001c30; color: white">
+            <th style="width: 60px">NOTA:</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              1.- MONTO APLICADO A DEDUCIBLE INTERNACIONAL AÑO CALENDARIO 2025
+              (<%= data.item.deductible %>).
+            </td>
+          </tr>
+          <tr>
+            <td>2.- CUBIERTO POR EL SEGURO (<%= data.item.insurance_description %>)</td>
+          </tr>
+          <tr>
+            <td>
+              3.- PAGO REALIZADO POR ASEGURADA. (<%= data.item.payment %>)
+            </td>
+          </tr>
+          <tr>
+            <td>4.- BALANCE PENDIENTE PROVEEDOR. (<%= data.item.balance %>)</td>
+          </tr>
+        </tbody>
+      </table>
+      <table>
+        <thead>
+          <tr style="background: #001c30; color: white">
+            <th style="width: 60px">ICD10 (DIAGNOSTICO)</th>
+          </tr>
+        </thead>
+        <% if(data.item.diagnosis) { %>
+          <tbody>
+            <% data.item.diagnosis.forEach(function(row, index) { %>
+            <tr>
+              <td><%= row.code %>, <%= row.description %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        <% } else { %>
+          <div></div>
+        <% } %>
+      </table>
+    </div>
+  </body>
+</html>

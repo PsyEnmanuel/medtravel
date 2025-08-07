@@ -1,0 +1,72 @@
+<style>
+  * {
+    font-family: "Arial", serif;
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body,
+  html {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    font-size: 14px;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  span,
+  p {
+    margin: 0;
+    padding: 0;
+    line-height: 1.3;
+  }
+  .header {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0 60px;
+  }
+  .header-title {
+    font-size: 24px;
+    text-align: center;
+    font-weight: bold;
+    padding: 20px 0;
+    display: block;
+  }
+  .header-body {
+    padding: 10px 0;
+  }
+  .grid {
+    display: grid;
+  }
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+</style>
+<body>
+  <div class="header">
+    <span class="header-title">Historia Clínica</span>
+    <div class="header-body grid grid-cols-2">
+      <div style="display: flex; flex-direction: column">
+        <span><b>Nombre:</b> <%= data.patient_description %></span>
+        <span
+          ><b>FDN:</b> <%= data.birthdate_format %> <b>Edad:</b> <%= data.age
+          %></span
+        >
+        <span><b>Sexo:</b> <%= data.sex %></span>
+        <span><b>Cédula:</b> <%= data.ident_no %></span>
+      </div>
+      <div style="display: flex; flex-direction: column">
+        <span><b>Médico:</b> <%= data.doctor_description %></span>
+        <span><b>Exequátur:</b> <%= data.exequatur %></span>
+        <span><b>Fecha:</b> <%= data.history_date_format %></span>
+      </div>
+    </div>
+  </div>
+</body>

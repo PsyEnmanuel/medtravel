@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Historia Clínica</title>
+    <style>
+      * {
+        font-family: "Arial", serif;
+        box-sizing: border-box;
+        line-height: 1.2;
+        -webkit-print-color-adjust: exact;
+      }
+
+      body,
+      html {
+        margin: 0;
+        position: relative;
+        padding: 0 30px;
+        font-size: 14px;
+      }
+
+      h1,
+      h2,
+      span,
+      p {
+        margin: 0;
+        padding: 0;
+        line-height: 1.3;
+      }
+
+      tr,
+      td,
+      th,
+      p {
+        page-break-inside: avoid;
+      }
+
+      p {
+        white-space: pre-wrap;
+      }
+
+      .mb-10 {
+        margin-bottom: 10px;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        width: 50%;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+
+    <% if(data.background || data.family_background || data.surgical_background) { %>
+      <div style="break-inside: avoid;">
+        <h3 style="margin-bottom: 4px">Historia Médica Pasada</h3>
+        <b style="margin-bottom: 4px; display: block">Antecedentes:</b>
+        <div style="display: flex; flex-direction: column;">
+          <% if(data.background) { %>
+            <p style="margin-bottom: 5px"><b>Historia Clínica Anterior:</b> <%=data.background%></p>
+          <% } %>
+          <% if(data.family_background) { %>
+            <p style="margin-bottom: 5px"><b>Historia Familiar Clínica:</b> <%=data.family_background%></p>
+            <% } %>
+          <% if(data.surgical_background) { %>
+            <p style="margin-bottom: 5px"><b>Antecedentes quirúrgicos:</b> <%=data.surgical_background%></p>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+
+    <div>
+      <h3 style="margin: 15px 0">Historia Clínica Actual</h3>
+      <% if(data.reason_of_consultation) { %>
+      <div class="mb-10">
+        <b>Motivo de Consulta</b>
+        <p><%= data.reason_of_consultation %></p>
+      </div>
+      <% } %> 
+      <% if(data.plan) { %>
+      <div class="mb-10">
+        <b>Plan</b>
+        <p><%= data.plan %></p>
+      </div>
+      <% } %>
+      <% if(data.result_text) { %>
+        <div class="mb-10">
+          <b>Resultados</b>
+          <p><%= data.result_text %></p>
+        </div>
+        <% } %> 
+    </div>
+
+    <% if(data.medicines) { %>
+      <div style="break-inside: avoid;">
+        <h3 style="margin: 15px 0">Medicamentos</h3>
+        <pre><%= data.medicines %></pre>
+      </div>
+    <% } %>
+
+    <% if(data.has_toxic_habits) { %>
+      <div style="break-inside: avoid;">
+        <h3 style="margin-bottom: 4px">Hábitos Tóxicos</h3>
+        <div style="display: flex; flex-direction: column;">
+            <% if(data.cafe) { %>
+              <span style="margin-bottom: 5px"><b>Café:</b> <%=data.cafe_text%></span>
+            <% } %>
+            <% if(data.te) { %>
+              <span style="margin-bottom: 5px"><b>Té:</b> <%=data.te_text%></span>
+            <% } %>
+            <% if(data.tabaco) { %>
+              <span style="margin-bottom: 5px"><b>Tabaco:</b> <%=data.tabaco_text%></span>
+            <% } %>
+            <% if(data.alcohol) { %>
+              <span style="margin-bottom: 5px"><b>Alcohol:</b> <%=data.alcohol_text%></span>
+            <% } %>
+            <% if(data.otras_sustancias) { %>
+              <span style="margin-bottom: 5px"><b>Otras Sustancias:</b> <%=data.otras_sustancias_text%></span>
+            <% } %>
+          </div>
+        </div>
+      <% } %>
+
+    <% if(data.has_physical_exam) { %>
+      <div style="break-inside: avoid;">
+        <h3 style="margin: 15px 0">Examen Físico</h3>
+        <%- data.physical_exam %>
+      </div>
+    <% } %>
+
+    <% if(data.has_vital_signal) { %>
+      <div style="break-inside: avoid;">
+        <h3 style="margin: 15px 0">Exploración Complementaria</h3>
+        <b>Signos Vitales</b>
+        <ul>
+          <li><b>Blood pressure: </b>
+            <%= data.blood_pressure %> mmHg
+          </li>
+          <li><b>Heart rate: </b>
+            <%= data.pulse %> lpm
+          </li>
+          <li><b>Breathing frequency: </b>
+            <%= data.breathing %> rpm
+          </li>
+          <li><b>Oxygen saturation: </b>
+            <%= data.oxygen_saturation %>%
+          </li>
+          <li><b>Temperature: </b>
+            <%= data.temperature_format %>
+          </li>
+        </ul>
+      </div>
+    <% } %>
+
+  <div style="break-inside: avoid;">
+    <%if (data.diagnosis_history && data.diagnosis_history.length) { %>
+      <div>
+        <b>Diagnóstico</b>
+        <% data.diagnosis_history.forEach(function(row, index){ %>
+        <br>
+        <span>
+          <%=index+1%>.&nbsp;<%=row%>
+        </span>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+
+  <div style="break-inside: avoid;">
+    <%if (data.mprocedure && data.mprocedure.length) { %>
+    <div>
+      <br>
+      <b>Procedimientos</b>
+      <% data.mprocedure.forEach(function(row, index){ %>
+      <br>
+      <%= index + 1 %>: <b>
+        <%=row.description%>
+      </b>
+      <% }); %>
+    </div>
+    <% } %>
+    <br>
+  <div>
+
+  </body>
+</html>

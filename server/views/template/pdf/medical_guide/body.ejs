@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title></title>
+    <style type="text/css" rel="stylesheet" media="all">
+      * {
+        box-sizing: border-box;
+        font-family: "Open Sans", sans-serif;
+      }
+
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        position: relative;
+        color: #1C355F;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 64px;
+      }
+      h2 {
+        font-size: 48px;
+        margin-top: -48px;
+        background-color: #1C355F;
+        padding: 12px 24px;
+        color: white
+      }
+      h3 {
+        font-size: 32px;
+      }
+
+      ul {
+        margin-left: 16px;
+        padding-left: 16px;
+      }
+
+      .contenido li {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+      
+      td,
+      th {
+        border: 1px solid #ddd;
+        padding: 2px;
+        font-size: 16px;
+        vertical-align: top;
+        text-transform: uppercase;
+      }
+
+      th {
+        text-align: center;
+        padding: 8px 4px;
+        background-color: #1C355F;
+      }
+
+      .itinerary td {
+        padding: 8px 4px;
+        text-align: center;
+        text-transform: uppercase;
+        color: black;
+      }
+      .itinerary tfoot td {
+        padding: 30px 4px;
+        background-color: #F2F2F2;
+      }
+
+      .notas {
+        padding: 0 20px;
+      }
+      .notas li {
+        color: #7F7F7F;
+        font-style: italic;
+
+      }
+
+      .border-none {
+        border: none;
+      }
+
+      .newpage,
+      tr,
+      td,
+      th,
+      p {
+        page-break-inside: avoid;
+      }
+
+      .font-light {
+        font-weight: 300;
+        font-size: 14px;
+        color: #7F7F7F;
+      }
+
+      .text-gray {
+        color: #7F7F7F;
+      }
+
+      .newpage {
+        position: relative; 
+        width: 100%; 
+        height: 100vh;
+      }
+
+      .background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-position: left;
+        background-size: cover;
+        background-repeat: no-repeat;
+      }
+
+      .background-provider {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 400px;
+        background-position: top;
+        background-size: cover;
+        background-repeat: no-repeat;
+      }
+
+      .cardnet {
+        height: 250px;
+        max-width: 500px;
+        object-fit: contain;
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      .provider {
+        height: auto;
+        width: 500px;
+        object-fit: contain;
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      .presertification {
+
+      }
+
+      .doctor {
+        background-color: #1C355F;
+        display: flex;
+        padding: 8px;
+        margin-top: 200px;
+        width: 100%;
+        color: white;
+      }
+
+      .doctor img {
+        height: auto;
+        width: 300px;
+        object-fit: contain;
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      .bio-doctor {
+        white-space: pre-wrap;
+        padding: 0 20px;
+      }
+
+      .hospital-detail {
+        white-space: pre-wrap;
+        padding: 0 20px;
+      }
+
+      .grid-2-cols {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2 equal columns */
+        gap: 3rem; /* optional space between columns */
+      }
+
+      .provider-file {
+        width: 100%;
+        object-fit: cover;
+      }
+    </style>
+  </head>
+</style>
+  <body>
+    <div class="body">
+      <div class="newpage">
+        <div
+          class="background"
+          style="
+            background-image: url(<%=data.images.guia1%>);
+            z-index: -1;
+          "></div>
+      </div>
+      <div class="newpage" style="display: flex; align-items: center; justify-content: center;">
+        <div
+          class="background"
+          style="
+            background-image: url(<%=data.images.guia2%>);
+            z-index: -1;
+          ">
+          </div>
+          <div>
+              <% data._files.cardnet.forEach(function(row, index) { %>
+                <img class="cardnet" src="<%= row %>" />
+              <% }) %>
+          </div>
+      </div>
+      <div class="newpage" style="display: flex; align-items: center; justify-content: center;">
+        <div
+          class="background"
+          style="
+            background-image: url(<%=data.images.guia3%>);
+            z-index: -1;
+          ">
+        </div>
+        <div>
+          <img class="provider" src="<%= data._files.provider.url %>" />
+        </div>
+      </div>
+
+      <div class="newpage" style="display: flex; align-items: center; justify-content: center;">
+        <div
+          class="background"
+          style="
+            background-image: url(<%=data.images.guia4%>);
+            z-index: -1;
+          ">
+        </div>
+        <div class="contenido">
+          <h1>CONTENIDO</h1>
+          <ul>
+            <li>Pre-certificación</li>
+            <li>Citas Médicas</li>
+            <li>Sobre el Doctor</li>
+            <li>Sobre el Hospital</li>
+            <!-- <li>Sobre la Ciudad</li>
+            <li>Estadía y Hospitales</li>
+            <li>Atracciones</li> -->
+            <li>Otras Informaciones</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="newpage" style="display: flex; align-items: center; justify-content: center;">
+        <div
+          class="background"
+          style="
+            background-image: url(<%=data.images.guia4%>);
+            z-index: -1;
+          ">
+        </div>
+        <div>
+          <h1> PRE-CERTIFICACIÓN</h1>
+        </div>
+      </div>
+      
+      <% data._files.presertification.forEach(function(row, index) { %>
+        <div class="newpage" style="display: flex; align-items: center; justify-content: center;">
+          <div
+          class="background"
+          style="
+              background-image: url(<%=row%>);
+              z-index: -1;
+            ">
+          </div>
+        </div>
+      <% }) %>
+  
+        <div class="newpage" style="display: flex; align-items: center; justify-content: center;">
+          <div
+            class="background"
+            style="
+              background-image: url(<%=data.images.guia4%>);
+              z-index: -1;
+            ">
+          </div>
+          <div>
+            <h1>CITAS MÉDICAS</h1>
+          </div>
+        </div>
+        <% if(data.itineraries) { %>
+        <div class="newpage" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+          <div
+            class="background"
+            style="
+              background-image: url(<%=data.images.guia4%>);
+              z-index: -1;
+            ">
+          </div>
+            <table class="itinerary">
+              <thead>
+                <tr style="background: #001c30; color: white">
+                  <th style="width: 60px">FECHA</th>
+                  <th style="width: 120px">HORA</th>
+                  <th style="width: 150px">LUGAR</th>
+                  <th style="width: 70px">DOCTOR</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% data.itineraries.forEach(function(row, index) { %>
+                <tr>
+                  <td>
+                    <div><%= row.attendance_day %></div>
+                    <b><%= row.attendance_date %></b>
+                  </td>
+                  <td align="center">
+                    <b><%= row.attendance_time %> <%= row.attendance_time_format %></b>
+                    <div class="font-light">Tipo de servicios</div>
+                  </td>
+                  <td>
+                    <b><%= row.provider_description %></b>
+                    <div class="font-light"><%= row.provider_address %></div>
+                    <div class="font-light"><%= row.provider_city %></div>
+                    <div class="font-light"><%= row.provider_country %></div>
+                  </td>
+                  <td>
+                    <b><%= row.doctor_description %></b>
+                    <div><%= row.speciality %></div>
+                  </td>
+                </tr>
+                <% }) %>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          <div class="notas">
+            <h3>NOTAS:</h3>
+            <ul>
+              <li>
+                Por favor llegar al Hospital al 30 minutos antes de la hora de su cita. A su llegada, favor dirigirse directamente a la Oficina Internacional. Recuerde traer con usted identificación (pasaporte y/o licencia de conducir junto a su carnet de seguro médico internacional). 
+              </li>
+              <li>
+                El día de su cirugía, favor llegar al Hospital a las 5:30 a.m. para iniciar su preparación prequirúrgica. 
+              </li>
+              <li>
+                Las consultas medicas con proveedores afiliados al a red están sujetas a un copago de US$25.00.
+              </li>
+              <li>
+                Los Dres. Igor Palacios, MD, Allan Pineda, MD y John Siliski, MD, forman parte de los proveedores  afiliados a la red de Humano (United Healthcare).
+              </li>
+              <li>
+                De acuerdo al plan bajo el cual está amparado, su deducible internacional anual es de  US$2,500.00, el cual  no sido copado.
+              </li>
+              <li>
+                Luego de copar su deducible, su cobertura es al 100% según las condiciones de su contrato. 
+              </li>
+              <li>
+                La compra de medicamentos se maneja mediante reembolso.
+              </li>
+              <li>
+                En caso de incurrir en cualquier gasto, favor de siempre pedir: Factura detallada de los servicios, que 
+                contenga procedimientos y diagnósticos con sus códigos. Asimismo Recibo de pago.
+              </li>
+            </ul>
+          </div>
+        </div>
+        <% } %>
+        <div class="newpage" style="display: flex; flex-direction: column; align-items: center; padding: 0 40px;">
+          <div
+            class="background"
+            style="
+              background-image: url(<%=data.images.guia3%>);
+              z-index: -1;
+            ">
+          </div>
+          <div style="margin-top: 200px">
+            <h1>CONTACTOS</h1>
+          </div>
+          <div class="grid-2-cols" style="box-shadow:-4px 0 6px -4px rgba(200, 200, 200, 0.7), 4px 0 6px -4px rgba(200, 200, 200, 0.7); padding: 15px">
+            <div>
+              <b>Laura Suárez</b>
+              <div>Client liaison, International Patient Center International and Specialized Services Massachusetts General Hospital | Mass Eye and Ear</div>
+              <div>55 Fruit St, Blake building, Site 180 Boston, MA 02114</div>
+              <div>T 617-726-1442 | F 617-726-2543</div>
+              <b style="text-decoration: underline;">Email: LSUAREZ5@mgh.harvard.edu</b>
+            </div>
+            <div>
+              <b>Laura Suárez</b>
+              <div>Client liaison, International Patient Center International and Specialized Services Massachusetts General Hospital | Mass Eye and Ear</div>
+              <div>55 Fruit St, Blake building, Site 180 Boston, MA 02114</div>
+              <div>T 617-726-1442 | F 617-726-2543</div>
+              <b style="text-decoration: underline;">Email: LSUAREZ5@mgh.harvard.edu</b>
+            </div>
+          </div>
+        </div>
+
+        <div class="newpage" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+          <div
+            class="background"
+            style="
+              background-image: url(<%=data.images.guia4%>);
+              z-index: -1;
+            ">
+          </div>
+          <div>
+            <h1>SOBRE EL DOCTOR</h1>
+          </div>
+        </div>
+        
+        <% data._files.doctor.forEach(function(row, index) { %>
+          <div class="newpage" style="display: flex; flex-direction: column; align-items: start; justify-content: start;">
+            <div
+            class="background"
+            style="
+                background-image: url(<%=data.images.guia3%>);
+                z-index: -1;
+              ">
+            </div>
+            <div class="doctor">
+              <img src="<%= row.profile %>" />
+              <div style="display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 20px; font-size: 32px; line-height: 1.3rem">
+                <span style="font-weight: bold; padding-bottom: 10px;"><%=row.description %></span>
+                <% if(row.speciality && row.speciality.length) { %>
+                  <% row.speciality.forEach(function(_row) { %>
+                    <span style="font-weight: 300;"><%=_row.description %></span>
+                  <% }) %>
+                <% } %>
+              </div>
+            </div>
+            <div class="bio-doctor">
+              <%=row.bio %>
+            </div>
+          </div>
+        <% }) %>
+
+        <% if(data.provider) {%>
+        <div class="newpage" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+          <div
+            class="background"
+            style="
+              background-image: url(<%=data.images.guia4%>);
+              z-index: -1;
+            ">
+          </div>
+          <div>
+            <h1>SOBRE EL HOSPITAL</h1>
+          </div>
+        </div>
+
+        <div class="newpage" style="display: flex; flex-direction: column; align-items: center; padding: 0 40px;">
+          <div
+            class="background-provider"
+            style="
+              background-image: url(<%=data.provider.file%>);
+              z-index: -1;
+            ">
+          </div>
+          <div style="margin-top: 400px">
+            <h2><%= data.provider.description %></h2>
+          </div>
+          <div class="hospital-detail">
+              <%=data.provider.detail %>
+          </div>
+        </div>
+        <% } %>
+
+        <% if(data.provider) {%>
+        <div class="newpage" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+          <div
+            class="background"
+            style="
+              background-image: url(<%=data.images.guia3%>);
+              z-index: -1;
+            ">
+          </div>
+          <div>
+              <div style="box-shadow:-4px 0 6px -4px rgba(200, 200, 200, 0.7), 4px 0 6px -4px rgba(200, 200, 200, 0.7); padding: 15px">
+                <img class="provider" src="<%= data.provider.mapa %>" />
+            </div>
+          </div>
+          <div style="text-align: center; display: flex; flex-direction: column; gap: 4">
+            <h1 style="margin-bottom: 0;">¿CÓMO LLEGAR?</h1>
+            <p style="background: #1C355F; padding: 24px 12px; display: flex; justify-content: center; align-items: center; color: white; width: 600px; font-size: 18px;">UBICACIÓN: <%= data.provider.place %></p>
+            <p style="font-size: 18px; font-style: italic;"><%=data.provider.address %></p>
+
+          </div>
+        </div>
+        <% } %>
+
+        <div class="newpage" style="display: flex; align-items: center; justify-content: center;">
+          <div
+            class="background"
+            style="
+              background-image: url(<%=data.images.guia19%>);
+              z-index: -1;
+            ">
+          </div>
+        </div>
+
+
+
+    </div>
+  </body>
+</html>

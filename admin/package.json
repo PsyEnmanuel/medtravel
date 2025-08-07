@@ -1,0 +1,58 @@
+{
+  "name": "saonas",
+  "version": "0.0.1",
+  "description": "MedTravel",
+  "productName": "MedTravel",
+  "author": "Enmanuel <enmanuelpsy@gmail.com>",
+  "private": true,
+  "scripts": {
+    "lint": "eslint --ext .js,.vue ./",
+    "format": "prettier --write \"**/*.{js,vue,scss,html,md,json}\" --ignore-path .gitignore",
+    "test": "echo \"No test specified\" && exit 0",
+    "start": "quasar dev",
+    "build": "quasar build"
+  },
+  "dependencies": {
+    "@quasar/extras": "^1.16.4",
+    "axios": "^1.2.1",
+    "date-fns": "^3.6.0",
+    "echarts": "^5.5.0",
+    "js-cookie": "^3.0.5",
+    "maska": "^2.1.10",
+    "nprogress": "^0.2.0",
+    "pinia": "^2.0.11",
+    "print-js": "^1.6.0",
+    "qs": "^6.12.1",
+    "quasar": "^2.18.1",
+    "socket.io-client": "^4.7.5",
+    "vue": "^3.4.18",
+    "vue-cal": "^4.8.1",
+    "vue-i18n": "^9.0.0",
+    "vue-router": "^4.0.12",
+    "vue3-pdfjs": "^0.1.6",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@electron/packager": "^18.3.4",
+    "@intlify/vite-plugin-vue-i18n": "^3.3.1",
+    "@quasar/app-vite": "^1.9.0",
+    "autoprefixer": "^10.4.19",
+    "electron": "^32.0.1",
+    "electron-builder": "^24.13.3",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "postcss": "^8.4.38",
+    "prettier": "^2.5.1",
+    "tailwindcss": "^3.4.4",
+    "vite-plugin-checker": "^0.6.4"
+  },
+  "engines": {
+    "node": "^20 || ^18 || ^16",
+    "npm": ">= 6.13.4",
+    "yarn": ">= 1.21.1"
+  },
+  "volta": {
+    "node": "20.15.0"
+  }
+}

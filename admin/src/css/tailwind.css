@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  ul,
+  ol {
+    list-style: revert;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p {
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
+  }
+
+  h1 {
+    font-size: 1.2rem;
+    padding: 0;
+    margin: 0;
+  }
+  h2 {
+    font-size: 1rem;
+    padding: 0;
+    margin: 0;
+  }
+}
+
+@layer components {
+  .popup-edit {
+    @apply cursor-pointer hover:text-gray-500 duration-75;
+  }
+
+  .active-nav-link .q-item__section i {
+    @apply #d61e5c;
+  }
+
+  .active-nav-link .q-item__label {
+    @apply #d61e5c;
+  }
+
+  .button {
+    @apply py-1.5 px-5 text-xs bg-default font-semibold rounded uppercase focus:outline-none tracking-wider transition duration-150 hover:brightness-95 border border-solid border-borderDefault leading-none;
+  }
+
+  .button-icon {
+    @apply py-1.5 px-1.5 text-xs bg-default font-semibold rounded uppercase focus:outline-none tracking-wider leading-none;
+  }
+
+  .button-active {
+    @apply bg-[#d61e5c];
+  }
+
+  .button-press {
+    @apply pt-1.5 pb-2 px-6 text-xs font-bold uppercase focus:outline-none transition duration-150 shadow-press active:shadow-none active:pb-1.5 active:scale-[0.99] active:mb-0.5 bg-default hover:shadow-gray-700 text-font leading-none;
+  }
+
+  .button-tab {
+    @apply pt-1.5 pb-2 px-3 text-sm text-left rounded-md focus:outline-none transition duration-150 bg-white text-font border border-solid border-borderDefault w-full leading-none;
+  }
+
+  .button-icon-text {
+    @apply pt-1.5 py-1 px-3 text-sm rounded focus:outline-none bg-default text-font transition duration-150 hover:brightness-95  border border-solid border-borderDefault;
+  }
+
+  .card {
+    @apply bg-white rounded-md shadow border border-solid border-borderDefault;
+  }
+  .border-standard {
+    @apply border border-solid border-borderDefault;
+  }
+  .card-shadow {
+    @apply rounded bg-white hover:shadow-primary transition duration-200 border border-solid border-borderDefault;
+  }
+
+  .subtitle {
+    @apply rounded font-medium text-sm p-1 bg-gradient-to-r from-default to-default text-font;
+  }
+
+  .title {
+    @apply relative font-bold pb-1.5 mb-1 text-lg before:absolute before:content-[''] before:bottom-0 before:left-0 before:w-[40px] before:h-[3px] before:bg-blue-200;
+  }
+  
+}

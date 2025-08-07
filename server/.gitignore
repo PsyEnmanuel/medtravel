@@ -1,0 +1,7 @@
+privated/uploads/*
+public/uploads/*
+node_modules
+logs/*
+config
+.env.production
+.env*

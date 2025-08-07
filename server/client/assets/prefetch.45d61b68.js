@@ -1,0 +1,1 @@
+import{b as o,p as r,a as e,r as s}from"./index.1c9c82ce.js";import{api as c}from"./axios.9e4c508e.js";import{l as i}from"./local.4a6bbf12.js";var m=o(async({app:a})=>{a.provide("$path",r),a.config.globalProperties.$path=r;const t=await c.get("category/children",{params:{data:e}});a.provide("$cats",s(t)),i.set("cats",t)});export{m as default};

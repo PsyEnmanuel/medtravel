@@ -1,0 +1,189 @@
+// app global css in SCSS form
+
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap");
+
+@font-face {
+  font-family: "Figtree", sans-serif;
+  src: url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap");
+  font-weight: normal;
+  font-style: normal;
+}
+
+* {
+  // font-size: 14px
+  word-break: auto-phrase;
+  box-sizing: border-box !important;
+}
+
+html {
+  text-transform: uppercase !important;
+}
+
+ul,
+ol {
+  padding-left: 40px !important;
+  margin-top: 1em !important;
+  margin-bottom: 1em !important;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #d3dce6;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #99a9bf;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+#nprogress {
+  position: relative;
+  z-index: 9999999;
+}
+
+.q-tab-panels {
+  .q-page {
+    padding: 0 !important;
+  }
+}
+
+.shadow-bottom {
+  padding-bottom: 4px;
+  box-shadow: 0px 2px 0px #b4b2af;
+}
+
+.body--light {
+  color: #484848;
+}
+
+.text-brand {
+  color: #484848;
+}
+
+.bg-brand {
+  background: #f4f7fa !important;
+}
+
+.q-item__section--avatar {
+  min-width: initial !important;
+}
+
+.q-input,
+.q-select,
+.q-textarea {
+  .q-field__control {
+    background-color: #fff !important;
+    padding-right: 6px;
+  }
+}
+
+.q-input,
+.q-textarea {
+  .q-field__control {
+    background-color: #fff !important;
+    padding-right: 6px;
+  }
+}
+
+.q-select {
+  font-size: 11px;
+  .q-field__control {
+    padding-right: 6px;
+  }
+}
+
+.q-field--outlined .q-field__control {
+  border-radius: 8px !important;
+}
+
+.q-field--outlined .q-field__control:before {
+  border: 1px solid #dfdfdf;
+}
+
+.q-table--grid .q-table__top {
+  padding: 0px;
+}
+
+.q-item__label--caption {
+  color: rgba(0, 0, 0, 0.74);
+}
+
+.q-btn-group {
+  border: 1px solid #a9a7b1;
+  border-radius: 8px;
+}
+
+.q-dialog__title {
+  line-height: 1.1;
+}
+
+.q-field__label {
+  color: #484848;
+  font-size: 11px !important;
+}
+
+.q-card {
+  overflow-y: scroll !important;
+}
+
+.q-radio {
+  width: 100%;
+}
+
+.q-radio__label {
+  // padding-top: 5px !important;
+  display: flex;
+  width: 100%;
+}
+
+.vuecal-small.vuecal {
+  .vuecal__cell--today {
+    background-color: #e5e5e5 !important;
+  }
+
+  .vuecal__cell--selected {
+    background-color: #0c4a6e !important;
+    color: white;
+  }
+}
+
+.q-btn__content {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+}
+
+.q-field--dense .q-field__after,
+.q-field--dense .q-field__append {
+  padding-left: 2px;
+}
+
+.q-icon {
+  width: 0.75em;
+  height: 0.75em;
+}
+
+.q-field--standard .q-field__control:before {
+  border-bottom: none;
+  transition: none;
+}
+
+.q-tooltip {
+  text-transform: uppercase;
+}
+
+@media screen and (max-width: 768px) {
+  .q-icon.on-left {
+    margin: 0 !important;
+  }
+}
