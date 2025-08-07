@@ -9,6 +9,7 @@
     "start:server": "npm run start --prefix ./server",
     "build": "npm run build --prefix ./admin && npm run build --prefix ./server && git add . && git commit -m deploy && git push origin master",
     "deploy": "git add . && git commit -m deploy && git push origin master",
+    "production": "git add . && git commit -m deploy && git push production master",
     "build:admin": "npm run build --prefix ./admin",
     "build:server": "npm run build --prefix ./server"
   },
