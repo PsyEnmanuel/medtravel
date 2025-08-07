@@ -44,7 +44,7 @@
                   <div class="text-xs">{{ row.description }}</div>
                   <div class="line-clamp-2 text-xxs">{{ row.detail }}</div>
                   <q-badge v-if="row.task_section" class="bg-default text-black text-xxs">{{ row.task_section
-                    }}</q-badge>
+                  }}</q-badge>
                 </div>
                 <hr class="my-1">
               </div>
@@ -62,26 +62,33 @@
         <q-img v-else src="~assets/logoText.png" spinner-color="white" :width="180" />
 
         <div class="overflow-auto flex-1">
-          <div v-for="(row, i) in state.navLinks" :key="i" class="border-b border-default">
+          <div v-for="(row, i) in state.navLinks" :key="i" class="border-b border-default text-xs">
             <div v-if="row.children?.length">
-              <div class="px-2 py-2 flex justify-between items-center cursor-pointer"
+              <div class=" flex justify-between items-center cursor-pointer"
                 :class="isParentActive(row.children) ? 'border-primary border-r-4 bg-primary/10 text-primary font-bold' : 'hover:border-primary hover:border-r-4 text-primary'"
                 @click="toggleDropdown(row.title)">
-                <div class="flex items-center">
-                  <q-icon class="mr-2" size="xs" :name="row.icon" />
-                  <div>{{ $t(row.title) }}</div>
+                <div class="relative flex items-center px-2 py-2"
+                  :class="state.miniState ? 'justify-center w-full h-[42px] bg-default' : ''">
+                  <q-icon v-if="!state.miniState" class="mr-2" size="xs" :name="row.icon" />
+                  <q-icon v-else size="xs" :name="row.icon" />
+                  <div v-if="!state.miniState">{{ $t(row.title) }}</div>
+                  <div v-if="state.miniState"
+                    class="absolute bottom-0 right-0 w-0 h-0 border-l-[10px] border-b-[10px] border-l-transparent border-b-secondary">
+                  </div>
                 </div>
-                <q-icon :name="state.dropdownOpen[row.title] ? 'expand_less' : 'expand_more'" size="sm" />
+                <q-icon class="pr-1" v-if="!state.miniState" :name="state.dropdownOpen[row.title] ? 'expand_less' : 'expand_more'"
+                  size="sm" />
               </div>
 
               <q-slide-transition>
-                <div v-if="state.dropdownOpen[row.title]" class="pl-5">
+                <div v-if="state.dropdownOpen[row.title]">
                   <router-link v-for="(child, j) in row.children" :key="j" :to="child.link" v-slot="{ isActive }">
-                    <div class="py-1 text-sm flex items-center cursor-pointer" :class="isActive
-                      ? 'border-primary border-r-4  text-primary font-bold'
+                    <div class="pl-5 py-2 text-sm flex items-center cursor-pointer border-b border-default text-xs" :class="isActive
+                      ? 'border-r-primary border-r-4  text-primary font-bold'
                       : 'text-gray-700 hover:text-primary'">
-                      <q-icon class="mr-2" size="xs" :name="child.icon" />
-                      <div>{{ $t(child.title) }}</div>
+                      <q-icon v-if="state.miniState" class="my-1" size="sm" :name="child.icon" />
+                      <q-icon v-else class="mr-2" size="xs" :name="child.icon" />
+                      <div v-if="!state.miniState">{{ $t(child.title) }}</div>
                     </div>
                   </router-link>
                 </div>
@@ -299,7 +306,7 @@ const state = reactive({
   pendingTasks: [],
   leftDrawerOpen: $isDesktop ? true : false,
   dropdownOpen: {},
-  drawerWidth: 220,
+  drawerWidth: 200,
   miniState: false,
   footer: {
     open: false,

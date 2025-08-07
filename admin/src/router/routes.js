@@ -297,24 +297,24 @@ export const asyncRoutes = [
       },
     ],
   },
-  {
-    path: path.conciliation_group,
-    name: "conciliation_group",
-    component: MainLayout,
-    meta: { title: "conciliations", nav: 1, icon: 'fa-duotone fa-solid fa-hospitals', children: ['conciliation', 'conciliation_report'] },
-    children: [
-      {
-        path: "",
-        name: "conciliation_group_index",
-        component: () => import("pages/conciliation/conciliation-index.vue"),
-      }
-    ]
-  },
+  // {
+  //   path: path.conciliation_group,
+  //   name: "conciliation_group",
+  //   component: MainLayout,
+  //   meta: { title: "conciliations", nav: 1, icon: 'fa-duotone fa-solid fa-hospitals', children: ['conciliation', 'conciliation_report'] },
+  //   children: [
+  //     {
+  //       path: "",
+  //       name: "conciliation_group_index",
+  //       component: () => import("pages/conciliation/conciliation-index.vue"),
+  //     }
+  //   ]
+  // },
   {
     path: path.conciliation,
     name: "conciliation",
     component: MainLayout,
-    meta: { title: "conciliation", nav: 2, icon: 'fa-duotone fa-solid fa-books' },
+    meta: { title: "conciliations", nav: 1, icon: 'fa-duotone fa-solid fa-books' },
     children: [
       {
         path: "",

@@ -52,6 +52,7 @@ export async function getRows({
   auth = 1,
   optsServer = {
     columns: "",
+    having: ""
   },
 }) {
   const opts = {
@@ -163,7 +164,7 @@ export async function getRows({
 
   opts.sql = `SELECT ${opts.columns} ${optsServer.columns ? ", " + optsServer.columns : ""
     } FROM ${table} ${opts.join} ${opts.privilege} ${opts.where} ${opts.access} ${opts.groupBy
-    } ${opts.order} ${opts.limit}`;
+    } ${optsServer.having || ''} ${opts.order} ${opts.limit}`;
 
   const sql = mysql.format(opts.sql, opts.args);
 

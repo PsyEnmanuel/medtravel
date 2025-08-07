@@ -7,10 +7,10 @@
             <div class="flex flex-nowrap justify-between items-start gap-2 py-2">
                 <div v-if="isEdit">
                     <p v-if="state.item.c_status & 4" class="text-2xl text-info">Editar Coordinación {{ state.item.code
-                        }}</p>
+                    }}</p>
                     <div v-else-if="state.item.c_status & 2">
                         <p class="text-2xl text-info">Cancelada {{ state.item.code
-                            }} </p>
+                        }} </p>
                         <p>{{ state.item.cancelled_by }} - {{ state.item.cancelled_date_format }}</p>
                     </div>
                 </div>
@@ -33,21 +33,8 @@
                 </div>
             </div>
 
-            <div v-if="state.item.c_status & 2"
-                class="absolute w-full h-full bg-black z-30 opacity-30 flex justify-center items-center">
-                <div class="text-8xl font-bold z-40 text-white transform -rotate-45">CANCELADA</div>
-                <div class="text-8xl font-bold z-40 text-white transform -rotate-45">CANCELADA</div>
-                <div class="text-8xl font-bold z-40 text-white transform -rotate-45">CANCELADA</div>
-                <div class="text-8xl font-bold z-40 text-white transform -rotate-45">CANCELADA</div>
-            </div>
-
-            <div v-if="state.item.blocked && state.item.blocked_by_id !== $me.id"
-                class="absolute w-full h-full bg-black z-30 opacity-30 flex justify-center items-center">
-                <div class="text-8xl font-bold z-40 text-white transform -rotate-45">BLOQUEADA</div>
-                <div class="text-8xl font-bold z-40 text-white transform -rotate-45">BLOQUEADA</div>
-                <div class="text-8xl font-bold z-40 text-white transform -rotate-45">BLOQUEADA</div>
-                <div class="text-8xl font-bold z-40 text-white transform -rotate-45">BLOQUEADA</div>
-            </div>
+            <WatermarkBlock v-if="state.item.c_status & 2" text="CANCELADA" />
+            <WatermarkBlock v-if="state.item.blocked && state.item.blocked_by_id !== $me.id" text="BLOQUEADA" />
 
             <div class="pb-20 pt-2">
                 <q-form ref="writeForm" autofocus @submit="onSubmit" @reset="onReset" autocomplete="off"
@@ -306,7 +293,7 @@
                                                     class="w-full flex flex-start items-center justify-between border card shadow-none px-3 py-1">
                                                     <div class="uppercase pr-4 line-clamp-1">{{ format(d.from,
                                                         'EEE dd MMM yyyy')
-                                                    }} - {{ format(d.to,
+                                                        }} - {{ format(d.to,
                                                             'EEE dd MMM yyyy') }}
                                                     </div>
                                                 </div>
@@ -639,6 +626,7 @@ import InsuredPregnant from 'src/pages/insured/components/InsuredPregnant.vue';
 import pregnant from 'src/data/pregnant';
 import PolicySelect from 'src/components/select/PolicySelect.vue';
 import LodgingSelect from 'src/components/select/LodgingSelect.vue';
+import WatermarkBlock from 'src/components/WatermarkBlock.vue';
 const props = defineProps({
     id: Number, copyId: Number, isEdit: Boolean, timestamp: Object, user: Object, userId: Number, insuredId: Number, unixroles: Number, width: String, isDrawer: Boolean
 })
@@ -883,7 +871,7 @@ const pendingList = computed(() => {
 
     }
 
-    if (state.item.$event_state_id >= 38) {
+    if (state.item.$event_state_id >= 38 && state.item.insurance_vob) {
         if (!state.item.VOB_file?.url) {
             list.push({
                 text: 'Agregar VOB (Archivo)',
@@ -1127,8 +1115,8 @@ async function setInsurance(id, row) {
     try {
 
         const insurance = await $api.get(`insurance/${id}`)
-
         state.item.insurance_id = insurance.id;
+        state.item.insurance_vob = insurance.has_vob;
         state.item.insurance_description = insurance.description;
 
     } catch (error) {
@@ -1139,6 +1127,7 @@ async function setInsurance(id, row) {
 function clearInsurance() {
     try {
         state.item.insurance_id = null;
+        state.item.insurance_vob = null;
         state.item.insurance_description = null;
         clearPolicy()
     } catch (error) {
@@ -1169,8 +1158,7 @@ async function setPolicy(id) {
         if (policies.length) {
             const policy = policies[0];
 
-            state.item.insurance_id = policy.insurance_id;
-            state.item.insurance_description = policy.insurance;
+            setInsurance(policy.insurance_id)
             state.item.insured_code = policy.insured_code
             state.item.policy_id = policy.id
             state.item.policy_number = policy.policy_number
@@ -1453,10 +1441,7 @@ async function setInsured(id) {
         if (!id) return;
         const insured = await $api.get(`insured/${id}`);
         if (!props.isEdit && insured.policies) {
-
-
             setPolicy(id)
-
         }
         state.item.insured_id = insured.id;
         state.item.insured = insured.fullname;

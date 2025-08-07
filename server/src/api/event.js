@@ -391,6 +391,42 @@ async function updateInsured(data, user) {
   }
 }
 
+router.get("/alert-list", async function (req, res, next) {
+  try {
+
+    const user = res.locals.user;
+    let { items, total, sql } = await _query.getRows({
+      table,
+      user,
+      query: req.query,
+      optsServer: {
+        columns: 't_event.id AS event_id, t_event.*, t_itinerary.*, MAX(t_itinerary.attendance_datetime) AS last_attendance_datetime',
+        having: 'HAVING MAX(t_itinerary.attendance_datetime) < NOW() - INTERVAL 3 DAY'
+      },
+    });
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      item.last_attendance_datetime_format = _date.intlDateTime(item.last_attendance_datetime);
+
+      item.time_passed = formatDistanceToNow(item.last_attendance_datetime, { addSuffix: true });
+
+      if (item.doctor_description) {
+        item.doctor_description = item.doctor_description.split("|");
+      }
+
+      if (item.request_date) {
+        item.request_date_format = _date.intlReadbleDate(item.request_date);
+      }
+
+    }
+    return res.status(200).json({ items, total });
+  } catch (error) {
+    next(error)
+  }
+})
+
 router.get("/", async function (req, res, next) {
   try {
     const user = res.locals.user;

@@ -11,50 +11,7 @@ const table = "t_itinerary";
 
 router.use(isAuthenticated);
 
-(async () => {
-  try {
-    const items = await pool.query(`select * from t_itinerary`);
 
-    for (let i = 0; i < items.length; i++) {
-      const row = items[i];
-      if (row.mprocedure) {
-        row.mprocedure = JSON.parse(row.mprocedure).map(item => ({
-          ...item,
-          id: String(item.id),
-          code: String(item.code),
-        }))
-        if (row.mprocedure.length) {
-          row.mprocedure = JSON.stringify(row.mprocedure);
-          await pool.query(`update t_itinerary set mprocedure=? where id=?`, [row.mprocedure, row.id]);
-
-        }
-      }
-    }
-    console.log('complete');
-  } catch (error) {
-    console.log(error);
-  }
-})
-
-async function checkIfcontactExist(user, data) {
-  if (data.ident_no) {
-    const { items, total, sql } = await _query.getRows({
-      table,
-      user,
-      query: {
-        where: {
-          ident_no: data.ident_no,
-          c_status: 4,
-        },
-      },
-    });
-
-    if (items.length) {
-      return true;
-    }
-    return false;
-  }
-}
 
 router.get("/", async function (req, res, next) {
   try {

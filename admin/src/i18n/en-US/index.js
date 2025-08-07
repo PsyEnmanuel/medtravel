@@ -1,4 +1,5 @@
 export default {
+  last_attendance_datetime: 'Última Asistencia',
   c_status: 'Estado',
   contacts: 'Contactos',
   customers: 'Clientes',
