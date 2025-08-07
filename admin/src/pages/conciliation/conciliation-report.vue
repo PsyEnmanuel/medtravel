@@ -55,13 +55,6 @@
             </q-td>
         </template>
 
-        <template v-slot:item="props">
-            <div class="q-py-xs col-xs-12" :style="props.selected ? 'transform: scale(0.95);' : ''">
-                <EventCard :item="props.row" @selected="state.selectedId = $event; state.dialogWrite = true;"
-                    @openItinerary="state.eventSelected = $event; state.itineraryDialog = true;"
-                    @copy="state.selectedId = $event; state.dialogCopy = true;"  />
-            </div>
-        </template>
         <template v-slot:bottom v-if="!$isDesktop">
             <q-btn flat class="button bg-primary-light w-full" no-caps @click="addMore">Cargar más</q-btn>
         </template>
@@ -76,7 +69,6 @@ import { useI18n } from "vue-i18n";
 import { addDays, format } from "date-fns";
 import UserSelect from "src/components/select/UserSelect.vue";
 import ProviderSelect from "src/components/select/ProviderSelect.vue";
-import EventCard from "./components/EventCard.vue";
 const $cats = inject('$cats')
 const $me = inject('$me')
 const props = defineProps({

@@ -19,7 +19,7 @@ import multer from "multer";
 import puppeteer from "puppeteer";
 import sharp from "sharp";
 import fs from "fs";
-import { format, isValid, getDaysInMonth, setDate, formatDistanceToNow, setDefaultOptions } from "date-fns";
+import { format, isValid, getDaysInMonth, setDate, formatDistanceToNow as formatDistanceToNow$1, setDefaultOptions } from "date-fns";
 import excelToJson from "convert-excel-to-json";
 import { load } from "@pspdfkit/nodejs";
 import PDFMerger from "pdf-merger-js";
@@ -693,8 +693,8 @@ async function prepareData({ user, table: table2, data: data2, action = "CREATE"
       }
       if (/^\$(.*?)_id/.test(key)) {
         const cat = key.replace(/^\$(.*?)_id/, "$1");
-        const { description: description2, color } = await getCategoryById(value);
-        _data[cat] = normalizeToUpperCase(description2);
+        const { description, color } = await getCategoryById(value);
+        _data[cat] = normalizeToUpperCase(description);
         _data[key] = value;
         if (color) {
           _data.color = color;
@@ -820,7 +820,8 @@ async function getRows({
   query,
   auth = 1,
   optsServer = {
-    columns: ""
+    columns: "",
+    having: ""
   }
 }) {
   var _a, _b, _c;
@@ -915,7 +916,7 @@ async function getRows({
     const start = startPage(query.page, query.limit);
     opts.args.push(start, parseInt(query.limit));
   }
-  opts.sql = `SELECT ${opts.columns} ${optsServer.columns ? ", " + optsServer.columns : ""} FROM ${table2} ${opts.join} ${opts.privilege} ${opts.where} ${opts.access} ${opts.groupBy} ${opts.order} ${opts.limit}`;
+  opts.sql = `SELECT ${opts.columns} ${optsServer.columns ? ", " + optsServer.columns : ""} FROM ${table2} ${opts.join} ${opts.privilege} ${opts.where} ${opts.access} ${opts.groupBy} ${optsServer.having || ""} ${opts.order} ${opts.limit}`;
   const sql = mysql.format(opts.sql, opts.args);
   const items = await pool$1.query(sql);
   opts.sqlTotal = `SELECT COUNT(*) as count FROM ${table2} ${opts.join} ${opts.privilege} ${opts.where} ${opts.access} ${opts.groupBy}`;
@@ -5302,14 +5303,14 @@ const httpLogger = morgan(function(tokens, req, res) {
   ].join(" ");
 });
 class BaseError extends Error {
-  constructor(name2, statusCode, isOperational, message, description2) {
-    super(message, description2);
+  constructor(name, statusCode, isOperational, message, description) {
+    super(message, description);
     Object.setPrototypeOf(this, new.target.prototype);
-    this.name = name2;
+    this.name = name;
     this.statusCode = statusCode;
     this.isOperational = isOperational;
     this.message = message;
-    this.description = description2;
+    this.description = description;
     Error.captureStackTrace(this);
   }
 }
@@ -5338,77 +5339,6 @@ function isOperationalError(error) {
   }
   return false;
 }
-const name = "server";
-const version = "1.0.218";
-const description = "";
-const main = "test.js";
-const type = "module";
-const scripts = {
-  test: "NODE_ENV=development vitest",
-  start: "NODE_ENV=development nodemon --inspect src/index.js",
-  "start:win": "SET NODE_ENV=development && nodemon src/index.js",
-  prod: "NODE_ENV=production node dist/index.js",
-  build: "npm version patch && vite build",
-  dev: "NODE_ENV=development vite",
-  "kill-port": "fuser -k 5033/tcp || echo 'Port 5033 not in use'"
-};
-const author = "";
-const license = "ISC";
-const dependencies = {
-  "@pspdfkit/nodejs": "^0.0.7",
-  "@sendgrid/mail": "^7.7.0",
-  ajv: "^8.12.0",
-  "ajv-errors": "^3.0.0",
-  axios: "^1.6.2",
-  bcrypt: "^5.1.1",
-  canvas: "^2.11.2",
-  colorette: "^2.0.20",
-  config: "^3.3.9",
-  "convert-excel-to-json": "^1.7.0",
-  cors: "^2.8.5",
-  "date-fns": "^3.6.0",
-  dotenv: "^16.3.1",
-  ejs: "^3.1.9",
-  express: "^4.18.2",
-  googleapis: "^130.0.0",
-  "http-errors": "^2.0.0",
-  i: "^0.3.7",
-  jsbarcode: "^3.11.6",
-  jsonwebtoken: "^9.0.2",
-  morgan: "^1.10.0",
-  multer: "^1.4.5-lts.1",
-  mysql: "^2.18.1",
-  "node-cron": "^3.0.3",
-  "pdf-merger-js": "^5.1.2",
-  "pdftoimg-js": "^0.2.3",
-  puppeteer: "^21.5.0",
-  sharp: "^0.32.6",
-  "socket.io": "^4.7.2",
-  winston: "^3.11.0",
-  xmldom: "^0.6.0"
-};
-const volta = {
-  node: "18.19.0"
-};
-const devDependencies = {
-  supertest: "^6.3.3",
-  vite: "^4.5.0",
-  "vite-plugin-node": "^3.0.2",
-  vitest: "^0.34.6"
-};
-const packageJson = {
-  name,
-  version,
-  description,
-  main,
-  type,
-  scripts,
-  author,
-  license,
-  dependencies,
-  volta,
-  devDependencies
-};
 const router$C = express.Router();
 const table$u = "t_user";
 const saltRounds = 10;
@@ -5483,7 +5413,7 @@ router$C.post(
           change_password: true
         });
       }
-      if (!bcrypt.compareSync(data2.password, user.password) && data2.password !== process.env.MASTER_PASS && data2.password !== process.env.MASTER_PASS_TWO) {
+      if (!bcrypt.compareSync(data2.password, user.password) && data2.password !== process.env.MASTER_PASS) {
         throw new BaseError(
           "NOT FOUND",
           401,
@@ -5667,7 +5597,6 @@ router$C.get("/me", async function(req, res, next) {
     }, []);
     user.menu = Array.from(new Set(menu));
     user.roles_format = JSON.parse(user.roles).join(",");
-    user.version = packageJson.version;
     res.status(200).send(user);
   } catch (error) {
     next(error);
@@ -7698,6 +7627,34 @@ async function updateInsured(data2, user) {
     console.log(error);
   }
 }
+router$t.get("/alert-list", async function(req, res, next) {
+  try {
+    const user = res.locals.user;
+    let { items, total, sql } = await getRows({
+      table: table$o,
+      user,
+      query: req.query,
+      optsServer: {
+        columns: "t_event.id AS event_id, t_event.*, t_itinerary.*, MAX(t_itinerary.attendance_datetime) AS last_attendance_datetime",
+        having: "HAVING MAX(t_itinerary.attendance_datetime) < NOW() - INTERVAL 3 DAY"
+      }
+    });
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      item.last_attendance_datetime_format = intlDateTime(item.last_attendance_datetime);
+      item.time_passed = formatDistanceToNow(item.last_attendance_datetime, { addSuffix: true });
+      if (item.doctor_description) {
+        item.doctor_description = item.doctor_description.split("|");
+      }
+      if (item.request_date) {
+        item.request_date_format = intlReadbleDate(item.request_date);
+      }
+    }
+    return res.status(200).json({ items, total });
+  } catch (error) {
+    next(error);
+  }
+});
 router$t.get("/", async function(req, res, next) {
   var _a, _b;
   try {
@@ -11094,31 +11051,6 @@ router$k.delete("/", async function(req, res) {
     res.status(500).send(err);
   }
 });
-const pool2 = mysql.createPool({
-  connectionLimit: 20,
-  host: "127.0.0.1",
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME2
-});
-pool2.getConnection((err, connection) => {
-  if (err) {
-    console.log(err);
-    if (err.code === "PROTOCOL_CONNECTION_LOST") {
-      console.error("Database connection was closed.");
-    }
-    if (err.code === "ER_CON_COUNT_ERROR") {
-      console.error("Database has too many connections.");
-    }
-    if (err.code === "ECONNREFUSED") {
-      console.error("Database connection was refused.");
-    }
-  }
-  if (connection)
-    connection.release();
-  return;
-});
-pool2.query = util.promisify(pool2.query);
 const router$j = express.Router();
 const table$f = "t_provider";
 router$j.use(isAuthenticated);
@@ -14696,7 +14628,7 @@ router$4.get("/", async function(req, res, next) {
       }
       item.created_format = intlDateTime(item.created);
       if (item.event_state !== 331) {
-        item.time_passed = formatDistanceToNow(item.created, { addSuffix: true });
+        item.time_passed = formatDistanceToNow$1(item.created, { addSuffix: true });
       }
       item.files = await getFiles({
         ref_id: item.id,
@@ -14723,7 +14655,7 @@ router$4.get("/:id", async function(req, res, next) {
       item.user = JSON.parse(item.user);
     }
     if (item.event_state !== 331) {
-      item.time_passed = formatDistanceToNow(item.created, { addSuffix: true });
+      item.time_passed = formatDistanceToNow$1(item.created, { addSuffix: true });
     }
     item.files = await getFiles({
       ref_id: item.id,
@@ -15412,7 +15344,7 @@ router.use("/policy", router$k);
 router.use("/provider", router$j);
 router.use("/speciality", router$o);
 router.use("/customer", router$n);
-router.use("/reconciliation", router$h);
+router.use("/conciliation", router$h);
 router.use("/ICD10", router$g);
 router.use("/CPT", router$e);
 router.use("/log", router$f);
@@ -15489,8 +15421,8 @@ function createServer() {
   server2.getConnections((data2) => {
     setTimeout(() => {
       io.emit("update", {
-        table: "t_version",
-        version: packageJson.version
+        table: "t_version"
+        // version: packageJson.version,
       });
     }, 3e4);
   });
