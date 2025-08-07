@@ -1,0 +1,1 @@
+import{t as e,v as t,x as s,z as c,aN as r,S as o}from"./index.49e59f77.js";const _={__name:"doctor-view",props:{id:Number},setup(a){return(p,i)=>(e(),t(o,{class:"px-1.5 py-2 lg:px-5 lg:py-6"},{default:s(()=>[c(r,{id:a.id},null,8,["id"])]),_:1}))}};export{_ as default};

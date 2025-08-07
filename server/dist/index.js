@@ -7906,6 +7906,15 @@ router$t.post("/", async function(req, res, next) {
         data: itinerary
       });
     }
+    for (let i = 0; i < data2.admin_comments.length; i++) {
+      const ac = data2.admin_comments[i];
+      ac.ref_id = response2.id;
+      await insert({
+        user,
+        table: "t_comment",
+        data: ac
+      });
+    }
     req.io.emit("update", {
       table: table$o
     });

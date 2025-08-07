@@ -1,1 +1,0 @@
-var t={get(r){try{return JSON.parse(localStorage.getItem(r))}catch{return r==="prescription"||r==="history"||r==="cosmiatry"?!1:localStorage.getItem(r)}},set(r,e){return localStorage.setItem(r,JSON.stringify(e))},remove(r){return localStorage.removeItem(r)}};export{t as l};
