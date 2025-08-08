@@ -7,10 +7,10 @@
             <div class="flex flex-nowrap justify-between items-start gap-2 py-2">
                 <div v-if="isEdit">
                     <p v-if="state.item.c_status & 4" class="text-2xl text-info">Editar Coordinación {{ state.item.code
-                        }}</p>
+                    }}</p>
                     <div v-else-if="state.item.c_status & 2">
                         <p class="text-2xl text-info">Cancelada {{ state.item.code
-                            }} </p>
+                        }} </p>
                         <p>{{ state.item.cancelled_by }} - {{ state.item.cancelled_date_format }}</p>
                     </div>
                 </div>
@@ -293,7 +293,7 @@
                                                     class="w-full flex flex-start items-center justify-between border card shadow-none px-3 py-1">
                                                     <div class="uppercase pr-4 line-clamp-1">{{ format(d.from,
                                                         'EEE dd MMM yyyy')
-                                                    }} - {{ format(d.to,
+                                                        }} - {{ format(d.to,
                                                             'EEE dd MMM yyyy') }}
                                                     </div>
                                                 </div>
@@ -1228,17 +1228,18 @@ async function setPresumptiveDiagnosis(id) {
         if (index !== -1) {
             $q.notify({
                 type: 'warning',
-                message: 'Diagnóstico ya esta agregado'
+                message: 'Diagnóstico Presuntivo ya esta agregado'
             })
         }
         state.item.presumptive_diagnosis.push({
             id: String(diagnosis.id),
             code: diagnosis.code,
-            description: diagnosis.description
+            description: diagnosis.description,
+            group_desc: diagnosis.group_desc,
+            chapter_desc: diagnosis.chapter_desc,
         })
 
-        state.item.presumptive_diagnosis_description = null;
-        state.item.presumptive_diagnosis_id = null;
+        clearPresumptiveDiagnosis()
 
     } catch (error) {
         console.log(error);
@@ -1270,11 +1271,12 @@ async function setDiagnosis(id) {
         state.item.diagnosis.push({
             id: String(diagnosis.id),
             code: diagnosis.code,
-            description: diagnosis.description
+            description: diagnosis.description,
+            group_desc: diagnosis.group_desc,
+            chapter_desc: diagnosis.chapter_desc,
         })
 
-        state.item.diagnosis_description = null;
-        state.item.diagnosis_id = null;
+        clearDiagnosis()
 
     } catch (error) {
         console.log(error);
