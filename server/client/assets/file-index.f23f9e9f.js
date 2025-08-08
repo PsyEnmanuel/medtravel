@@ -1,1 +1,0 @@
-import{t as a,G as t,z as e,a7 as c,ac as _,U as n}from"./index.09b51acc.js";const l={__name:"file-index",setup(r){return(s,o)=>(a(),t(n,null,[e(c,{ref_id:1,table:"t_account",file_type:"GENERAL"}),e(_,{refId:1,refKey:"t_account"})],64))}};export{l as default};
