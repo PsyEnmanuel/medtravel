@@ -66,6 +66,10 @@ router.get("/pdf/:code", async function (req, res, next) {
         item.deductible_format = _utility.currency(item.deductible, item.currency);
       }
 
+      if (item.copago) {
+        item.copago_format = _utility.currency(item.copago, item.currency);
+      }
+
       if (item.covered) {
         item.covered_format = _utility.currency(item.covered, item.currency);
       }
@@ -112,6 +116,10 @@ router.get("/pdf/:code", async function (req, res, next) {
       item.deductible_total_format = _utility.currency(item.deductible_total, item.currency);
     }
 
+    if (item.copago_total) {
+      item.copago_total_format = _utility.currency(item.copago_total, item.currency);
+    }
+
     if (item.covered_total) {
       item.covered_total_format = _utility.currency(item.covered_total, item.currency);
     }
@@ -130,7 +138,7 @@ router.get("/pdf/:code", async function (req, res, next) {
 
 
     const bodyTemplate = await _template.getBody({
-      table: "reconciliation",
+      table: "conciliation",
       account,
       data: {
         item,
@@ -144,7 +152,7 @@ router.get("/pdf/:code", async function (req, res, next) {
     const filename = await _upload.generatePDF({
       account,
       data: item,
-      table: "reconciliation",
+      table: "conciliation",
       id: req.params.id,
       filename: item.filename,
       landscape: true,
@@ -189,13 +197,15 @@ router.get("/pdf/:code", async function (req, res, next) {
 router.get("/", async function (req, res, next) {
   try {
     const user = res.locals.user;
-
+    console.log(req.query);
     let columns = null;
     if (req.query.groupBy.includes("t_book.code")) {
       columns = [
         "GROUP_CONCAT(DISTINCT item_description SEPARATOR '|') AS label, min(id) AS id",
       ];
     }
+
+
 
     let { items, total, sql } = await _query.getRows({
       table,
@@ -205,6 +215,8 @@ router.get("/", async function (req, res, next) {
         columns: columns,
       },
     });
+
+    console.log(sql);
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
@@ -328,6 +340,7 @@ router.post("/", async function (req, res, next) {
       item.billed_amount = _utility.cleanCurrency(item.billed_amount);
       item.coverage = _utility.cleanCurrency(item.coverage);
       item.deductible = _utility.cleanCurrency(item.deductible);
+      item.copago = _utility.cleanCurrency(item.copago);
       item.covered = _utility.cleanCurrency(item.covered);
       item.discount = _utility.cleanCurrency(item.discount);
       item.insurance_payment = _utility.cleanCurrency(item.insurance_payment);
@@ -349,9 +362,12 @@ router.post("/", async function (req, res, next) {
           item_id: item.item_id,
           item_code: item.item_code,
           item_description: item.item_description,
+          doctor_id: item.doctor_id,
+          doctor_description: item.doctor_description,
           billed_amount: item.billed_amount,
           coverage: item.coverage,
           deductible: item.deductible,
+          copago: item.copago,
           covered: item.covered,
           insurance_payment: item.insurance_payment,
           insurance_responsability: item.insurance_responsability,
@@ -435,6 +451,7 @@ router.put("/:id", async function (req, res, next) {
       item.billed_amount = _utility.cleanCurrency(item.billed_amount);
       item.coverage = _utility.cleanCurrency(item.coverage);
       item.deductible = _utility.cleanCurrency(item.deductible);
+      item.copago = _utility.cleanCurrency(item.copago);
       item.covered = _utility.cleanCurrency(item.covered);
       item.discount = _utility.cleanCurrency(item.discount);
       item.insurance_payment = _utility.cleanCurrency(item.insurance_payment);
@@ -453,9 +470,12 @@ router.put("/:id", async function (req, res, next) {
         item_id: item.item_id,
         item_code: item.item_code,
         item_description: item.item_description,
+        doctor_id: item.doctor_id,
+        doctor_description: item.doctor_description,
         billed_amount: item.billed_amount,
         coverage: item.coverage,
         deductible: item.deductible,
+        copago: item.copago,
         covered: item.covered,
         insurance_payment: item.insurance_payment,
         insurance_responsability: item.insurance_responsability,

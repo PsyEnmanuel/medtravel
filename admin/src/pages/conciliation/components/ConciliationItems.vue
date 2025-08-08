@@ -76,6 +76,13 @@
                                 @update:model-value="updateDeductible(props.row); updateResponsability(props.row)">
                             </q-input>
                         </template>
+                        <template v-else-if="col.name === 'copago'">
+                            <q-input :readonly="!props.row.item_id" input-class="text-right" dense outlined
+                                v-model="props.row.copago" v-maska:[optionsMoney] data-maska="0.99"
+                                :data-maska-tokens="maskaMoney" hide-bottom-space
+                                @update:model-value="updateCopago(props.row); updateResponsability(props.row)">
+                            </q-input>
+                        </template>
                         <template v-else-if="col.name === 'covered'">
                             <q-input :readonly="!props.row.item_id" input-class="text-right" dense outlined
                                 v-model="props.row.covered" v-maska:[optionsMoney] data-maska="0.99"
@@ -158,7 +165,8 @@ const state = reactive({
         { name: 'billed_amount', label: t('MONTO FACTURADO'), field: 'billed_amount', align: 'left', classes: 'min-w-[100px]' },
         { name: 'discount', label: t('DESCUENTO DE AJUSTE'), field: 'discount', align: 'left', classes: 'min-w-[100px]' },
         { name: 'coverage', label: t('MONTO A PROCESAR'), field: 'coverage', align: 'left', classes: 'min-w-[100px]' },
-        { name: 'deductible', label: t('DEDUCIBLE / COPAGO'), field: 'deductible', align: 'left', classes: 'min-w-[100px]' },
+        { name: 'deductible', label: t('DEDUCIBLE'), field: 'deductible', align: 'left', classes: 'min-w-[100px]' },
+        { name: 'copago', label: t('COPAGO'), field: 'copago', align: 'left', classes: 'min-w-[100px]' },
         { name: 'covered', label: t('CUBIERTO'), field: 'covered', align: 'left', classes: 'min-w-[100px]' },
         { name: 'insurance_payment', label: t('PAGO DE ASEGURADA'), field: 'insurance_payment', align: 'left', classes: 'min-w-[100px]' },
         { name: 'insurance_responsability', label: t('RESP. ASEGURADA'), field: 'insurance_responsability', align: 'left', classes: 'min-w-[100px]' },
@@ -220,6 +228,17 @@ function updateDeductible(row) {
 
     if (coverage && deductible) {
         row.covered = coverage - deductible
+    }
+
+}
+
+function updateCopago(row) {
+
+    const coverage = cleanCurrency(row.coverage || 0)
+    const copago = cleanCurrency(row.copago || 0)
+
+    if (coverage && copago) {
+        row.covered = coverage - copago
     }
 
 }

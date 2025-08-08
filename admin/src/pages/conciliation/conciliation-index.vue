@@ -35,6 +35,10 @@
                 </div>
 
             </div>
+            <div v-if="$isDesktop" class="ml-auto">
+                <PaginationTable :rowsNumber="state.pagination.rowsNumber" :itemsRange="itemsRange"
+                    :tableRef="tableRef" />
+            </div>
         </div>
 
         <div class="mb-1">
@@ -43,8 +47,8 @@
         </div>
 
         <div style="overflow-x: auto; white-space: nowrap;">
-            <q-table :grid="!$isDesktop" hide-pagination :rows="state.rows" :columns="state.columns" row-key="id"
-                ref="tableRef" @request="onRequest" flat :loading="state.loading"
+            <q-table :grid="!$isDesktop" hide-pagination v-model:pagination="state.pagination" :rows="state.rows"
+                :columns="state.columns" row-key="id" ref="tableRef" @request="onRequest" flat :loading="state.loading"
                 rows-per-page-label="Lineas" :wrap-cells="true">
                 <template v-slot:no-data="{ icon, message, filter }">
                     <div class="full-width row flex-center text-primary q-gutter-sm">
@@ -67,7 +71,7 @@
                                     <span>{{ props.row.code }}</span>
                                     <span>{{ props.row.ncf_sequence }}</span>
                                     <span class="text-purple-400 text-xxs">{{ props.row.promotion_description
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </template>
                             <template v-else-if="col.name === 'invoice_sequence'">
@@ -80,7 +84,7 @@
                             <template v-else-if="col.name === 'customer_description'">
                                 <div class="flex flex-col flex-nowrap text-xs">
                                     <span class="line-clamp-1 whitespace-pre-wrap">{{ props.row.customer_description
-                                        }}</span>
+                                    }}</span>
                                     <span v-if="props.row.customer_policy">Póliza: <span>{{
                                         props.row.customer_policy
                                             }}</span></span>
@@ -106,7 +110,7 @@
                                         <span>C: {{ props.row.coverage_total_format }}</span>
                                     </span>
                                     <span v-if="props.row.gap_total_format">D: {{ props.row.gap_total_format
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </template>
                             <template v-else-if="col.name === 'book_state'">
@@ -134,7 +138,7 @@
                         <div bordered flat class="card pb-4 relative flex flex-nowrap">
                             <div class="pl-3 pr-10 w-full pt-2 flex flex-col items-start overflow-hidden">
                                 <span class="text-uppercase line-clamp-1 font-semibold">{{ props.row.description
-                                    }}</span>
+                                }}</span>
                                 <div class="flex text-xs">
                                     <span class="text-xs">#{{ props.row.sequence }}</span>
                                     <span>&nbsp;-&nbsp;</span>
@@ -143,7 +147,7 @@
                                 </div>
                                 <div class="flex justify-between w-full text-xs">
                                     <span class="line-clamp-1 whitespace-pre-wrap">{{ props.row.customer_description
-                                        }}</span>
+                                    }}</span>
                                     <span class="line-clamp-1 text-xxs">{{ props.row.insurance }}</span>
                                 </div>
                                 <span class="line-clamp-1 text-xs">{{ props.row.user_description }}</span>
@@ -155,7 +159,7 @@
                                     <span class="text-xs flex justify-between gap-2" v-if="props.row.coverage_total">
                                         <span>Cobertura: </span>
                                         <span class="text-red-600 ml-auto">{{ props.row.coverage_total_format
-                                            }}</span>
+                                        }}</span>
                                     </span>
                                     <span class="text-xs flex justify-between gap-2" v-if="props.row.gap_total">
                                         <span>Diferencia: </span>
@@ -164,7 +168,7 @@
                                     <span class="text-xs flex justify-between gap-2" v-if="props.row.exoneration_total">
                                         <span>Exoneración: </span>
                                         <span class="text-pink-600 ml-auto">{{ props.row.exoneration_total_format
-                                            }}</span>
+                                        }}</span>
                                     </span>
                                 </div>
                             </div>
@@ -189,6 +193,7 @@ import { addDays, format } from "date-fns";
 import { convertToValidDate } from "src/helpers/date";
 import { timePeriods } from 'src/data/options'
 import { setTimePeriodQuery } from "src/helpers";
+import PaginationTable from "src/components/table/PaginationTable.vue";
 const props = defineProps({ patientId: Number, insuredId: Number })
 const { t } = useI18n()
 const tableRef = ref()
@@ -214,10 +219,10 @@ const state = reactive({
     search: '',
     search_key: 'orlike:code,customer_description,ncf_sequence,item_description',
     pagination: {
-        sortBy: 'book_date',
+        sortBy: 'code',
         descending: true,
         page: 1,
-        rowsPerPage: 20,
+        rowsPerPage: 50,
     },
     url: 'conciliation',
     query: {
@@ -352,7 +357,7 @@ onMounted(async () => {
     }))
 })
 
-const { onRequest, getSelectedString, onDeleteRows, addMore, itemsRange } = useTable(state, tableRef)
+const { onRequest, addMore, itemsRange } = useTable(state, tableRef)
 
 const updateStore = useUpdateStore()
 watch(() => updateStore.table.t_user, (data) => {

@@ -147,7 +147,7 @@ const state = reactive({
         sortBy: 'id',
         descending: true,
         page: 1,
-        rowsPerPage: 20,
+        rowsPerPage: 5,
     },
     url: 'comment',
     query: {

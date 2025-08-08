@@ -140,11 +140,13 @@
           <tr style="background: #001c30; color: white">
             <th style="width: 60px">FECHA</th>
             <th style="width: 120px">PROVEEDOR</th>
+            <th style="width: 120px">PRESTADOR DE SERVICIOS</th>
             <th style="width: 150px">CONCEPTO</th>
             <th style="width: 70px">MONTO FACTURADO</th>
             <th style="width: 70px">DESCUENTO DE AJUSTE</th>
             <th style="width: 70px">MONTO A PROCESAR</th>
-            <th style="width: 70px">DEDUCIBLE / COPAGO</th>
+            <th style="width: 70px">DEDUCIBLE</th>
+            <th style="width: 70px">COPAGO</th>
             <th style="width: 70px">CUBIERTO</th>
             <th style="width: 70px">PAGO ASEGURADORA</th>
             <th style="width: 70px">RESP. ASEGURADORA</th>
@@ -157,21 +159,20 @@
           <tr>
             <td><%= row.book_date_format %></td>
             <td><%= row.provider_description %></td>
+            <td><%= row.doctor_description %></td>
             <td><%= row.item_description %></td>
             <td align="right"><%= row.billed_amount_format %></td>
             <td align="right"><%= row.discount_format %></td>
             <td align="right"><%= row.coverage_format %></td>
             <td align="right"><%= row.deductible_format %></td>
+            <td align="right"><%= row.copago_format %></td>
             <td align="right"><%= row.covered_format %></td>
             <td align="right"><%= row.insurance_payment_format %></td>
-            <td align="right">
-              <%= row.insurance_responsability_format %>
-            </td>
+            <td align="right"><%= row.insurance_responsability_format %></td>
             <td><%= row.insurance_claim %></td>
             <td><%= row.note %></td>
           </tr>
-          <% }) %>
-          <% data.payments.forEach(function(row, index) { %>
+          <% }) %> <% data.payments.forEach(function(row, index) { %>
           <tr style="background-color: #f3f1f1">
             <td><%= row.book_date_format %></td>
             <td><%= row.description %></td>
@@ -181,10 +182,10 @@
             <td align="right"></td>
             <td align="right"></td>
             <td align="right"></td>
+            <td align="right"></td>
+            <td align="right"></td>
             <td align="right"><%= row.insurance_payment_format %></td>
-            <td align="right">
-              <%= row.insurance_responsability_format %>
-            </td>
+            <td align="right"><%= row.insurance_responsability_format %></td>
             <td></td>
             <td></td>
           </tr>
@@ -193,10 +194,12 @@
             <td></td>
             <td></td>
             <td></td>
+            <td></td>
             <td align="right"><%= data.item.billed_amount_total_format %></td>
             <td align="right"><%= data.item.discount_total_format %></td>
             <td align="right"><%= data.item.coverage_total_format %></td>
             <td align="right"><%= data.item.deductible_total_format %></td>
+            <td align="right"><%= data.item.copago_total_format %></td>
             <td align="right"><%= data.item.covered_total_format %></td>
             <td align="right">
               <%= data.item.insurance_payment_total_format %>
@@ -226,7 +229,10 @@
             </td>
           </tr>
           <tr>
-            <td>2.- CUBIERTO POR EL SEGURO (<%= data.item.insurance_description %>)</td>
+            <td>
+              2.- CUBIERTO POR EL SEGURO (<%= data.item.insurance_description
+              %>)
+            </td>
           </tr>
           <tr>
             <td>
@@ -245,15 +251,15 @@
           </tr>
         </thead>
         <% if(data.item.diagnosis) { %>
-          <tbody>
-            <% data.item.diagnosis.forEach(function(row, index) { %>
-            <tr>
-              <td><%= row.code %>, <%= row.description %></td>
-            </tr>
-            <% }) %>
-          </tbody>
+        <tbody>
+          <% data.item.diagnosis.forEach(function(row, index) { %>
+          <tr>
+            <td><%= row.code %>, <%= row.description %></td>
+          </tr>
+          <% }) %>
+        </tbody>
         <% } else { %>
-          <div></div>
+        <div></div>
         <% } %>
       </table>
     </div>

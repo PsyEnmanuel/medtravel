@@ -35,8 +35,12 @@
                         <span class="text-font text-right text-md">{{ $currency(coverage) }}</span>
                     </div>
                     <div class="flex flex-col">
-                        <q-badge class="text-xxs text-font bg-stone-200 rounded">DEDUCIBLE / COPAGO</q-badge>
+                        <q-badge class="text-xxs text-font bg-stone-200 rounded">DEDUCIBLE</q-badge>
                         <span class="text-font text-right text-md">{{ $currency(deductible) }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <q-badge class="text-xxs text-font bg-stone-200 rounded">COPAGO</q-badge>
+                        <span class="text-font text-right text-md">{{ $currency(copago) }}</span>
                     </div>
                     <div class="flex flex-col">
                         <q-badge class="text-xxs text-font bg-stone-200 rounded">CUBIERTO</q-badge>
@@ -90,8 +94,7 @@
                         @keydown.enter.prevent @update:model-value="findInsuredCode"
                         hide-bottom-space></q-input>
                     <q-input input-class="text-right" dense outlined v-model="state.item.deductible" label="Deducible"
-                        v-maska:[optionsMoney] data-maska="0.99" :data-maska-tokens="maskaMoney" hide-bottom-space
-                        :rules="[requiredInput]">
+                        v-maska:[optionsMoney] data-maska="0.99" :data-maska-tokens="maskaMoney" hide-bottom-space>
                     </q-input>
 
                     <div>
@@ -238,6 +241,15 @@ const deductible = computed(() => {
     const result = state.items.reduce((total, curr) => {
         if (curr.c_status & 1) return total;
         total += (cleanCurrency(curr.deductible) || 0);
+        return total;
+    }, 0);
+    return roundToPrecision(result);
+})
+
+const copago = computed(() => {
+    const result = state.items.reduce((total, curr) => {
+        if (curr.c_status & 1) return total;
+        total += (cleanCurrency(curr.copago) || 0);
         return total;
     }, 0);
     return roundToPrecision(result);
@@ -416,6 +428,7 @@ async function onSubmit() {
                     coverage_total: coverage.value,
                     discount_total: discount.value,
                     deductible_total: deductible.value,
+                    copago_total: copago.value,
                     covered_total: covered.value,
                     insurance_payment_total: insurance_payment.value,
                     insurance_responsability_total: insurance_responsability.value,
@@ -441,6 +454,7 @@ async function onSubmit() {
                     coverage_total: coverage.value,
                     discount_total: discount.value,
                     deductible_total: deductible.value,
+                    copago_total: copago.value,
                     covered_total: covered.value,
                     insurance_payment_total: insurance_payment.value,
                     insurance_responsability_total: insurance_responsability.value,
