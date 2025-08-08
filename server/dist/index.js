@@ -7399,7 +7399,9 @@ router$t.get("/stats", async function(req, res, next) {
               stats.c.diagnosis[row.code] = {
                 description: row.description,
                 code: row.code,
-                quantity: 1
+                quantity: 1,
+                group_desc: row.group_desc || "",
+                chapter_desc: row.chapter_desc || ""
               };
             }
           }
@@ -11627,6 +11629,9 @@ router$h.get("/pdf/:code", async function(req, res, next) {
       if (item2.deductible) {
         item2.deductible_format = currency(item2.deductible, item2.currency);
       }
+      if (item2.copago) {
+        item2.copago_format = currency(item2.copago, item2.currency);
+      }
       if (item2.covered) {
         item2.covered_format = currency(item2.covered, item2.currency);
       }
@@ -11660,6 +11665,9 @@ router$h.get("/pdf/:code", async function(req, res, next) {
     if (item.deductible_total) {
       item.deductible_total_format = currency(item.deductible_total, item.currency);
     }
+    if (item.copago_total) {
+      item.copago_total_format = currency(item.copago_total, item.currency);
+    }
     if (item.covered_total) {
       item.covered_total_format = currency(item.covered_total, item.currency);
     }
@@ -11673,7 +11681,7 @@ router$h.get("/pdf/:code", async function(req, res, next) {
       item.diagnosis = JSON.parse(item.diagnosis);
     }
     const bodyTemplate = await getBody({
-      table: "reconciliation",
+      table: "conciliation",
       account,
       data: {
         item,
@@ -11685,7 +11693,7 @@ router$h.get("/pdf/:code", async function(req, res, next) {
     const filename = await generatePDF({
       account,
       data: item,
-      table: "reconciliation",
+      table: "conciliation",
       id: req.params.id,
       filename: item.filename,
       landscape: true,
@@ -11724,6 +11732,7 @@ router$h.get("/pdf/:code", async function(req, res, next) {
 router$h.get("/", async function(req, res, next) {
   try {
     const user = res.locals.user;
+    console.log(req.query);
     let columns = null;
     if (req.query.groupBy.includes("t_book.code")) {
       columns = [
@@ -11738,6 +11747,7 @@ router$h.get("/", async function(req, res, next) {
         columns
       }
     });
+    console.log(sql);
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (item.billed_amount_total) {
@@ -11831,6 +11841,7 @@ router$h.post("/", async function(req, res, next) {
       item.billed_amount = cleanCurrency(item.billed_amount);
       item.coverage = cleanCurrency(item.coverage);
       item.deductible = cleanCurrency(item.deductible);
+      item.copago = cleanCurrency(item.copago);
       item.covered = cleanCurrency(item.covered);
       item.discount = cleanCurrency(item.discount);
       item.insurance_payment = cleanCurrency(item.insurance_payment);
@@ -11850,9 +11861,12 @@ router$h.post("/", async function(req, res, next) {
           item_id: item.item_id,
           item_code: item.item_code,
           item_description: item.item_description,
+          doctor_id: item.doctor_id,
+          doctor_description: item.doctor_description,
           billed_amount: item.billed_amount,
           coverage: item.coverage,
           deductible: item.deductible,
+          copago: item.copago,
           covered: item.covered,
           insurance_payment: item.insurance_payment,
           insurance_responsability: item.insurance_responsability,
@@ -11925,6 +11939,7 @@ router$h.put("/:id", async function(req, res, next) {
       item.billed_amount = cleanCurrency(item.billed_amount);
       item.coverage = cleanCurrency(item.coverage);
       item.deductible = cleanCurrency(item.deductible);
+      item.copago = cleanCurrency(item.copago);
       item.covered = cleanCurrency(item.covered);
       item.discount = cleanCurrency(item.discount);
       item.insurance_payment = cleanCurrency(item.insurance_payment);
@@ -11941,9 +11956,12 @@ router$h.put("/:id", async function(req, res, next) {
         item_id: item.item_id,
         item_code: item.item_code,
         item_description: item.item_description,
+        doctor_id: item.doctor_id,
+        doctor_description: item.doctor_description,
         billed_amount: item.billed_amount,
         coverage: item.coverage,
         deductible: item.deductible,
+        copago: item.copago,
         covered: item.covered,
         insurance_payment: item.insurance_payment,
         insurance_responsability: item.insurance_responsability,
