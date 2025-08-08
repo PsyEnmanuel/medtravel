@@ -136,6 +136,10 @@ router.get("/pdf/:code", async function (req, res, next) {
       item.diagnosis = JSON.parse(item.diagnosis)
     }
 
+    if (item.notes) {
+      item.notes = JSON.parse(item.notes)
+    }
+
 
     const bodyTemplate = await _template.getBody({
       table: "conciliation",
@@ -216,8 +220,6 @@ router.get("/", async function (req, res, next) {
       },
     });
 
-    console.log(sql);
-
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
 
@@ -251,6 +253,14 @@ router.get("/", async function (req, res, next) {
 
       if (item.diagnosis) {
         item.diagnosis = JSON.parse(item.diagnosis)
+      } else {
+        item.diagnosis = []
+      }
+
+      if (item.notes) {
+        item.notes = JSON.parse(item.notes)
+      } else {
+        item.notes = []
       }
 
       item.book_date_format = _date.intlDate(item.book_date);
@@ -291,7 +301,16 @@ router.get("/:code", async function (req, res, next) {
 
     if (item.diagnosis) {
       item.diagnosis = JSON.parse(item.diagnosis)
+    } else {
+      item.diagnosis = []
     }
+
+    if (item.notes) {
+      item.notes = JSON.parse(item.notes)
+    } else {
+      item.notes = []
+    }
+
 
     item.created_format = _date.intlDateTime(item.created);
     if (item.modified) {

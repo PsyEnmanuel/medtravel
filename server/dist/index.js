@@ -11680,6 +11680,9 @@ router$h.get("/pdf/:code", async function(req, res, next) {
     if (item.diagnosis) {
       item.diagnosis = JSON.parse(item.diagnosis);
     }
+    if (item.notes) {
+      item.notes = JSON.parse(item.notes);
+    }
     const bodyTemplate = await getBody({
       table: "conciliation",
       account,
@@ -11747,7 +11750,6 @@ router$h.get("/", async function(req, res, next) {
         columns
       }
     });
-    console.log(sql);
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (item.billed_amount_total) {
@@ -11773,6 +11775,13 @@ router$h.get("/", async function(req, res, next) {
       }
       if (item.diagnosis) {
         item.diagnosis = JSON.parse(item.diagnosis);
+      } else {
+        item.diagnosis = [];
+      }
+      if (item.notes) {
+        item.notes = JSON.parse(item.notes);
+      } else {
+        item.notes = [];
       }
       item.book_date_format = intlDate(item.book_date);
       item.created_format = intlDateTime(item.created);
@@ -11804,6 +11813,13 @@ router$h.get("/:code", async function(req, res, next) {
     const payments = books.filter((i) => i.$book_type_id === 354);
     if (item.diagnosis) {
       item.diagnosis = JSON.parse(item.diagnosis);
+    } else {
+      item.diagnosis = [];
+    }
+    if (item.notes) {
+      item.notes = JSON.parse(item.notes);
+    } else {
+      item.notes = [];
     }
     item.created_format = intlDateTime(item.created);
     if (item.modified) {

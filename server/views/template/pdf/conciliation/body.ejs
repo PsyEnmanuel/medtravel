@@ -222,26 +222,13 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>
-              1.- MONTO APLICADO A DEDUCIBLE INTERNACIONAL AÑO CALENDARIO 2025
-              (<%= data.item.deductible %>).
-            </td>
-          </tr>
-          <tr>
-            <td>
-              2.- CUBIERTO POR EL SEGURO (<%= data.item.insurance_description
-              %>)
-            </td>
-          </tr>
-          <tr>
-            <td>
-              3.- PAGO REALIZADO POR ASEGURADA. (<%= data.item.payment %>)
-            </td>
-          </tr>
-          <tr>
-            <td>4.- BALANCE PENDIENTE PROVEEDOR. (<%= data.item.balance %>)</td>
-          </tr>
+          <% if(data.item.notes) { %>
+            <% data.item.notes.forEach(function(row, index) { %>
+            <tr>
+              <td><%= row.id %>.- <%= row.description %></td>
+            </tr>
+            <% }) %>
+          <% } %>
         </tbody>
       </table>
       <table>
