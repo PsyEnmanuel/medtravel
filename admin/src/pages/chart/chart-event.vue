@@ -83,8 +83,15 @@
         <q-tab-panel class="p-0" name="diagnosis">
           <div class="grid lg:grid-cols-1 gap-1">
             <div class="flex flex-col w-full gap-1">
-              <ChartPieArrObj :key="state.update" :data="state.stats.c.diagnosisList" name="label"
-                value="value" title="Coordinaciones por Diagnóstico" subtitle="Coordinaciones" />
+              <div class="flex justify-center gap-4">
+                <q-tabs v-model="state.diagnosisBy" dense class="text-grey mb-1 w-full" active-color="primary"
+                  indicator-color="primary" align="center" narrow-indicator outside-arrows>
+                  <q-tab name="code" label="Grupo" @click="()=>getDiagnosisDataBy('code')" />
+                  <q-tab name="list" label="Código" @click="()=>getDiagnosisDataBy('list')" />
+                </q-tabs>
+              </div>
+              <ChartPieArrObj :key="state.update" :data="state.diagnosisGraph.data" name="label"
+                value="value" :title="state.diagnosisGraph.title" subtitle="Coordinaciones" />
               <ChartTableEvent :list="state.stats.c.diagnosisList" title="COORDINACIONES"
                 name="Diagnóstico" :stats="state.stats.c" type="diagnosis" columnKey="diagnosis" hideBtn
                 :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" />
@@ -150,6 +157,7 @@ import { useI18n } from 'vue-i18n';
 import UserSelect from 'src/components/select/UserSelect.vue';
 import ChartTableEvent from './components/ChartTableEvent.vue';
 import ChartPieArrObj from 'src/components/chart/ChartPieArrObj.vue';
+import ICD_GROUP  from 'src/data/icd_group';
 const { t } = useI18n();
 
 const options = {
@@ -196,6 +204,9 @@ const state = reactive({
   update: 1,
   day,
   stats: {},
+  diagnosisBy: 'list',
+  diagnosisGraph: { title: 'Coordinaciones por Diagnóstico', data: [] },
+  diagnosisByGroupDesc: [],
   diagnosis: [],
   dailyList: [],
   eventStateList: [],
@@ -241,14 +252,43 @@ watch(() => state.$event_state_id, (val) => {
   getStats()
 })
 
+function groupByGroupDesc(data) {
+  const grouped = {};
+
+  for (const [code, item] of Object.entries(data)) {
+    const group = item.group_desc || "unknown";
+
+    if (!grouped[group]) {
+      grouped[group] = { value: 0, label: '' };
+    }
+
+    grouped[group].value += item.quantity;
+    grouped[group].label = ICD_GROUP[group]['es'] || '';
+  }
+
+  return Object.values(grouped);
+}
+
+function getDiagnosisDataBy(val){
+  state.diagnosisBy = val
+  if(val === 'code'){
+    state.diagnosisGraph = { title: 'Coordinaciones por Diagnóstico de grupo', data: state.diagnosisByGroupDesc }
+  } else {
+    state.diagnosisGraph = { title: 'Coordinaciones por Diagnóstico', data:  state.stats.c.diagnosisList }
+  }
+  ++state.update
+}
+
+
 async function getStats() {
   state.stats = await $api.get('event/stats', { params: state.query });
-  console.log({stats: state.stats})
-  ++state.update
+  state.diagnosisByGroupDesc = groupByGroupDesc(state.stats.c.diagnosis);
+  getDiagnosisDataBy(state.diagnosisBy)
   state.loading = false
 }
 
 onMounted(() => {
   getStats()
+  console.log(state.stats.c)
 })
 </script>

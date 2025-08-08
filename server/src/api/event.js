@@ -127,7 +127,9 @@ router.get("/stats", async function (req, res, next) {
               stats.c.diagnosis[row.code] = {
                 description: row.description,
                 code: row.code,
-                quantity: 1
+                quantity: 1,
+                group_desc: row.group_desc || '',
+                chapter_desc: row.chapter_desc || ''
               }
             }
           }
