@@ -41,6 +41,7 @@
     "mysql": "^2.18.1",
     "node-cron": "^3.0.3",
     "pdf-merger-js": "^5.1.2",
+    "pdfmake": "^0.2.20",
     "pdftoimg-js": "^0.2.3",
     "puppeteer": "^21.5.0",
     "sharp": "^0.32.6",
