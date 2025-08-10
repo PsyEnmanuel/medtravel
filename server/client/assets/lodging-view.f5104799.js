@@ -1,1 +1,0 @@
-import{t as e,v as s,x as t,z as c,aZ as r,S as i}from"./index.02adb5f5.js";const n={__name:"lodging-view",props:{id:Number},setup(a){return(l,o)=>(e(),s(i,{class:"px-1.5 py-2 lg:px-5 lg:py-6"},{default:t(()=>[c(r,{id:a.id},null,8,["id"])]),_:1}))}};export{n as default};

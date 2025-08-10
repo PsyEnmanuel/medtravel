@@ -1,0 +1,1 @@
+import{t as e,v as s,x as t,z as r,aR as c,S as p}from"./index.bc6d1759.js";const _={__name:"provider-view",props:{id:Number},setup(a){return(i,o)=>(e(),s(p,{class:"px-1.5 py-2 lg:px-5 lg:py-6"},{default:t(()=>[r(c,{id:a.id},null,8,["id"])]),_:1}))}};export{_ as default};
