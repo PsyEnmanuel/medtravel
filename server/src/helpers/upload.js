@@ -9,6 +9,7 @@ import crypto from "crypto";
 import { load } from "@pspdfkit/nodejs";
 import PDFMerger from "pdf-merger-js";
 import { pdfToImg } from "pdftoimg-js";
+import PdfPrinter from "pdfmake";
 let browser;
 
 export const uploadDir = path.join(path.resolve(), "/privated/uploads/");
@@ -400,6 +401,64 @@ export async function generatePDF({
     filename: opts.filename,
   });
   // The browser instance is not closed here; it will be reused for the next PDF generation
+}
+
+export async function generatePDFWithPdfmake({
+  account,
+  table,
+  id,
+  filename,
+  docDefinition,
+  fonts = null,
+  outputPath = null,
+}) {
+  const defaultFonts = fonts || {
+    Roboto: {
+      normal: path.resolve("fonts/noway-regular-webfont.ttf"),
+      bold: path.resolve("fonts/noway-regular-webfont.ttf"),
+      italics: path.resolve("fonts/noway-regular-webfont.ttf"),
+      bolditalics: path.resolve("fonts/noway-regular-webfont.ttf"),
+    },
+  };
+
+  const printer = new PdfPrinter(defaultFonts);
+
+  const pdfDoc = printer.createPdfKitDocument(docDefinition);
+
+  const pdfFilename = `${filename}.pdf`;
+
+  let pdfFolder;
+  if (outputPath) {
+    pdfFolder = path.dirname(outputPath);
+  } else if (id) {
+    pdfFolder = path.join(process.cwd(), "privated", "uploads", account.domain, table, id.toString());
+  } else {
+    pdfFolder = path.join(process.cwd(), "privated", "uploads", "tmp");
+  }
+
+  if (!fs.existsSync(pdfFolder)) {
+    await fs.promises.mkdir(pdfFolder, { recursive: true });
+  }
+
+  const pdfPath = outputPath || path.join(pdfFolder, pdfFilename);
+
+  const writeStream = fs.createWriteStream(pdfPath);
+
+  pdfDoc.pipe(writeStream);
+
+  pdfDoc.end();
+
+  await new Promise((resolve, reject) => {
+    writeStream.on("finish", resolve);
+    writeStream.on("error", reject);
+  });
+
+  return publicPath({
+    account,
+    table,
+    id,
+    filename: pdfFilename,
+  });
 }
 
 export async function getFinalMapUrl(shortUrl) {

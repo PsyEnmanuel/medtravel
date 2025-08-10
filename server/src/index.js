@@ -1,6 +1,6 @@
 import "../config.js";
 // import "../src/utils/groupICD10.js"
-import "../src/fix/icd10.js"
+// import "../src/fix/icd10.js"
 
 import createServer from "./utils/server.js";
 
