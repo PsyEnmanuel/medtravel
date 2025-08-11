@@ -3,6 +3,7 @@ import { isAuthenticated } from "../middleware/auth.js";
 import { BaseError } from "../utils/errors.js";
 import { _query, _date, _utility, _comunication, _stats } from "../helpers/index.js";
 import pool from "../databases/main.js";
+import { differenceInDays } from "date-fns";
 const router = express.Router();
 const table = "t_event";
 
@@ -397,12 +398,12 @@ router.get("/alert-list", async function (req, res, next) {
   try {
 
     const user = res.locals.user;
-    let { items, total, sql } = await _query.getRows({
+    let { items, total, sql, sqlTotal } = await _query.getRows({
       table,
       user,
       query: req.query,
       optsServer: {
-        columns: 't_event.id AS event_id, t_event.*, t_itinerary.*, MAX(t_itinerary.attendance_datetime) AS last_attendance_datetime',
+        columns: 't_event.id AS event_id, t_event.*, t_itinerary.*, MAX(t_itinerary.attendance_datetime) AS last_attendance_datetime, t_event.id AS id',
         having: 'HAVING MAX(t_itinerary.attendance_datetime) < NOW() - INTERVAL 3 DAY'
       },
     });
@@ -412,8 +413,21 @@ router.get("/alert-list", async function (req, res, next) {
 
       item.last_attendance_datetime_format = _date.intlDateTime(item.last_attendance_datetime);
 
-      item.time_passed = formatDistanceToNow(item.last_attendance_datetime, { addSuffix: true });
+      item.time_passed = differenceInDays(new Date(), item.last_attendance_datetime);
+      item.time_passed_format = item.time_passed > 1 ? `Hace ${item.time_passed} días` : `Hace ${item.time_passed} día`;
 
+      if (item.time_passed > 1) {
+        item.time_passed_color = '#4CAF50';
+      }
+      if (item.time_passed > 10) {
+        item.time_passed_color = '#FFD93B';
+      }
+      if (item.time_passed > 30) {
+        item.time_passed_color = '#FF4B4B';
+      }
+      if (item.pending_list) {
+        item.pending_list = JSON.parse(item.pending_list)
+      }
       if (item.doctor_description) {
         item.doctor_description = item.doctor_description.split("|");
       }
@@ -455,6 +469,7 @@ router.get("/", async function (req, res, next) {
         item.attendance_time = _date.intlTime(item.attendance_datetime);
         item.attendance_datetime = _date.intlDateTime(item.attendance_datetime)
       }
+
       if (item.request_date) {
         item.request_date_format = _date.intlReadbleDate(item.request_date);
       }
@@ -492,6 +507,7 @@ router.get("/", async function (req, res, next) {
       }
 
       item.created_format = _date.intlDateTime(item.created);
+
       if (item.modified) {
         item.modified_format = _date.intlDateTime(item.modified);
       }

@@ -1,31 +1,32 @@
 import * as path from "path";
 import path__default, { format as format$2 } from "path";
 import dotenv from "dotenv";
-import excelToJson from "convert-excel-to-json";
+import express, { response } from "express";
+import createError from "http-errors";
+import http from "http";
+import cors from "cors";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import mysql from "mysql";
 import * as util from "util";
-import { format, transports, createLogger } from "winston";
+import Ajv from "ajv";
+import AjvErrors from "ajv-errors";
+import axios from "axios";
+import { format as format$1, transports, createLogger } from "winston";
 import ejs from "ejs";
 import multer from "multer";
 import puppeteer from "puppeteer";
 import sharp from "sharp";
 import fs from "fs";
-import express, { response } from "express";
-import jwt from "jsonwebtoken";
-import axios from "axios";
-import { format as format$1, isValid, getDaysInMonth, setDate, formatDistanceToNow as formatDistanceToNow$1, setDefaultOptions } from "date-fns";
-import crypto from "crypto";
+import { format, isValid, differenceInDays, getDaysInMonth, setDate, formatDistanceToNow, setDefaultOptions } from "date-fns";
+import excelToJson from "convert-excel-to-json";
 import { load } from "@pspdfkit/nodejs";
 import PDFMerger from "pdf-merger-js";
 import { pdfToImg } from "pdftoimg-js";
+import PdfPrinter from "pdfmake";
 import morgan from "morgan";
 import { gray, redBright, cyanBright, yellowBright, greenBright, green, cyan, yellow, red } from "colorette";
-import createError from "http-errors";
-import http from "http";
-import cors from "cors";
-import bcrypt from "bcrypt";
-import Ajv from "ajv";
-import AjvErrors from "ajv-errors";
 import JsBarcode from "jsbarcode";
 import { XMLSerializer, DOMImplementation } from "xmldom";
 import { Server } from "socket.io";
@@ -63,31 +64,26 @@ pool$1.getConnection((err, connection) => {
   return;
 });
 pool$1.query = util.promisify(pool$1.query);
-const pool = mysql.createPool({
-  connectionLimit: 20,
-  host: "127.0.0.1",
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME_GLOBAL
+const ajv = new Ajv({ allErrors: true });
+AjvErrors(ajv);
+ajv.addKeyword("$isNotEmpty", {
+  type: "string",
+  validate: function(schema, data2) {
+    return typeof data2 === "string" && data2.trim() !== "";
+  },
+  errors: false
 });
-pool.getConnection((err, connection) => {
-  if (err) {
-    console.log(err);
-    if (err.code === "PROTOCOL_CONNECTION_LOST") {
-      console.error("Database connection was closed.");
+const validate_json = (schema) => {
+  return (req, res, next) => {
+    const validate = ajv.compile(schema);
+    const valid = validate(req.body);
+    if (!valid) {
+      const errors = validate.errors;
+      return res.status(400).json(errors);
     }
-    if (err.code === "ER_CON_COUNT_ERROR") {
-      console.error("Database has too many connections.");
-    }
-    if (err.code === "ECONNREFUSED") {
-      console.error("Database connection was refused.");
-    }
-  }
-  if (connection)
-    connection.release();
-  return;
-});
-pool.query = util.promisify(pool.query);
+    next();
+  };
+};
 const operation = {
   bi: "&",
   eq: "=",
@@ -362,76 +358,6 @@ async function postMarkErrors(data2) {
       msg: "Email no pudo ser enviado"
     };
   }
-}
-const myFormat = format.printf(({ level, message, timestamp }) => {
-  return `${gray(timestamp)} ${level}: ${message}`;
-});
-const prodTransport = new transports.File({
-  filename: "logs/error.log",
-  level: "error"
-});
-const transport = new transports.Console();
-const logger = createLogger({
-  level: isDevEnvironment() ? "trace" : "error",
-  format: isDevEnvironment() ? format.combine(
-    format.colorize(),
-    format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    myFormat
-  ) : format.combine(
-    format.timestamp(),
-    format.errors({ stack: true }),
-    format.json()
-  ),
-  transports: [isDevEnvironment() ? transport : prodTransport]
-});
-const httpLogger = morgan(function(tokens, req, res) {
-  const status = (typeof res.headersSent !== "boolean" ? Boolean(res.header) : res.headersSent) ? res.statusCode : 0;
-  const color = status >= 500 ? redBright(status) : status >= 400 ? cyanBright(status) : status >= 300 ? yellowBright(status) : status >= 200 ? greenBright(status) : 0;
-  const method = req.method === "GET" ? green(req.method) : req.method === "POST" ? cyan(req.method) : req.method === "PUT" ? yellow(req.method) : req.method === "DELETE" ? red(req.method) : 0;
-  return [
-    `${gray(tokens.date(req, res, "clf") || 0)}`,
-    `${color}`,
-    `${method}`,
-    `${tokens.url(req, res)}`,
-    `${gray(tokens["response-time"](req, res) || 0)}`
-  ].join(" ");
-});
-class BaseError extends Error {
-  constructor(name, statusCode, isOperational, message, description) {
-    super(message, description);
-    Object.setPrototypeOf(this, new.target.prototype);
-    this.name = name;
-    this.statusCode = statusCode;
-    this.isOperational = isOperational;
-    this.message = message;
-    this.description = description;
-    Error.captureStackTrace(this);
-  }
-}
-function logError(err) {
-  logger.error(err);
-}
-function returnError(err, req, res, next) {
-  var _a;
-  const _err = JSON.stringify(err);
-  const user = (_a = res == null ? void 0 : res.locals) == null ? void 0 : _a.user;
-  console.log(err);
-  postMarkErrors({
-    MessageStream: "outbound",
-    From: `${process.env.MAIL_USER}`,
-    To: `enmanuelpsy@gmail.com`,
-    Subject: `MEDTRAVEL - ERRORS ✔`,
-    // Subject line
-    HtmlBody: `<pre>Usuario: ${user == null ? void 0 : user.description}, ${req == null ? void 0 : req.url}, ${req == null ? void 0 : req.method}</pre><br /><pre>${err.stack}</pre><br /><pre>${err}</pre><br /><pre>${_err}</pre>`
-  });
-  logger.error(err);
-  res.status(err.statusCode || 500).json(err);
-}
-function isOperationalError(error) {
-  if (error instanceof BaseError) {
-    return error.isOperational;
-  }
-  return false;
 }
 function fixString(str) {
   if (!str)
@@ -828,6 +754,31 @@ async function prepareData({ user, table: table2, data: data2, action = "CREATE"
   }
   return _data;
 }
+const pool = mysql.createPool({
+  connectionLimit: 20,
+  host: "127.0.0.1",
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME_GLOBAL
+});
+pool.getConnection((err, connection) => {
+  if (err) {
+    console.log(err);
+    if (err.code === "PROTOCOL_CONNECTION_LOST") {
+      console.error("Database connection was closed.");
+    }
+    if (err.code === "ER_CON_COUNT_ERROR") {
+      console.error("Database has too many connections.");
+    }
+    if (err.code === "ECONNREFUSED") {
+      console.error("Database connection was refused.");
+    }
+  }
+  if (connection)
+    connection.release();
+  return;
+});
+pool.query = util.promisify(pool.query);
 async function getProfilePic({ ref_key, ref_id }) {
   const [file] = await pool$1.query(
     "SELECT id, url, thumb, small, description, ref_key, $file_type_id, file_type, type, icon FROM t_file WHERE ref_key=? AND ref_id=? AND $file_type_id=188 AND  c_status & 4 ORDER BY id DESC",
@@ -969,7 +920,7 @@ async function getRows({
   opts.sql = `SELECT ${opts.columns} ${optsServer.columns ? ", " + optsServer.columns : ""} FROM ${table2} ${opts.join} ${opts.privilege} ${opts.where} ${opts.access} ${opts.groupBy} ${optsServer.having || ""} ${opts.order} ${opts.limit}`;
   const sql = mysql.format(opts.sql, opts.args);
   const items = await pool$1.query(sql);
-  opts.sqlTotal = `SELECT COUNT(*) as count FROM ${table2} ${opts.join} ${opts.privilege} ${opts.where} ${opts.access} ${opts.groupBy}`;
+  opts.sqlTotal = `SELECT COUNT(*) as count FROM ${table2} ${opts.join} ${opts.privilege} ${opts.where} ${opts.access} ${opts.groupBy} ${optsServer.having || ""}`;
   if ((_c = opts.groupBy) == null ? void 0 : _c.length) {
     opts.sqlTotal = `SELECT COUNT(*) as count
     FROM
@@ -980,7 +931,8 @@ async function getRows({
   return {
     items,
     total: total.count,
-    sql
+    sql,
+    sqlTotal
   };
 }
 async function getRowsUtils({
@@ -1575,6 +1527,52 @@ async function generatePDF({
     table: table2,
     id,
     filename: opts.filename
+  });
+}
+async function generatePDFWithPdfmake({
+  account,
+  table: table2,
+  id,
+  filename,
+  docDefinition,
+  fonts = null,
+  outputPath = null
+}) {
+  const defaultFonts = fonts || {
+    Roboto: {
+      normal: path__default.resolve("fonts/noway-regular-webfont.ttf"),
+      bold: path__default.resolve("fonts/noway-regular-webfont.ttf"),
+      italics: path__default.resolve("fonts/noway-regular-webfont.ttf"),
+      bolditalics: path__default.resolve("fonts/noway-regular-webfont.ttf")
+    }
+  };
+  const printer = new PdfPrinter(defaultFonts);
+  const pdfDoc = printer.createPdfKitDocument(docDefinition);
+  const pdfFilename = `${filename}.pdf`;
+  let pdfFolder;
+  if (outputPath) {
+    pdfFolder = path__default.dirname(outputPath);
+  } else if (id) {
+    pdfFolder = path__default.join(process.cwd(), "privated", "uploads", account.domain, table2, id.toString());
+  } else {
+    pdfFolder = path__default.join(process.cwd(), "privated", "uploads", "tmp");
+  }
+  if (!fs.existsSync(pdfFolder)) {
+    await fs.promises.mkdir(pdfFolder, { recursive: true });
+  }
+  const pdfPath = outputPath || path__default.join(pdfFolder, pdfFilename);
+  const writeStream = fs.createWriteStream(pdfPath);
+  pdfDoc.pipe(writeStream);
+  pdfDoc.end();
+  await new Promise((resolve, reject) => {
+    writeStream.on("finish", resolve);
+    writeStream.on("error", reject);
+  });
+  return publicPath({
+    account,
+    table: table2,
+    id,
+    filename: pdfFilename
   });
 }
 async function getFinalMapUrl(shortUrl) {
@@ -4891,7 +4889,7 @@ async function t_policy(options) {
         $policy_type_id: item.$policy_type_id,
         policy_type: item.policy_type,
         birthdate: item.birthdate,
-        birthdate_format: format$1(item.birthdate, "dd-MM-yyyy"),
+        birthdate_format: format(item.birthdate, "dd-MM-yyyy"),
         firstname: item.firstname,
         lastname: item.lastname,
         fullname: `${item.fullname || item.insured_description}`,
@@ -4900,8 +4898,8 @@ async function t_policy(options) {
         international_manager: null,
         agency_manager: null,
         director: null,
-        validity_date_start: isValid(item.validity_date_start) ? format$1(item.validity_date_start, "yyyy-MM-dd") : "",
-        validity_date_end: isValid(item.validity_date_end) ? format$1(item.validity_date_end, "yyyy-MM-dd") : "",
+        validity_date_start: isValid(item.validity_date_start) ? format(item.validity_date_start, "yyyy-MM-dd") : "",
+        validity_date_end: isValid(item.validity_date_end) ? format(item.validity_date_end, "yyyy-MM-dd") : "",
         deductible: item.deductible
       };
       _items.push(data2);
@@ -5319,68 +5317,76 @@ function setAgeStats(stats, age) {
       break;
   }
 }
-(async function() {
-  try {
-    console.log("start");
-    const items = await pool$1.query(`select * from t_event`);
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.diagnosis) {
-        item.diagnosis = JSON.parse(item.diagnosis);
-        for (let j = 0; j < item.diagnosis.length; j++) {
-          const diag = item.diagnosis[j];
-          const [icd10] = await pool$1.query(`select * from t_ICD10 where id=?`, [diag.id]);
-          if (icd10) {
-            diag.group_desc = icd10.group_desc;
-            diag.chapter_desc = icd10.chapter_desc;
-          } else {
-            console.log("error", diag, item.id);
-          }
-        }
-        item.diagnosis = JSON.stringify(item.diagnosis);
-        await pool$1.query(`update t_event set diagnosis=? where id=?`, [item.diagnosis, item.id]);
-      }
-      if (item.presumptive_diagnosis) {
-        item.presumptive_diagnosis = JSON.parse(item.presumptive_diagnosis);
-        for (let j = 0; j < item.presumptive_diagnosis.length; j++) {
-          const diag = item.presumptive_diagnosis[j];
-          const [icd10] = await pool$1.query(`select * from t_ICD10 where id=?`, [diag.id]);
-          if (icd10) {
-            diag.group_desc = icd10.group_desc;
-            diag.chapter_desc = icd10.chapter_desc;
-          } else {
-            console.log("error", diag, item.id);
-          }
-        }
-        item.presumptive_diagnosis = JSON.stringify(item.presumptive_diagnosis);
-        await pool$1.query(`update t_event set presumptive_diagnosis=? where id=?`, [item.presumptive_diagnosis, item.id]);
-      }
-    }
-    console.log("Updated!!!!");
-  } catch (err) {
-    console.log(err);
-  }
-})();
-const ajv = new Ajv({ allErrors: true });
-AjvErrors(ajv);
-ajv.addKeyword("$isNotEmpty", {
-  type: "string",
-  validate: function(schema, data2) {
-    return typeof data2 === "string" && data2.trim() !== "";
-  },
-  errors: false
+const myFormat = format$1.printf(({ level, message, timestamp }) => {
+  return `${gray(timestamp)} ${level}: ${message}`;
 });
-const validate_json = (schema) => {
-  return (req, res, next) => {
-    const validate = ajv.compile(schema);
-    const valid = validate(req.body);
-    if (!valid) {
-      const errors = validate.errors;
-      return res.status(400).json(errors);
-    }
-    next();
-  };
-};
+const prodTransport = new transports.File({
+  filename: "logs/error.log",
+  level: "error"
+});
+const transport = new transports.Console();
+const logger = createLogger({
+  level: isDevEnvironment() ? "trace" : "error",
+  format: isDevEnvironment() ? format$1.combine(
+    format$1.colorize(),
+    format$1.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+    myFormat
+  ) : format$1.combine(
+    format$1.timestamp(),
+    format$1.errors({ stack: true }),
+    format$1.json()
+  ),
+  transports: [isDevEnvironment() ? transport : prodTransport]
+});
+const httpLogger = morgan(function(tokens, req, res) {
+  const status = (typeof res.headersSent !== "boolean" ? Boolean(res.header) : res.headersSent) ? res.statusCode : 0;
+  const color = status >= 500 ? redBright(status) : status >= 400 ? cyanBright(status) : status >= 300 ? yellowBright(status) : status >= 200 ? greenBright(status) : 0;
+  const method = req.method === "GET" ? green(req.method) : req.method === "POST" ? cyan(req.method) : req.method === "PUT" ? yellow(req.method) : req.method === "DELETE" ? red(req.method) : 0;
+  return [
+    `${gray(tokens.date(req, res, "clf") || 0)}`,
+    `${color}`,
+    `${method}`,
+    `${tokens.url(req, res)}`,
+    `${gray(tokens["response-time"](req, res) || 0)}`
+  ].join(" ");
+});
+class BaseError extends Error {
+  constructor(name, statusCode, isOperational, message, description) {
+    super(message, description);
+    Object.setPrototypeOf(this, new.target.prototype);
+    this.name = name;
+    this.statusCode = statusCode;
+    this.isOperational = isOperational;
+    this.message = message;
+    this.description = description;
+    Error.captureStackTrace(this);
+  }
+}
+function logError(err) {
+  logger.error(err);
+}
+function returnError(err, req, res, next) {
+  var _a;
+  const _err = JSON.stringify(err);
+  const user = (_a = res == null ? void 0 : res.locals) == null ? void 0 : _a.user;
+  console.log(err);
+  postMarkErrors({
+    MessageStream: "outbound",
+    From: `${process.env.MAIL_USER}`,
+    To: `enmanuelpsy@gmail.com`,
+    Subject: `MEDTRAVEL - ERRORS ✔`,
+    // Subject line
+    HtmlBody: `<pre>Usuario: ${user == null ? void 0 : user.description}, ${req == null ? void 0 : req.url}, ${req == null ? void 0 : req.method}</pre><br /><pre>${err.stack}</pre><br /><pre>${err}</pre><br /><pre>${_err}</pre>`
+  });
+  logger.error(err);
+  res.status(err.statusCode || 500).json(err);
+}
+function isOperationalError(error) {
+  if (error instanceof BaseError) {
+    return error.isOperational;
+  }
+  return false;
+}
 const router$C = express.Router();
 const table$u = "t_user";
 const saltRounds = 10;
@@ -5526,7 +5532,7 @@ router$C.post("/forgot-password", async function(req, res, next) {
         domain: `${process.env.DOMAIN}`,
         url: `${process.env.DOMAIN}/cambiar-contrasena?token=${token}`,
         created_by: user.description,
-        date: format$1(/* @__PURE__ */ new Date(), "dd-MM-yyyy"),
+        date: format(/* @__PURE__ */ new Date(), "dd-MM-yyyy"),
         name: user.description,
         logo_url: `${process.env.DOMAIN_HOST}/images/logoText.png`
       }
@@ -7674,19 +7680,32 @@ async function updateInsured(data2, user) {
 router$t.get("/alert-list", async function(req, res, next) {
   try {
     const user = res.locals.user;
-    let { items, total, sql } = await getRows({
+    let { items, total, sql, sqlTotal } = await getRows({
       table: table$o,
       user,
       query: req.query,
       optsServer: {
-        columns: "t_event.id AS event_id, t_event.*, t_itinerary.*, MAX(t_itinerary.attendance_datetime) AS last_attendance_datetime",
+        columns: "t_event.id AS event_id, t_event.*, t_itinerary.*, MAX(t_itinerary.attendance_datetime) AS last_attendance_datetime, t_event.id AS id",
         having: "HAVING MAX(t_itinerary.attendance_datetime) < NOW() - INTERVAL 3 DAY"
       }
     });
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       item.last_attendance_datetime_format = intlDateTime(item.last_attendance_datetime);
-      item.time_passed = formatDistanceToNow(item.last_attendance_datetime, { addSuffix: true });
+      item.time_passed = differenceInDays(/* @__PURE__ */ new Date(), item.last_attendance_datetime);
+      item.time_passed_format = item.time_passed > 1 ? `Hace ${item.time_passed} días` : `Hace ${item.time_passed} día`;
+      if (item.time_passed > 1) {
+        item.time_passed_color = "#4CAF50";
+      }
+      if (item.time_passed > 10) {
+        item.time_passed_color = "#FFD93B";
+      }
+      if (item.time_passed > 30) {
+        item.time_passed_color = "#FF4B4B";
+      }
+      if (item.pending_list) {
+        item.pending_list = JSON.parse(item.pending_list);
+      }
       if (item.doctor_description) {
         item.doctor_description = item.doctor_description.split("|");
       }
@@ -8851,7 +8870,7 @@ router$r.post("/poll", async function(req, res, next) {
         company_cel: account.cel,
         url: `${process.env.DOMAIN}/encuesta-de-calidad?token=${token}`,
         created_by: user.description,
-        date: format$1(/* @__PURE__ */ new Date(), "dd-MM-yyyy"),
+        date: format(/* @__PURE__ */ new Date(), "dd-MM-yyyy"),
         logo_url: `${process.env.DOMAIN_HOST}/images/logoText.png`
       }
     });
@@ -10610,7 +10629,7 @@ router$k.get("/stats", async function(req, res, next) {
     });
     const days = getDaysInMonth(/* @__PURE__ */ new Date());
     const days_array = Array.apply(null, { length: days }).map((i, index) => index + 1).map((i) => {
-      const day = format$1(setDate(/* @__PURE__ */ new Date(), i), "dd-MM-yyyy");
+      const day = format(setDate(/* @__PURE__ */ new Date(), i), "dd-MM-yyyy");
       return day;
     }).reduce((acc, curr) => {
       acc[curr] = 0;
@@ -11650,10 +11669,10 @@ router$h.get("/pdf/:code", async function(req, res, next) {
     const item = books[0];
     const items = books.filter((i) => i.$book_type_id === 98);
     const payments = books.filter((i) => i.$book_type_id === 354);
-    item.book_date_format = format$1(new Date(item.book_date), "dd-MM-yyyy");
+    item.book_date_format = format(new Date(item.book_date), "dd-MM-yyyy");
     item.sequence = String(item.code).substring(1);
-    item.day = format$1(item.book_date, "dd");
-    item.year = format$1(item.created, "yyyy");
+    item.day = format(item.book_date, "dd");
+    item.year = format(item.created, "yyyy");
     item.images = {
       logoText: convertImagetoBase64("logoText.png")
     };
@@ -13126,7 +13145,7 @@ router$a.post("/web/:id", async function(req, res, next) {
             product: data2.product,
             event_id: data2.event_id,
             event_code: data2.event_code,
-            event_start: format$1(
+            event_start: format(
               new Date(data2.event_start),
               "yyyy-MM-dd HH:mm:ss"
             ),
@@ -13136,7 +13155,7 @@ router$a.post("/web/:id", async function(req, res, next) {
             poll_answer_description: question.answer_description,
             poll_question_description: question.description,
             account_id: 1,
-            result_date: format$1(/* @__PURE__ */ new Date(), "yyyy-MM-dd HH:mm:ss")
+            result_date: format(/* @__PURE__ */ new Date(), "yyyy-MM-dd HH:mm:ss")
           }
         });
       }
@@ -13256,19 +13275,19 @@ router$a.get("/", async function(req, res, next) {
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (item.created) {
-        item.created_format = format$1(
+        item.created_format = format(
           new Date(item.created),
           "dd/MM/yyyy hh:mm aa"
         );
       }
       if (item.modified) {
-        item.modified_format = format$1(
+        item.modified_format = format(
           new Date(item.modified),
           "dd/MM/yyyy hh:mm aa"
         );
       }
       if (item.result_date) {
-        item.result_date_format = format$1(/* @__PURE__ */ new Date(), "dd/MM/yyyy");
+        item.result_date_format = format(/* @__PURE__ */ new Date(), "dd/MM/yyyy");
       }
       items[i] = item;
     }
@@ -13290,13 +13309,13 @@ router$a.get("/:id", async function(req, res, next) {
       }
     });
     if (item.created) {
-      item.created_format = format$1(
+      item.created_format = format(
         new Date(item.created),
         "dd/MM/yyyy hh:mm aa"
       );
     }
     if (item.modified) {
-      item.modified_format = format$1(
+      item.modified_format = format(
         new Date(item.modified),
         "dd/MM/yyyy hh:mm aa"
       );
@@ -13425,13 +13444,13 @@ router$9.get("/", async function(req, res, next) {
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (item.created) {
-        item.created_format = format$1(
+        item.created_format = format(
           new Date(item.created),
           "dd/MM/yyyy hh:mm aa"
         );
       }
       if (item.modified) {
-        item.modified_format = format$1(
+        item.modified_format = format(
           new Date(item.modified),
           "dd/MM/yyyy hh:mm aa"
         );
@@ -13459,13 +13478,13 @@ router$9.get("/:id", async function(req, res, next) {
       }
     });
     if (item.created) {
-      item.created_format = format$1(
+      item.created_format = format(
         new Date(item.created),
         "dd/MM/yyyy hh:mm aa"
       );
     }
     if (item.modified) {
-      item.modified_format = format$1(
+      item.modified_format = format(
         new Date(item.modified),
         "dd/MM/yyyy hh:mm aa"
       );
@@ -13571,13 +13590,13 @@ router$8.get("/", async function(req, res, next) {
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (item.created) {
-        item.created_format = format$1(
+        item.created_format = format(
           new Date(item.created),
           "dd/MM/yyyy hh:mm aa"
         );
       }
       if (item.modified) {
-        item.modified_format = format$1(
+        item.modified_format = format(
           new Date(item.modified),
           "dd/MM/yyyy hh:mm aa"
         );
@@ -13605,13 +13624,13 @@ router$8.get("/:id", async function(req, res, next) {
       }
     });
     if (item.created) {
-      item.created_format = format$1(
+      item.created_format = format(
         new Date(item.created),
         "dd/MM/yyyy hh:mm aa"
       );
     }
     if (item.modified) {
-      item.modified_format = format$1(
+      item.modified_format = format(
         new Date(item.modified),
         "dd/MM/yyyy hh:mm aa"
       );
@@ -13712,18 +13731,18 @@ router$7.get("/", async function(req, res, next) {
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       item.product = JSON.parse(item.product);
-      item.event_start_format = format$1(
+      item.event_start_format = format(
         new Date(item.event_start),
         "dd/MM/yyyy"
       );
       if (item.result_date) {
-        item.result_date_format = format$1(
+        item.result_date_format = format(
           new Date(item.result_date),
           "dd/MM/yyyy hh:mm:ss"
         );
       }
       if (item.event_start) {
-        item.event_start_format = format$1(
+        item.event_start_format = format(
           new Date(item.event_start),
           "dd/MM/yyyy hh:mm:ss"
         );
@@ -14117,7 +14136,7 @@ router$5.get("/stats", async function(req, res, next) {
       recomendationList: []
     };
     items.forEach((item) => {
-      item.created_format = format$1(new Date(item.created), "dd-MM-yyyy");
+      item.created_format = format(new Date(item.created), "dd-MM-yyyy");
       if (item.$sex_id === 5) {
         stats.sex.men++;
       }
@@ -14459,8 +14478,8 @@ router$5.post("/report", async function(req, res, next) {
       user,
       items,
       title: body.title,
-      from: format$1(convertToValidDate(body.from), "dd MMMM, yyyy"),
-      to: format$1(convertToValidDate(body.to), "dd MMMM, yyyy")
+      from: format(convertToValidDate(body.from), "dd MMMM, yyyy"),
+      to: format(convertToValidDate(body.to), "dd MMMM, yyyy")
     };
     if (req.query.type === "excel") {
       return res.status(200).json(items);
@@ -14703,7 +14722,7 @@ router$4.get("/", async function(req, res, next) {
       }
       item.created_format = intlDateTime(item.created);
       if (item.event_state !== 331) {
-        item.time_passed = formatDistanceToNow$1(item.created, { addSuffix: true });
+        item.time_passed = formatDistanceToNow(item.created, { addSuffix: true });
       }
       item.files = await getFiles({
         ref_id: item.id,
@@ -14730,7 +14749,7 @@ router$4.get("/:id", async function(req, res, next) {
       item.user = JSON.parse(item.user);
     }
     if (item.event_state !== 331) {
-      item.time_passed = formatDistanceToNow$1(item.created, { addSuffix: true });
+      item.time_passed = formatDistanceToNow(item.created, { addSuffix: true });
     }
     item.files = await getFiles({
       ref_id: item.id,
@@ -15393,6 +15412,154 @@ router$1.get("/medical-guide/:id", async function(req, res, next) {
     });
     console.log(filename);
     return res.status(200).json({ item, filename });
+  } catch (error) {
+    next(error);
+  }
+});
+router$1.get("/medical-guide2/:id", async function(req, res, next) {
+  try {
+    const user = res.locals.user;
+    const account = res.locals.account;
+    const item = await getRowById({
+      id: req.params.id,
+      table: "t_event",
+      user
+    });
+    const filename = item.code || "medical-guide";
+    const { items: itineraries } = await getRows({
+      table: "t_itinerary",
+      user,
+      query: {
+        where: {
+          event_id: req.params.id,
+          c_status: 4
+        }
+      }
+    });
+    if (itineraries.length) {
+      for (let itinerary of itineraries) {
+        const provider2 = await getRowById({
+          id: itinerary.provider_id,
+          table: "t_provider",
+          user
+        });
+        if (provider2) {
+          itinerary.provider_address = provider2.address;
+          itinerary.provider_city = provider2.city;
+          itinerary.provider_country = provider2.country;
+        }
+        if (itinerary.attendance_datetime) {
+          itinerary.attendance_day = intlDay(itinerary.attendance_datetime);
+          itinerary.attendance_date = intlDate(itinerary.attendance_datetime);
+          itinerary.attendance_time = intlTimeClean(itinerary.attendance_datetime);
+          itinerary.attendance_time_format = extractAMPM(itinerary.attendance_time);
+        }
+        const doctor = await getRowById({
+          id: itinerary.doctor_id,
+          table: "t_doctor",
+          user
+        });
+        if (doctor) {
+          itinerary.doctor_address = doctor.speciality;
+          if (doctor.speciality) {
+            doctor.speciality = JSON.parse(doctor.speciality);
+          } else {
+            doctor.speciality = [];
+          }
+        }
+      }
+    }
+    const provider = await getRowById({
+      id: item.provider_id,
+      table: "t_provider",
+      user
+    });
+    const files = await getFiles({ ref_key: "t_event", ref_id: req.params.id });
+    const docDefinition = {
+      pageSize: "A4",
+      pageMargins: [40, 60, 40, 60],
+      content: [
+        { text: `Medical Guide - Event Code: ${item.code}`, style: "title", margin: [0, 0, 0, 5] },
+        { text: `Patient: ${item.patient_name || "N/A"}`, style: "subheader" },
+        { text: `Date: ${item.date || "N/A"}`, margin: [0, 0, 0, 20] },
+        {
+          text: "Provider Information",
+          style: "sectionHeader"
+        },
+        {
+          ul: [
+            `Name: ${(provider == null ? void 0 : provider.description) || "N/A"}`,
+            `Address: ${provider ? `${provider.address}, ${provider.city}, ${provider.country}` : "N/A"}`
+          ],
+          margin: [0, 0, 0, 20]
+        },
+        {
+          text: "Itineraries",
+          style: "sectionHeader"
+        },
+        {
+          table: {
+            headerRows: 1,
+            widths: ["auto", "*", "*", "auto", "auto"],
+            body: [
+              [
+                { text: "Day", style: "tableHeader" },
+                { text: "Provider", style: "tableHeader" },
+                { text: "City", style: "tableHeader" },
+                { text: "Doctor", style: "tableHeader" },
+                { text: "Time", style: "tableHeader" }
+              ],
+              ...itineraries.map((it) => [
+                it.attendance_day || "",
+                it.provider_address || "",
+                it.provider_city || "",
+                it.doctor_address || "",
+                it.attendance_time || ""
+              ])
+            ]
+          },
+          layout: "lightHorizontalLines"
+        }
+      ],
+      styles: {
+        title: {
+          fontSize: 20,
+          bold: true,
+          color: "#20375c",
+          margin: [0, 0, 0, 10]
+        },
+        subheader: {
+          fontSize: 14,
+          margin: [0, 10, 0, 5]
+        },
+        sectionHeader: {
+          fontSize: 12,
+          bold: true,
+          margin: [0, 15, 0, 5],
+          decoration: "underline",
+          color: "#333333"
+        },
+        tableHeader: {
+          bold: true,
+          fontSize: 11,
+          color: "black",
+          fillColor: "#F0F0F0",
+          alignment: "center"
+        },
+        defaultStyle: {
+          fontSize: 10,
+          color: "#333333"
+        }
+      }
+    };
+    const pdfUrl = await generatePDFWithPdfmake({
+      account,
+      table: "t_event",
+      id: req.params.id,
+      filename,
+      docDefinition
+    });
+    return res.status(200).json({ item, filename, pdfUrl });
   } catch (error) {
     next(error);
   }

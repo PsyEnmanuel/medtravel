@@ -114,6 +114,32 @@ export const asyncRoutes = [
     ],
   },
   {
+    path: path.conciliation,
+    name: "conciliation",
+    component: MainLayout,
+    meta: { title: "conciliations", nav: 1, icon: 'fa-duotone fa-solid fa-books' },
+    children: [
+      {
+        path: "",
+        name: "conciliation_index",
+        meta: { title: "conciliation" },
+        component: () => import("pages/conciliation/conciliation-index.vue"),
+      },
+      {
+        path: path.conciliation_create,
+        name: "conciliation_create",
+        props: (route) => route.query,
+        component: () => import("pages/conciliation/conciliation-write.vue"),
+      },
+      {
+        path: `${path.conciliation_write}/:id`,
+        name: "conciliation_write",
+        props: true,
+        component: () => import("pages/conciliation/conciliation-write.vue"),
+      },
+    ],
+  },
+  {
     path: path.insurance,
     name: "insurance",
     component: MainLayout,
@@ -188,19 +214,6 @@ export const asyncRoutes = [
         component: () => import("pages/provider/provider-view.vue"),
       },
     ],
-  },
-  {
-    path: path.provider_group,
-    name: "provider_group",
-    component: MainLayout,
-    meta: { title: "providers", nav: 1, icon: 'fa-duotone fa-solid fa-hospitals', children: ['doctor', 'broker', 'contact', 'lodging', 'insurance', 'provider'] },
-    children: [
-      {
-        path: "",
-        name: "provider_group_index",
-        component: () => import("pages/provider/provider-index.vue"),
-      }
-    ]
   },
   {
     path: path.broker,
@@ -279,145 +292,46 @@ export const asyncRoutes = [
     ],
   },
   {
-    path: path.file,
-    name: "file",
+    path: path.pending_group,
+    name: "pending_group",
     component: MainLayout,
-    meta: { title: "files", nav: 1, icon: 'fa-duotone fa-solid fa-photo-film' },
+    meta: { title: "Pendientes", nav: 1, icon: 'fa-duotone fa-solid fa-solid fa-clock-rotate-left', children: ['pending_event', 'pending_conciliation'] },
     children: [
       {
         path: "",
-        name: "file_index",
-        component: () => import("pages/file/file-index.vue"),
-      },
-      {
-        path: `${path.file_consult}/:id`,
-        props: true,
-        name: "file_view",
-        component: () => import("pages/file/file-view.vue"),
-      },
-    ],
+        name: "pending_group_index",
+        component: () => import("pages/setting/speciality/speciality-index.vue"),
+      }
+    ]
   },
-  // {
-  //   path: path.conciliation_group,
-  //   name: "conciliation_group",
-  //   component: MainLayout,
-  //   meta: { title: "conciliations", nav: 1, icon: 'fa-duotone fa-solid fa-hospitals', children: ['conciliation', 'conciliation_report'] },
-  //   children: [
-  //     {
-  //       path: "",
-  //       name: "conciliation_group_index",
-  //       component: () => import("pages/conciliation/conciliation-index.vue"),
-  //     }
-  //   ]
-  // },
   {
-    path: path.conciliation,
-    name: "conciliation",
+    path: `${path.pending}/${path.pending_event}`,
+    name: "pending_event",
     component: MainLayout,
-    meta: { title: "conciliations", nav: 1, icon: 'fa-duotone fa-solid fa-books' },
+    meta: { title: "events", nav: 2, icon: 'fa-duotone fa-solid fa-calendar-lines' },
     children: [
       {
         path: "",
-        name: "conciliation_index",
-        meta: { title: "conciliation" },
-        component: () => import("pages/conciliation/conciliation-index.vue"),
-      },
-      {
-        path: path.conciliation_create,
-        name: "conciliation_create",
-        props: (route) => route.query,
-        component: () => import("pages/conciliation/conciliation-write.vue"),
-      },
-      {
-        path: `${path.conciliation_write}/:id`,
-        name: "conciliation_write",
-        props: true,
-        component: () => import("pages/conciliation/conciliation-write.vue"),
+        name: "pending_events",
+        meta: { title: "events" },
+        component: () => import("pages/pending/pending-event.vue"),
       },
     ],
   },
   {
-    path: path.conciliation_report,
-    name: "conciliation_report",
+    path: `${path.pending}/${path.pending_conciliation}`,
+    name: "pending_conciliation",
     component: MainLayout,
-    meta: { title: "Reporte General", nav: 2, icon: 'fa-duotone fa-solid fa-calendar-lines' },
+    meta: { title: "conciliations", nav: 2, icon: 'fa-duotone fa-solid fa-books' },
     children: [
       {
         path: "",
-        name: "conciliation_report_index",
-        meta: { title: "Reporte General" },
-        component: () => import("pages/conciliation/conciliation-report.vue"),
+        name: "pending_conciliations",
+        meta: { title: "conciliations" },
+        component: () => import("pages/pending/pending-conciliation.vue"),
       },
     ],
   },
-  {
-    path: path.task,
-    name: "task",
-    component: MainLayout,
-    meta: { title: "task", nav: 1, icon: 'fa-duotone fa-solid fa-list-check' },
-    children: [
-      {
-        path: "",
-        name: "task_index",
-        meta: { title: "task" },
-        component: () => import("pages/task/task-index.vue"),
-      },
-      {
-        path: `${path.task_consult}/:id`,
-        name: "task_view",
-        meta: { title: "task" },
-        props: true,
-        component: () => import("pages/task/task-view.vue"),
-      },
-    ],
-  },
-  {
-    path: path.chart,
-    name: "chart",
-    component: MainLayout,
-    meta: { nav: 2, title: "Estadísticas", nav: 1, icon: 'fa-duotone fa-solid fa-chart-pie-simple' },
-    children: [
-      {
-        path: "",
-        name: "chart_index",
-        meta: { title: "Gráfico" },
-        component: () => import("pages/chart/chart-index.vue"),
-        children: [
-          {
-            path: path.chart_insured,
-            name: "chart_insured_index",
-            meta: { title: "insured" },
-            component: () => import("pages/chart/chart-insured.vue"),
-          },
-          {
-            path: path.chart_event,
-            name: "chart_event_index",
-            meta: { title: "event" },
-            component: () => import("pages/chart/chart-event.vue"),
-          },
-          {
-            path: path.chart_executive_checkups,
-            name: "chart_executive_checkups_index",
-            meta: { title: "event" },
-            component: () => import("pages/chart/chart-chequeos-ejectivos.vue"),
-          },
-          {
-            path: path.chart_policy,
-            name: "chart_policy_index",
-            meta: { title: "policies" },
-            component: () => import("pages/chart/chart-policy.vue"),
-          },
-          {
-            path: path.chart_conciliation,
-            name: "chart_conciliation_index",
-            meta: { title: "conciliation" },
-            component: () => import("pages/chart/chart-conciliation.vue"),
-          },
-        ],
-      },
-    ],
-  },
-
   {
     path: path.setting_speciality,
     name: "speciality",
@@ -488,6 +402,19 @@ export const asyncRoutes = [
         component: () => import("pages/setting/poll/poll-view.vue"),
       },
     ],
+  },
+  {
+    path: path.provider_group,
+    name: "provider_group",
+    component: MainLayout,
+    meta: { title: "providers", nav: 1, icon: 'fa-duotone fa-solid fa-hospitals', children: ['doctor', 'broker', 'contact', 'lodging', 'insurance', 'provider'] },
+    children: [
+      {
+        path: "",
+        name: "provider_group_index",
+        component: () => import("pages/provider/provider-index.vue"),
+      }
+    ]
   },
   {
     path: path.libraries_group,
@@ -580,6 +507,92 @@ export const asyncRoutes = [
         component: () => import("pages/setting/log/log-index.vue"),
       }
     ]
+  },
+  {
+    path: path.chart,
+    name: "chart",
+    component: MainLayout,
+    meta: { nav: 2, title: "Estadísticas", nav: 1, icon: 'fa-duotone fa-solid fa-chart-pie-simple' },
+    children: [
+      {
+        path: "",
+        name: "chart_index",
+        meta: { title: "Gráfico" },
+        component: () => import("pages/chart/chart-index.vue"),
+        children: [
+          {
+            path: path.chart_insured,
+            name: "chart_insured_index",
+            meta: { title: "insured" },
+            component: () => import("pages/chart/chart-insured.vue"),
+          },
+          {
+            path: path.chart_event,
+            name: "chart_event_index",
+            meta: { title: "event" },
+            component: () => import("pages/chart/chart-event.vue"),
+          },
+          {
+            path: path.chart_executive_checkups,
+            name: "chart_executive_checkups_index",
+            meta: { title: "event" },
+            component: () => import("pages/chart/chart-chequeos-ejectivos.vue"),
+          },
+          {
+            path: path.chart_policy,
+            name: "chart_policy_index",
+            meta: { title: "policies" },
+            component: () => import("pages/chart/chart-policy.vue"),
+          },
+          {
+            path: path.chart_conciliation,
+            name: "chart_conciliation_index",
+            meta: { title: "conciliation" },
+            component: () => import("pages/chart/chart-conciliation.vue"),
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: path.file,
+    name: "file",
+    component: MainLayout,
+    meta: { title: "files", nav: 1, icon: 'fa-duotone fa-solid fa-photo-film' },
+    children: [
+      {
+        path: "",
+        name: "file_index",
+        component: () => import("pages/file/file-index.vue"),
+      },
+      {
+        path: `${path.file_consult}/:id`,
+        props: true,
+        name: "file_view",
+        component: () => import("pages/file/file-view.vue"),
+      },
+    ],
+  },
+  {
+    path: path.task,
+    name: "task",
+    component: MainLayout,
+    meta: { title: "task", nav: 1, icon: 'fa-duotone fa-solid fa-list-check' },
+    children: [
+      {
+        path: "",
+        name: "task_index",
+        meta: { title: "task" },
+        component: () => import("pages/task/task-index.vue"),
+      },
+      {
+        path: `${path.task_consult}/:id`,
+        name: "task_view",
+        meta: { title: "task" },
+        props: true,
+        component: () => import("pages/task/task-view.vue"),
+      },
+    ],
   },
 
   {

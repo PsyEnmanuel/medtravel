@@ -38,9 +38,15 @@ export default {
   lodging: "/hospedaje",
   lodging_consult: "consultar",
 
+
   event: "/coordinaciones",
   event_consult: "consultar",
-  
+
+  pending_group: "/pendientes-grupo",
+  pending: "/pendientes",
+  pending_event: "coordinaciones",
+  pending_conciliation: "conicliaciones",
+
   conciliation_group: "/conciliaciones-grupo",
   conciliation: "/conciliaciones",
   conciliation_create: "crear",
@@ -68,7 +74,7 @@ export default {
   chart_conciliation: "reconciliaciones",
   chart_executive_checkups: "chequeos-ejectivos",
 
-  
+
   libraries_group: "/libreria-grupo",
   setting_speciality: "/especialidad",
   setting_ICD10: "/ICD10",
@@ -76,7 +82,7 @@ export default {
   setting_category: "/categorias",
   setting_poll: "/encuesta",
   setting_poll_consult: "consultar",
-  
+
   access_group: "/acceso-grupo",
   setting_log: "/log",
   setting_user: "/usuarios",

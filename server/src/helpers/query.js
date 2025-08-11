@@ -170,7 +170,7 @@ export async function getRows({
 
   const items = await pool.query(sql);
 
-  opts.sqlTotal = `SELECT COUNT(*) as count FROM ${table} ${opts.join} ${opts.privilege} ${opts.where} ${opts.access} ${opts.groupBy}`;
+  opts.sqlTotal = `SELECT COUNT(*) as count FROM ${table} ${opts.join} ${opts.privilege} ${opts.where} ${opts.access} ${opts.groupBy} ${optsServer.having || ''}`;
 
   if (opts.groupBy?.length) {
     opts.sqlTotal = `SELECT COUNT(*) as count
@@ -185,6 +185,7 @@ export async function getRows({
     items,
     total: total.count,
     sql,
+    sqlTotal
   };
 }
 
