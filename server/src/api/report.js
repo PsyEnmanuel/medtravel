@@ -1,8 +1,38 @@
-import express from "express";
+import express, { text } from "express";
 import { isAuthenticated } from "../middleware/auth.js";
 import { _query, _date, _template, _upload } from "../helpers/index.js";
 import { getFiles, getProfilePic } from "../helpers/query.js";
+import path from "path";
+import fs from "fs";
 
+const imagesBase64Dir = path.join(path.resolve(), "/public/base64/");
+const frontPage = fs.readFileSync(`${imagesBase64Dir}/guia1.png`).toString('base64');
+const carnet = fs.readFileSync(`${imagesBase64Dir}/guia2.png`).toString('base64');
+const content1 = fs.readFileSync(`${imagesBase64Dir}/guia3.png`).toString('base64');
+const content2 = fs.readFileSync(`${imagesBase64Dir}/guia4.png`).toString('base64');
+const branches = fs.readFileSync(`${imagesBase64Dir}/guia19.png`).toString('base64');
+
+const BACKGROUNDS = [
+  frontPage, // page 1
+  carnet,    // page 2
+  content1,  // page 3
+  content2,  // page 4
+  content2,  // page 5
+  content2,  // page 6
+  content1,  // page 7
+  content1,  // page 8
+  content2,  // page 9
+  content1,  // page 10
+  content2,  // page 11
+  content1,  // page 12
+  content2,  // page 13
+  content1,  // page 14
+  content2,  // page 15
+  content2,  // page 16
+  content2,  // page 17
+  content1,  // page 18
+  branches   // page 19
+];
 const router = express.Router();
 
 router.use(isAuthenticated);
@@ -122,8 +152,8 @@ router.get("/medical-guide/:id", async function (req, res, next) {
     }
 
     data.images = {
-      guia1: _upload.convertImagetoBase64("guia1.png"),
-      guia2: _upload.convertImagetoBase64("guia2.png"),
+      frontPage: _upload.convertImagetoBase64("frontPage.png"),
+      content1: _upload.convertImagetoBase64("content1.png"),
       guia3: _upload.convertImagetoBase64("guia3.png"),
       guia4: _upload.convertImagetoBase64("guia4.png"),
       guia19: _upload.convertImagetoBase64("guia19.png"),
@@ -223,83 +253,229 @@ router.get("/medical-guide2/:id", async function (req, res, next) {
 
     const files = await getFiles({ ref_key: "t_event", ref_id: req.params.id });
 
+    console.log({provider,files})
+
     const docDefinition = {
       pageSize: "A4",
-      pageMargins: [40, 60, 40, 60],
+      pageMargins: [40, 150, 40, 60], 
+      background: function (currentPage) {
+        const bg = BACKGROUNDS[currentPage - 1];
+        if (!bg) return null;
+
+        return {
+          image: `data:image/png;base64,${bg}`,
+          width: 595,
+          height: 842
+        };
+      },
       content: [
-        { text: `Medical Guide - Event Code: ${item.code}`, style: "title", margin: [0, 0, 0, 5] },
-        { text: `Patient: ${item.patient_name || "N/A"}`, style: "subheader" },
-        { text: `Date: ${item.date || "N/A"}`, margin: [0, 0, 0, 20] },
+        { text: '', pageBreak: 'after' }, // page1
+        { text: 'Carnet', pageBreak: 'after' }, // page2
+        { text: 'Logo', pageBreak: 'after' }, // page3
+        { text:'CONTENIDO', style: "title", margin: [30,35, 0, 0] }, // page4 start
         {
-          text: "Provider Information",
-          style: "sectionHeader",
+          type: 'square',
+          style: 'item',
+          ul: [
+            'Pre-certificación',
+            'Citas Medicas',
+            'Sobre el Doctor',
+            'Sobre el Hospital',
+            'Sobre la Ciudad',
+            'Estadía y Hospital',
+            'Atracciones',
+            'Otras Informaciones'
+          ], 
+          margin: [30, 0, 0, 0],
+          pageBreak: 'after'
+        }, // page4 end
+        {
+          text: 'PRE-CERTIFICACIÓN',
+          style: 'title',
+			    alignment: 'center',
+          absolutePosition: { x: 0, y: 390 }, 
+          pageBreak: 'after'
+        }, // page5
+        {
+          text: 'CITAS MÉDICAS',
+          style: 'title',
+			    alignment: 'center',
+          absolutePosition: { x: 0, y: 390 },
+          pageBreak: 'after'
+        }, // page6
+        {
+          table: {
+            widths: ['30%', '18%', '30%', '27%'],
+            body: [
+              [
+                { text: 'FECHA', style: 'tableHeader', alignment: 'center' },
+                { text: 'HORA', style: 'tableHeader', alignment: 'center' },
+                { text: 'LUGAR', style: 'tableHeader', alignment: 'center' },
+                { text: 'DOCTOR', style: 'tableHeader', alignment: 'center' }
+              ],
+              [
+                { 
+                  stack: [
+                    { text: 'DÍA,', bold: false, fontSize: 9 },
+                    { text: 'FECHA', bold: true, fontSize: 9 }
+                  ],
+                  style: 'tableSubHeader',
+                  alignment: 'left'
+                },
+                { 
+                  stack: [
+                    { text: 'HORA', fontSize: 9 },
+                    { text: 'TIPO DE SERVICIOS', fontSize: 8 }
+                  ],
+                  style: 'tableSubHeader',
+                  alignment: 'center'
+                },
+                { 
+                  stack: [
+                    { text: 'NOMBRE DEL HOSPITAL', bold: true, fontSize: 9, lineHeight: 0.7 },
+                    { text: 'DIRECCIÓN', fontSize: 8 }
+                  ],
+                  style: 'tableSubHeader',
+                  alignment: 'center'
+                },
+                { 
+                  stack: [
+                    { text: 'NOMBRE DEL DOCTOR', bold: true, fontSize: 9, lineHeight: 0.7 },
+                    { text: 'ESPECIALIDAD', fontSize: 8 }
+                  ],
+                  style: 'tableSubHeader',
+                  alignment: 'center'
+                }
+              ],
+              // Empty data row example
+              [
+                { text: '', minHeight: 80 },
+                { text: '', minHeight: 80 },
+                { text: '', minHeight: 80 },
+                { text: '', minHeight: 80 }
+              ]
+            ]
+          },
+          layout: {
+            fillColor: function (rowIndex) {
+              return rowIndex === 0 ? '#1b355e' : null;
+            },
+            hLineWidth: function () { return 0.5; },
+            vLineWidth: function () { return 0.5; },
+            hLineColor: function () { return '#CCCCCC'; },
+            vLineColor: function () { return '#CCCCCC'; }
+          }
+        },
+        { text: '\n' },
+        {
+          text: 'NOTAS:',
+          style: 'notesHeader'
         },
         {
           ul: [
-            `Name: ${provider?.description || "N/A"}`,
-            `Address: ${provider ? `${provider.address}, ${provider.city}, ${provider.country}` : "N/A"}`,
+            { text: 'Por favor llegar al Hospital al 30 minutos antes de la hora de su cita. A su llegada, favor dirigirse directamente a la Oficina Internacional.', style: 'notesContent' },
+            { text: 'Recuerde traer con usted identificación (pasaporte y/o licencia de conducir junto a su carnet de seguro médico internacional).', style: 'notesContent' },
+            { text: 'El día de su cirugía, favor llegar al Hospital a las 5:30 a.m. para iniciar su preparación prequirúrgica.', style: 'notesContent' },
+            { text: 'Las consultas médicas con proveedores afiliados a la red están sujetas a un copago de US$25.00.', style: 'notesContent' },
+            { text: 'Los Dres. Igor Palacios, MD, Allan Pineda, MD y John Siliski, MD, forman parte de los proveedores afiliados a la red de Humano (United Healthcare).', style: 'notesContent' },
+            { text: 'De acuerdo al plan bajo el cual está amparado, su deducible internacional anual es de US$2,500.00, el cual no ha sido copado.', style: 'notesContent' },
+            { text: 'Luego de copar su deducible, su cobertura es al 100% según las condiciones de su contrato.', style: 'notesContent' },
+            { text: 'La compra de medicamentos se maneja mediante reembolso.', style: 'notesContent' },
+            { text: 'En caso de incurrir en cualquier gasto, favor de siempre pedir: Factura detallada de los servicios, que contenga procedimientos y diagnósticos con sus códigos. Asimismo Recibo de pago.', style: 'notesContent' }
           ],
-          margin: [0, 0, 0, 20],
-        },
-
+          pageBreak: 'after'
+        }, // page7
+        { text: '', pageBreak: 'after' }, // page8
+        { 
+          text: 'SOBRE EL DOCTOR',
+          style: 'title',
+			    alignment: 'center',
+          absolutePosition: { x: 0, y: 390 }, 
+          pageBreak: 'after' 
+        }, // page9
+        { text: '', pageBreak: 'after' }, // page10
+        { 
+          text: 'SOBRE EL HOSPITAL',
+          style: 'title',
+			    alignment: 'center',
+          absolutePosition: { x: 0, y: 390 }, 
+          pageBreak: 'after' 
+        }, // page11
+        { text: '', pageBreak: 'after' }, // page12
         {
-          text: "Itineraries",
-          style: "sectionHeader",
-        },
+          text: 'SOBRE LA CIUDAD',
+          style: 'title',
+			    alignment: 'center',
+          absolutePosition: { x: 0, y: 390 }, 
+          pageBreak: 'after'
+        }, // page13
+        { text: '', pageBreak: 'after' }, // page14
         {
-          table: {
-            headerRows: 1,
-            widths: ["auto", "*", "*", "auto", "auto"],
-            body: [
-              [
-                { text: "Day", style: "tableHeader" },
-                { text: "Provider", style: "tableHeader" },
-                { text: "City", style: "tableHeader" },
-                { text: "Doctor", style: "tableHeader" },
-                { text: "Time", style: "tableHeader" },
-              ],
-              ...itineraries.map((it) => [
-                it.attendance_day || "",
-                it.provider_address || "",
-                it.provider_city || "",
-                it.doctor_address || "",
-                it.attendance_time || "",
-              ]),
-            ],
-          },
-          layout: "lightHorizontalLines",
-        },
-
-
+          text: 'ESTADÍA & HOSPITALES',
+          style: 'title',
+			    alignment: 'center',
+          absolutePosition: { x: 0, y: 390 }, 
+          pageBreak: 'after'
+        }, // page15
+        {
+          text: 'ATRACCIONES',
+          style: 'title',
+			    alignment: 'center',
+          absolutePosition: { x: 0, y: 390 }, 
+          pageBreak: 'after'
+        }, // page16
+        {
+          text: 'OTRAS INFORMACIONES',
+          style: 'title',
+			    alignment: 'center',
+          absolutePosition: { x: 0, y: 390 }, 
+          pageBreak: 'after'
+        }, // page17
+        { text: '', pageBreak: 'after' }, // page18
+        { text: '' }, // page19
       ],
       styles: {
         title: {
-          fontSize: 20,
+          fontSize: 44,
           bold: true,
+          lineHeight: 0.85,
           color: '#20375c',
-          margin: [0, 0, 0, 10]
-        },
-        subheader: {
-          fontSize: 14,
-          margin: [0, 10, 0, 5],
-        },
-        sectionHeader: {
-          fontSize: 12,
-          bold: true,
-          margin: [0, 15, 0, 5],
-          decoration: "underline",
-          color: '#333333'
         },
         tableHeader: {
           bold: true,
-          fontSize: 11,
-          color: "black",
-          fillColor: '#F0F0F0',
-          alignment: 'center'
+          fontSize: 14,
+          color: 'white',
+          margin: [0, 5, 0, 0],
+        },
+        tableSubHeader: {
+          margin: [0, 5, 0, 5],
+        },
+        notesHeader: {
+          bold: true,
+          fontSize: 16,
+          color: '#20375c',
+          margin: [0, 80, 0, 5]
+        },
+        notesContent: {
+          italics: true,
+          color: 'gray',
+          fontSize: 10.5
+        },
+        pageTitle: {
+          fontSize: 24,
+          color: '#20375c',
+          bold: true,
+          lineHeight: 1.2,
+			    alignment: 'center',
+        },
+        item:{
+          fontSize: 24,
+          color: '#20375c',
+          lineHeight: 1.2,
         },
         defaultStyle: {
-            fontSize: 10,
-            color: '#333333'
+          fontSize: 10,
+          color: '#333333'
         }
       },
     };

@@ -415,9 +415,10 @@ export async function generatePDFWithPdfmake({
   const defaultFonts = fonts || {
     Roboto: {
       normal: path.resolve("fonts/noway-regular-webfont.ttf"),
-      bold: path.resolve("fonts/noway-regular-webfont.ttf"),
-      italics: path.resolve("fonts/noway-regular-webfont.ttf"),
-      bolditalics: path.resolve("fonts/noway-regular-webfont.ttf"),
+      bold: path.resolve("fonts/noway-bold-webfont.ttf"),
+      medium: path.resolve("fonts/noway-medium-webfont.ttf"),
+      italics: path.resolve("fonts/noway_regular_italic-webfont.ttf"),
+      bolditalics: path.resolve("fonts/noway_bold_italic-webfont.ttf"),
     },
   };
 

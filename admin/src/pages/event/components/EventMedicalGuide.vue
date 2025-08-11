@@ -36,8 +36,50 @@
     </template>
     <div class="card border my-4 rounded-xl overflow-hidden">
       <div v-if="!state.loading">
-        <div v-for="page in state.numOfPages" :key="page">
-          <VuePdf :src="state.fileUrl" :page="page" />
+        <div class="mt-2 flex justify-center">
+          <div class="flex items-center gap-3">
+            <button
+              @click="prevPage"
+              :disabled="state.currentPage === 1"
+              class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            >
+              ◀
+            </button>
+            <span class="text-sm font-medium text-gray-700">
+              Pag. {{ state.currentPage }} / {{ state.numOfPages }}
+            </span>
+            <button
+              @click="nextPage"
+              :disabled="state.currentPage === state.numOfPages"
+              class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            >
+              ▶
+            </button>
+          </div>
+        </div>
+
+        <VuePdf :src="state.fileUrl" :page="state.currentPage" :key="state.currentPage" />
+      
+        <div class="mb-2 flex justify-center">
+          <div class="flex items-center gap-3">
+            <button
+              @click="prevPage"
+              :disabled="state.currentPage === 1"
+              class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            >
+              ◀
+            </button>
+            <span class="text-sm font-medium text-gray-700">
+              Pag. {{ state.currentPage }} / {{ state.numOfPages }}
+            </span>
+            <button
+              @click="nextPage"
+              :disabled="state.currentPage === state.numOfPages"
+              class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            >
+              ▶
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -111,8 +153,25 @@ const state = reactive({
   item: {},
   filename: null,
   pdfSrc: null,
-  numOfPages: 0
+  numOfPages: 0,
+  currentPage: 1
 })
+
+function nextPage() {
+  state.loading = true;
+  if (state.currentPage < state.numOfPages) {
+    state.currentPage++;
+  }
+  state.loading = false;
+}
+
+function prevPage() {
+  state.loading = true;
+  if (state.currentPage > 1) {
+    state.currentPage--;
+  }
+  state.loading = false;
+}
 
 onMounted(async () => {
   const { item, filename, pdfUrl } = await $api.get(`report/medical-guide2/${props.id}`)
@@ -121,9 +180,10 @@ onMounted(async () => {
   state.fileUrl = pdfUrl
 
   const loadingTask = createLoadingTask(pdfUrl)
-    const pdf = await loadingTask.promise
-    state.numOfPages = pdf.numPages
+  const pdf = await loadingTask.promise
+  state.numOfPages = pdf.numPages
 
+  state.currentPage = 1;
   state.loading = false
 })
 
