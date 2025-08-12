@@ -3,9 +3,9 @@
     class="flex flex-col justify-center items-center bg-white rounded-2xl w-full p-4 text-center border-2 border-dashed hover:border-sky-300 cursor-pointer"
     :class="{ 'bg-sky-100': isDragging }" @dragover.prevent="onDragOver" @dragleave.prevent="onDragLeave"
     @drop.prevent="onDrop">
-    <input class="hidden w-full h-full" :id="`fileElem-${file_type}`" ref="myFiles" type="file" multiple
+    <input class="hidden w-full h-full" :id="`fileElem-${file_type}-${props.ref_id}`" ref="myFiles" type="file" multiple
       @change="handleFiles" />
-    <label class="w-full h-full flex justify-center items-center flex-col" :for="`fileElem-${file_type}`">
+    <label class="w-full h-full flex justify-center items-center flex-col" :for="`fileElem-${file_type}-${props.ref_id}`">
       <q-icon class="mb-2" :name="icon" size="48px" color="primary"></q-icon>
       <p class="text-lg">{{ text }}</p>
       <div v-if="avaliable_file_text" class="text-sm max-w-[300px] text-center mt-2" v-html="avaliable_text"></div>
