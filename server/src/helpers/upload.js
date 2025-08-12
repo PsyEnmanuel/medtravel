@@ -25,7 +25,6 @@ export function getFilePathFromUrl(fileUrl) {
 
 export async function pdfToImg2(pdf_document) {
   try {
-
     const images = await pdfToImg(pdf_document, {
       pages: "all",
       imgType: "png",
@@ -36,14 +35,19 @@ export async function pdfToImg2(pdf_document) {
     for (let i = 0; i < images.length; i++) {
       const image = images[i];
       const filename = `tempora${i}.png`
-      const tmpImage = path.join(uploadDir, filename)
+       
+      const pdfFolder = path.join(process.cwd(), "privated", "uploads", "tmp");
+
+      if (!fs.existsSync(pdfFolder)) {
+        await fs.promises.mkdir(pdfFolder, { recursive: true });
+      }
+
+      const tmpImage = path.join(pdfFolder, filename)
       const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
       const buffer = Buffer.from(base64Data, "base64")
       await fs.writeFileSync(tmpImage, buffer);
       files.push(filename)
-
     }
-
 
     return files
   } catch (error) {
@@ -56,6 +60,15 @@ export async function pdfToImg2(pdf_document) {
 export function convertImagetoBase64(file) {
   // Read the image file as a Buffer
   const imageBuffer = fs.readFileSync(`${imagesBase64Dir}/${file}`);
+
+  // Convert the Buffer to base64 encoding
+  const base64Image = imageBuffer.toString("base64");
+
+  return `data:image/png;base64,${base64Image}`;
+}
+export function convertImageUrltoBase64(filePath) {
+  // Read the image file as a Buffer
+  const imageBuffer = fs.readFileSync(filePath);
 
   // Convert the Buffer to base64 encoding
   const base64Image = imageBuffer.toString("base64");
@@ -420,6 +433,12 @@ export async function generatePDFWithPdfmake({
       italics: path.resolve("fonts/noway_regular_italic-webfont.ttf"),
       bolditalics: path.resolve("fonts/noway_bold_italic-webfont.ttf"),
     },
+    OpenSans:{
+      normal: path.resolve("fonts/OpenSans-Regular.ttf"),
+      bold: path.resolve("fonts/OpenSans-Bold.ttf"),
+      semibold: path.resolve("fonts/OpenSans-Semibold.ttf"),
+      italic: path.resolve("fonts/OpenSans-Italic.ttf"),
+    }
   };
 
   const printer = new PdfPrinter(defaultFonts);
