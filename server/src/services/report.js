@@ -14,6 +14,18 @@ const BACKGROUNDS = {frontPage, carnet, imagesAndContent:content1, titlePages: c
 
 export async function generateMedicalGuideDoc({ item, itineraries, provider, files, account, user }) {
     let provider_files;
+
+    const pending_list = {
+      hasCarnets: false,
+      hasLogo: false,
+      hasVobs: false,
+      hasEvents: false,
+      hasDoctors: false,
+      hasProviderInfo: false,
+      hasHowTo: false,
+      hasMap: false,
+    }
+
     if (provider) {
       item.provider_description = provider.description;
       item.provider_detail = provider.detail;
@@ -204,6 +216,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       pageMargins: [40, 150, 40, 60], 
       background: function (currentPage) {
         const hasLogo = !!item.provider_profile_pic?.url;
+        const hasCarnets = item.carnets?.length || 0;
         const hasVobs = (item.vobs?.length || 0) > 0;
         const hasEvents = (events_itineraries?.length || 0) > 0;
         const hasDoctors = (doctors?.length || 0) > 0;
@@ -225,10 +238,13 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         };
 
         // 1) Carnets (N pages)
-        addRange('carnets', item.carnets?.length || 0);
-
+        if (hasCarnets) {
+          addRange('carnets', item.carnets?.length);
+        }
         // 2) Logo (1 page if present)
-        addRange('logo', hasLogo ? 1 : 0);
+        if (hasLogo) {
+          addRange('logo', 1);
+        }
 
         // 3) CONTENIDO (always 1 page)
         addRange('contenido', 1);
@@ -645,5 +661,5 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       },
     };
 
-    return { docDefinition }
+    return { docDefinition, pending_list }
 }

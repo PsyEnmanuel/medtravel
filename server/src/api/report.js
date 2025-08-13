@@ -187,7 +187,7 @@ router.get("/medical-guide2/:id", async function (req, res, next) {
 
     const files = await _query.getFiles({ ref_key: "t_event", ref_id: req.params.id });
 
-    const { docDefinition } = await generateMedicalGuideDoc({ item, itineraries, provider, files, account, user })
+    const { docDefinition, pending_list } = await generateMedicalGuideDoc({ item, itineraries, provider, files, account, user })
 
     const pdfUrl = await _upload.generatePDFWithPdfmake({
       account,
@@ -196,7 +196,7 @@ router.get("/medical-guide2/:id", async function (req, res, next) {
       docDefinition,
     });
 
-    return res.status(200).json({ item, filename, pdfUrl });
+    return res.status(200).json({ item, filename, pdfUrl, pending_list });
   } catch (error) {
     next(error);
   }
