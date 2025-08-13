@@ -199,8 +199,6 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           ]
     })
 
-    console.log({itineraries, provider})
-
     const docDefinition = {
       pageSize: "A4",
       pageMargins: [40, 150, 40, 60], 
@@ -233,7 +231,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         if(currentPage > item.vobs.length + item.carnets.length + itineraries.length + 18 && currentPage < item.vobs.length + item.carnets.length + itineraries.length + 19) {
           bg = BACKGROUNDS.imagesAndContent
         }
-        if(currentPage === item.vobs.length + item.carnets.length + itineraries.length + 18){
+        if(currentPage === item.vobs.length + item.carnets.length + itineraries.length + 16){
           bg = BACKGROUNDS.lastPage;
         }
 
@@ -428,9 +426,10 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           },
         },
         {
-          image: 'cityImage',
-          width: 500,
-          margin: [0, 10, 0, 0],
+          text:'',
+          // image: 'cityImage',
+          // width: 500,
+          // margin: [0, 10, 0, 0],
           pageBreak: 'after'
         }, // page12
         {
@@ -461,11 +460,45 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           absolutePosition: { x: 0, y: 390 }, 
           pageBreak: 'after'
         }, // page17
-        { text: '', pageBreak: 'after' }, // page18
-        { text: '' }, // page19
+        {
+          text: '¿CÓMO LLEGAR?',
+          style: 'headerMap',
+          alignment: 'center',
+          margin: [0, 50, 0, 10],
+        },
+        {
+          columns: [
+            {
+              width: '*',
+              stack: [
+                {
+                  text: [
+                    { text: 'UBICACIÓN: ', bold: true },
+                    item.provider_location,
+                  ],
+                  alignment: 'center',
+                  margin: [0, 0, 0, 5],
+                },
+                {
+                  text: item.provider_place,
+                  italics: true,
+                  alignment: 'center',
+                  margin: [0, 0, 0, 20],
+                },
+              ],
+            },
+          ], 
+        }, // page18
+        {
+          image: 'map',
+          width: 500,
+          alignment: 'center',
+          pageBreak: 'after'
+        },
       ],
       images: {
         logo: _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(item.provider_profile_pic.url)),
+        map: _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(item.provider_map))
       },
       styles: {
         title: {
@@ -492,6 +525,11 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           bold: true,
           lineHeight: .2,
 			    alignment: 'center',
+        },
+        headerMap: {
+          bold: true,
+          fontSize: 35,
+          color: '#20375c',
         },
         item:{
           fontSize: 24,
