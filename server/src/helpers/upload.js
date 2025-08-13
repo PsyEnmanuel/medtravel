@@ -419,9 +419,9 @@ export async function generatePDF({
 export async function generatePDFWithPdfmake({
   account,
   table,
-  id,
   filename,
   docDefinition,
+  id = null,
   fonts = null,
   outputPath = null,
 }) {

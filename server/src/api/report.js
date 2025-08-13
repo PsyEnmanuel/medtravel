@@ -1,7 +1,6 @@
 import express from "express";
 import { isAuthenticated } from "../middleware/auth.js";
 import { _query, _date, _template, _upload } from "../helpers/index.js";
-import { getFiles, getProfilePic } from "../helpers/query.js";
 import { generateMedicalGuideDoc } from "../services/report.js";
 const router = express.Router();
 
@@ -72,7 +71,7 @@ router.get("/medical-guide/:id", async function (req, res, next) {
           } else {
               doctor.speciality = []
           }
-          const [doctor_profile] = await getFiles({ ref_key: 't_doctor', ref_id: doctor.id });
+          const [doctor_profile] = await _query.getFiles({ ref_key: 't_doctor', ref_id: doctor.id });
           if (doctor_profile) {
               data._files.doctor.push({ ...doctor, profile: doctor_profile.url })
           }
@@ -89,7 +88,7 @@ router.get("/medical-guide/:id", async function (req, res, next) {
     let provider_files;
     if (data.provider) {
       data.provider.place = `${data.provider.description}, ${data.provider.country}, ${data.provider.city}`
-      provider_files = await getFiles({ ref_key: 't_provider', ref_id: data.provider.id });
+      provider_files = await _query.getFiles({ ref_key: 't_provider', ref_id: data.provider.id });
 
       if (provider_files?.length) {
           const [provider_file] = provider_files.filter(i => i.$file_type_id === 198)
@@ -97,10 +96,10 @@ router.get("/medical-guide/:id", async function (req, res, next) {
           data.provider.file = provider_file?.url
           data.provider.mapa = provider_mapa?.url
       }
-      data._files.provider = await getProfilePic({ ref_key: 't_provider', ref_id: item.provider_id });
+      data._files.provider = await _upload.getProfilePic({ ref_key: 't_provider', ref_id: item.provider_id });
     }
 
-    const files = await getFiles({ ref_key: 't_event', ref_id: req.params.id });
+    const files = await _query.getFiles({ ref_key: 't_event', ref_id: req.params.id });
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -186,14 +185,13 @@ router.get("/medical-guide2/:id", async function (req, res, next) {
       user,
     });
 
-    const files = await getFiles({ ref_key: "t_event", ref_id: req.params.id });
+    const files = await _query.getFiles({ ref_key: "t_event", ref_id: req.params.id });
 
     const { docDefinition } = await generateMedicalGuideDoc({ item, itineraries, provider, files, account, user })
 
     const pdfUrl = await _upload.generatePDFWithPdfmake({
       account,
       table: "t_event",
-      id: req.params.id,
       filename,
       docDefinition,
     });
