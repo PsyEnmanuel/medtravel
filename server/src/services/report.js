@@ -245,7 +245,8 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         { text: '', pageBreak: 'after' }, // page1
         ...(item.carnets.length ? item.carnets.map(carnet => ({ image: _upload.convertImageUrltoBase64(carnet), width: 350, alignment: 'center', })) : [{}]),
         { text: '', pageBreak: 'after' }, // page2
-        { image: 'logo', width: 350, alignment: 'center', pageBreak: 'after' }, // page3
+        ...(!!item.provider_profile_pic?.url ? [{ image: 'logo', width: 350, alignment: 'center'}]: []),
+        { text: '', pageBreak: 'after' }, // page3
         { text:'CONTENIDO', style: "title", margin: [30,35, 0, 0] }, // page4 start
         {
           type: 'square',
@@ -489,16 +490,16 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
             },
           ], 
         }, // page18
-        {
+        ...(item.provider_map ? [{
           image: 'map',
           width: 500,
           alignment: 'center',
-          pageBreak: 'after'
-        },
+        }] : []),
+        { text: '', pageBreak: 'after' }, // page19
       ],
       images: {
-        logo: _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(item.provider_profile_pic.url)),
-        map: _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(item.provider_map))
+        logo: item.provider_profile_pic?.url ? _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(item.provider_profile_pic.url)) : undefined,
+        map: item.provider_map ? _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(item.provider_map)) : undefined
       },
       styles: {
         title: {
