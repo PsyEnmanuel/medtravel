@@ -14851,6 +14851,7 @@ const content2 = fs.readFileSync(`${imagesBase64Dir}/guia4.png`).toString("base6
 const branches = fs.readFileSync(`${imagesBase64Dir}/guia19.png`).toString("base64");
 const BACKGROUNDS = { frontPage, carnet, imagesAndContent: content1, titlePages: content2, lastPage: branches };
 async function generateMedicalGuideDoc({ item, itineraries, provider, files, account, user }) {
+  var _a, _b;
   let provider_files;
   if (provider) {
     item.provider_description = provider.description;
@@ -15075,7 +15076,8 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
       ...item.carnets.length ? item.carnets.map((carnet2) => ({ image: convertImageUrltoBase64(carnet2), width: 350, alignment: "center" })) : [{}],
       { text: "", pageBreak: "after" },
       // page2
-      { image: "logo", width: 350, alignment: "center", pageBreak: "after" },
+      ...!!((_a = item.provider_profile_pic) == null ? void 0 : _a.url) ? [{ image: "logo", width: 350, alignment: "center" }] : [],
+      { text: "", pageBreak: "after" },
       // page3
       { text: "CONTENIDO", style: "title", margin: [30, 35, 0, 0] },
       // page4 start
@@ -15341,16 +15343,17 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
         ]
       },
       // page18
-      {
+      ...item.provider_map ? [{
         image: "map",
         width: 500,
-        alignment: "center",
-        pageBreak: "after"
-      }
+        alignment: "center"
+      }] : [],
+      { text: "", pageBreak: "after" }
+      // page19
     ],
     images: {
-      logo: convertImageUrltoBase64(getFilePathFromUrl(item.provider_profile_pic.url)),
-      map: convertImageUrltoBase64(getFilePathFromUrl(item.provider_map))
+      logo: ((_b = item.provider_profile_pic) == null ? void 0 : _b.url) ? convertImageUrltoBase64(getFilePathFromUrl(item.provider_profile_pic.url)) : void 0,
+      map: item.provider_map ? convertImageUrltoBase64(getFilePathFromUrl(item.provider_map)) : void 0
     },
     styles: {
       title: {
