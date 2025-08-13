@@ -1,5 +1,5 @@
 import * as path from "path";
-import path__default, { format as format$2 } from "path";
+import path__default from "path";
 import dotenv from "dotenv";
 import express, { response } from "express";
 import createError from "http-errors";
@@ -27,8 +27,6 @@ import { pdfToImg } from "pdftoimg-js";
 import PdfPrinter from "pdfmake";
 import morgan from "morgan";
 import { gray, redBright, cyanBright, yellowBright, greenBright, green, cyan, yellow, red } from "colorette";
-import JsBarcode from "jsbarcode";
-import { XMLSerializer, DOMImplementation } from "xmldom";
 import { Server } from "socket.io";
 import { es } from "date-fns/locale";
 dotenv.config({
@@ -391,22 +389,6 @@ function separatedByComma(...params) {
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
-async function pdfUrlToBase64(url) {
-  try {
-    const response2 = await fetch(url);
-    const arrayBuffer = await response2.arrayBuffer();
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer).reduce(
-        (data2, byte) => data2 + String.fromCharCode(byte),
-        ""
-      )
-    );
-    return base64;
-  } catch (error) {
-    console.error("Error fetching the PDF:", error);
-    return null;
-  }
-}
 function sortObjectByValue(obj) {
   const entries = Object.entries(obj);
   entries.sort((a, b) => b[1] - a[1]);
@@ -415,14 +397,6 @@ function sortObjectByValue(obj) {
 }
 function isDevEnvironment() {
   return process.env.NODE_ENV === "development" ? true : false;
-}
-function formatCStatus(c_status) {
-  if (c_status & 2) {
-    return "Inactivo";
-  }
-  if (c_status & 4) {
-    return "Activo";
-  }
 }
 function currency(number, currency2 = "USD", currencyDisplay = "narrowSymbol") {
   if (!number && number !== 0) {
@@ -4853,8 +4827,8 @@ const languages = [
     "available": 0
   }
 ];
-const router$D = express.Router();
-router$D.use(isAuthenticated);
+const router$C = express.Router();
+router$C.use(isAuthenticated);
 async function t_policy(options) {
   try {
     const _items = [];
@@ -5496,8 +5470,8 @@ function isOperationalError(error) {
   }
   return false;
 }
-const router$C = express.Router();
-const table$u = "t_user";
+const router$B = express.Router();
+const table$t = "t_user";
 const saltRounds = 10;
 function isValidPassword(password) {
   const hasUppercase = /[A-Z]/.test(password);
@@ -5505,7 +5479,7 @@ function isValidPassword(password) {
   const hasNumber = /[0-9]/.test(password);
   return hasUppercase && hasSymbol && hasNumber;
 }
-router$C.post(
+router$B.post(
   "/login",
   validate_json({
     type: "object",
@@ -5534,7 +5508,7 @@ router$C.post(
       data2.email = data2.email.toLowerCase().trim();
       data2.password = data2.password.trim();
       let [user] = await pool$1.query(
-        `SELECT id, password_token, reset_password_token, change_password, password, unixroles FROM ${table$u} WHERE (email=? OR username=?) AND c_status=4 LIMIT 1`,
+        `SELECT id, password_token, reset_password_token, change_password, password, unixroles FROM ${table$t} WHERE (email=? OR username=?) AND c_status=4 LIMIT 1`,
         [data2.email, data2.email]
       );
       if (!user) {
@@ -5593,14 +5567,14 @@ router$C.post(
     }
   }
 );
-router$C.post("/forgot-password", async function(req, res, next) {
+router$B.post("/forgot-password", async function(req, res, next) {
   try {
     let domain = req.headers.origin;
     const data2 = req.body;
     var buf = await crypto.randomBytes(20);
     var token = buf.toString("hex");
     const [user] = await pool$1.query(
-      `SELECT * FROM ${table$u} WHERE (username=? OR email=?) LIMIT 1`,
+      `SELECT * FROM ${table$t} WHERE (username=? OR email=?) LIMIT 1`,
       [data2.email, data2.email]
     );
     const [account] = await pool$1.query(
@@ -5618,7 +5592,7 @@ router$C.post("/forgot-password", async function(req, res, next) {
     await updatePublic({
       id: user.id,
       user,
-      table: table$u,
+      table: table$t,
       data: {
         reset_password_token: token,
         reset_password_expires: Date.now() + 31 * 24 * 60 * 60 * 1e3
@@ -5653,7 +5627,7 @@ router$C.post("/forgot-password", async function(req, res, next) {
     next(err);
   }
 });
-router$C.post("/change-password", async function(req, res, next) {
+router$B.post("/change-password", async function(req, res, next) {
   try {
     const data2 = req.body;
     if (!isValidPassword(data2.password)) {
@@ -5675,7 +5649,7 @@ router$C.post("/change-password", async function(req, res, next) {
       );
     }
     const [user] = await pool$1.query(
-      `SELECT * FROM ${table$u} WHERE reset_password_token=? LIMIT 1`,
+      `SELECT * FROM ${table$t} WHERE reset_password_token=? LIMIT 1`,
       [data2.token]
     );
     if (!user) {
@@ -5707,7 +5681,7 @@ router$C.post("/change-password", async function(req, res, next) {
     }
     await updatePublic({
       id: user.id,
-      table: table$u,
+      table: table$t,
       user,
       data: {
         change_password: 0,
@@ -5735,8 +5709,8 @@ router$C.post("/change-password", async function(req, res, next) {
     next(err);
   }
 });
-router$C.use(isAuthenticated);
-router$C.get("/me", async function(req, res, next) {
+router$B.use(isAuthenticated);
+router$B.get("/me", async function(req, res, next) {
   try {
     const user = res.locals.user;
     let { items } = await getRows({
@@ -5759,11 +5733,11 @@ router$C.get("/me", async function(req, res, next) {
     next(error);
   }
 });
-router$C.get("/", async function(req, res, next) {
+router$B.get("/", async function(req, res, next) {
   try {
     const user = res.locals.user;
     let { items, total } = await getRows({
-      table: table$u,
+      table: table$t,
       user,
       query: req.query
     });
@@ -5780,12 +5754,12 @@ router$C.get("/", async function(req, res, next) {
     next(error);
   }
 });
-router$C.get("/:id", async function(req, res, next) {
+router$B.get("/:id", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const item = await getRowById({
       id: req.params.id,
-      table: table$u,
+      table: table$t,
       user
     });
     item.roles_format = JSON.parse(item.roles).join(", ");
@@ -5793,14 +5767,14 @@ router$C.get("/:id", async function(req, res, next) {
     item.created_format = intlDateTime(item.created);
     item.files = await getFiles({
       ref_id: item.id,
-      ref_key: table$u
+      ref_key: table$t
     });
     return res.status(200).json(item);
   } catch (error) {
     next(error);
   }
 });
-router$C.post("/", async function(req, res, next) {
+router$B.post("/", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
@@ -5818,7 +5792,7 @@ router$C.post("/", async function(req, res, next) {
     data2.roles = roles.map((i) => i.label);
     const response2 = await insert({
       user,
-      table: table$u,
+      table: table$t,
       data: {
         ...data2,
         username: data2.email ? data2.email.replace(/@(.*)/g, "") : "",
@@ -5831,7 +5805,7 @@ router$C.post("/", async function(req, res, next) {
       log: true
     });
     req.io.emit("update", {
-      table: table$u,
+      table: table$t,
       item: data2,
       id: response2.id
     });
@@ -5842,7 +5816,7 @@ router$C.post("/", async function(req, res, next) {
         "NO DATA UPDATED",
         401,
         true,
-        `User ${user.description} couldn't insert data to ${table$u}.`,
+        `User ${user.description} couldn't insert data to ${table$t}.`,
         `Cero datos agregados`
       );
     }
@@ -5850,7 +5824,7 @@ router$C.post("/", async function(req, res, next) {
     next(error);
   }
 });
-router$C.put("/new-password-code/:id", async function(req, res, next) {
+router$B.put("/new-password-code/:id", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
@@ -5865,10 +5839,10 @@ router$C.put("/new-password-code/:id", async function(req, res, next) {
         reset_password_expires: Date.now() + 31 * 24 * 60 * 60 * 1e3
       },
       id: req.params.id,
-      table: table$u
+      table: table$t
     });
     req.io.emit("update", {
-      table: table$u,
+      table: table$t,
       item: data2,
       id: req.params.id
     });
@@ -5882,7 +5856,7 @@ router$C.put("/new-password-code/:id", async function(req, res, next) {
     });
   }
 });
-router$C.put("/:id", async function(req, res) {
+router$B.put("/:id", async function(req, res) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
@@ -5899,12 +5873,12 @@ router$C.put("/:id", async function(req, res) {
     const response2 = await update({
       id: req.params.id,
       user,
-      table: table$u,
+      table: table$t,
       data: data2,
       log: true
     });
     req.io.emit("update", {
-      table: table$u,
+      table: table$t,
       item: data2,
       id: response2.id
     });
@@ -5915,280 +5889,9 @@ router$C.put("/:id", async function(req, res) {
         "NO DATA UPDATED",
         401,
         true,
-        `User ${user.description} couldn't update data to ${table$u}.`,
-        `Cero datos actualizados`
-      );
-    }
-  } catch (err) {
-    console.error(err);
-    res.status(500).send(err);
-  }
-});
-router$C.delete("/", async function(req, res) {
-  try {
-    const user = res.locals.user;
-    const ids = req.body;
-    let response2;
-    for (let i = 0; i < ids.length; i++) {
-      const id = ids[i];
-      response2 = await update({
-        user,
-        id,
-        table: table$u,
-        data: { c_status: 1 }
-      });
-    }
-    req.io.emit("update", {
-      table: table$u
-    });
-    if (response2) {
-      res.status(200).json(response2);
-    } else {
-      res.status(401).send({ msg: "Cero datos actualizados" });
-    }
-  } catch (err) {
-    console.log(err);
-    res.status(500).send(err);
-  }
-});
-const router$B = express.Router();
-const table$t = "t_category";
-router$B.get("/children", async function(req, res, next) {
-  try {
-    const data2 = req.query.data;
-    const items = await pool$1.query(
-      `SELECT id, ref, filterable FROM t_category WHERE 1 AND c_status=4 AND ref IN (?)`,
-      [data2]
-    );
-    const cats = {};
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const children = await pool$1.query(
-        `SELECT id, description, parent_id, description as label, id as value, color FROM t_category WHERE 1 AND c_status=4 AND parent_id = ? ORDER BY description ASC`,
-        [item.id]
-      );
-      cats[item.ref] = children;
-    }
-    res.status(200).json(cats);
-  } catch (error) {
-    next(error);
-  }
-});
-router$B.use(isAuthenticated);
-router$B.get("/list/:table/:ref", async function(req, res, next) {
-  try {
-    const items = await pool$1.query(
-      `SELECT ?? AS label, ?? AS value, count(*) as quantity FROM ?? WHERE 1 group by ??`,
-      [req.params.ref, `$${req.params.ref}_id`, req.params.table, req.params.ref]
-    );
-    return res.json(items);
-  } catch (error) {
-    console.log(error);
-  }
-});
-router$B.get("/", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const query = req.query;
-    const { items, total } = await getRows({
-      table: table$t,
-      user,
-      query
-    });
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      item.drawer = false;
-      item.created_format = intlDateTime(item.created);
-      items[i] = item;
-    }
-    if (req.query.returnItems) {
-      return res.status(200).json(items);
-    }
-    return res.status(200).json({ items, total });
-  } catch (error) {
-    next(error);
-  }
-});
-router$B.get("/ref/:ref", async function(req, res, next) {
-  try {
-    const item = await getCategoryByRef(req.params.ref);
-    return res.status(200).json(item);
-  } catch (error) {
-    next(error);
-  }
-});
-router$B.get("/:id", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const item = await getRowById({
-      id: req.params.id,
-      table: table$t,
-      user
-    });
-    item.created_format = intlDateTime(item.created);
-    return res.status(200).json(item);
-  } catch (error) {
-    next(error);
-  }
-});
-router$B.post("/", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const data2 = req.body;
-    let level = 0;
-    if (data2.parent_id) {
-      level = await getCategoryLevel(data2.parent_id);
-      const [exist] = await pool$1.query(`SELECT * FROM t_category WHERE parent_id=? AND description=? AND c_status=4`, [data2.parent_id, data2.description]);
-      if (exist) {
-        throw new BaseError(
-          "NO DATA UPDATED",
-          401,
-          true,
-          `Esta categoría ya esta agregada.`,
-          `Esta categoría ya esta agregada.`
-        );
-      }
-    }
-    const response2 = await insert({
-      user,
-      table: table$t,
-      data: { ...data2, level }
-    });
-    req.io.emit("update", {
-      table: table$t
-    });
-    if (response2) {
-      return res.status(200).json(response2);
-    } else {
-      throw new BaseError(
-        "NO DATA UPDATED",
-        401,
-        true,
-        `User ${user.description} couldn't insert data to ${table$t}.`,
-        `Cero datos agregados`
-      );
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-router$B.post("/child", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const data2 = req.body;
-    const { id } = await getCategoryByRef(data2.ref);
-    const [exist] = await pool$1.query(`SELECT * FROM t_category WHERE parent_id=? AND description=? AND c_status=4`, [id, data2.description]);
-    if (exist) {
-      throw new BaseError(
-        "NO DATA UPDATED",
-        401,
-        true,
-        `Esta categoría ya esta agregada.`,
-        `Esta categoría ya esta agregada.`
-      );
-    }
-    const response2 = await insert({
-      user,
-      table: table$t,
-      data: {
-        description: data2.description,
-        level: 1,
-        parent_id: id
-      }
-    });
-    req.io.emit("update", {
-      table: table$t
-    });
-    if (response2) {
-      return res.status(200).json(response2);
-    } else {
-      throw new BaseError(
-        "NO DATA UPDATED",
-        401,
-        true,
-        `User ${user.description} couldn't insert data to ${table$t}.`,
-        `Cero datos agregados`
-      );
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-router$B.put("/:id", async function(req, res) {
-  try {
-    const user = res.locals.user;
-    const data2 = req.body;
-    let level = 0;
-    if (data2.parent_id) {
-      level = await getCategoryLevel(data2.parent_id);
-    }
-    var response2 = await update({
-      id: req.params.id,
-      user,
-      table: table$t,
-      data: { ...data2, level }
-    });
-    req.io.emit("update", {
-      table: table$t
-    });
-    if (response2) {
-      res.status(200).json(response2);
-    } else {
-      throw new BaseError(
-        "NO DATA UPDATED",
-        401,
-        true,
         `User ${user.description} couldn't update data to ${table$t}.`,
         `Cero datos actualizados`
       );
-    }
-  } catch (err) {
-    console.error(err);
-    res.status(500).send(err);
-  }
-});
-router$B.put("/general/:id", async function(req, res) {
-  try {
-    const user = res.locals.user;
-    const data2 = req.body;
-    var response2 = await update({
-      id: req.params.id,
-      user,
-      table: table$t,
-      data: { ...data2 }
-    });
-    if (response2) {
-      res.status(200).json(response2);
-    } else {
-      throw new BaseError(
-        "NO DATA UPDATED",
-        401,
-        true,
-        `User ${user.description} couldn't update data to ${table$t}.`,
-        `Cero datos actualizados`
-      );
-    }
-  } catch (err) {
-    console.error(err);
-    res.status(500).send(err);
-  }
-});
-router$B.delete("/:id", async function(req, res) {
-  try {
-    let user = res.locals.user;
-    let response2 = await update({
-      user,
-      id: req.params.id,
-      table: table$t,
-      data: { c_status: 1 }
-    });
-    req.io.emit("update", {
-      table: table$t
-    });
-    if (response2) {
-      res.status(200).json(response2);
-    } else {
-      res.status(401).send({ msg: "Cero datos actualizados" });
     }
   } catch (err) {
     console.error(err);
@@ -6223,16 +5926,55 @@ router$B.delete("/", async function(req, res) {
   }
 });
 const router$A = express.Router();
-const table$s = "t_insurance";
-router$A.get("/public", async function(req, res, next) {
+const table$s = "t_category";
+router$A.get("/children", async function(req, res, next) {
+  try {
+    const data2 = req.query.data;
+    const items = await pool$1.query(
+      `SELECT id, ref, filterable FROM t_category WHERE 1 AND c_status=4 AND ref IN (?)`,
+      [data2]
+    );
+    const cats = {};
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const children = await pool$1.query(
+        `SELECT id, description, parent_id, description as label, id as value, color FROM t_category WHERE 1 AND c_status=4 AND parent_id = ? ORDER BY description ASC`,
+        [item.id]
+      );
+      cats[item.ref] = children;
+    }
+    res.status(200).json(cats);
+  } catch (error) {
+    next(error);
+  }
+});
+router$A.use(isAuthenticated);
+router$A.get("/list/:table/:ref", async function(req, res, next) {
+  try {
+    const items = await pool$1.query(
+      `SELECT ?? AS label, ?? AS value, count(*) as quantity FROM ?? WHERE 1 group by ??`,
+      [req.params.ref, `$${req.params.ref}_id`, req.params.table, req.params.ref]
+    );
+    return res.json(items);
+  } catch (error) {
+    console.log(error);
+  }
+});
+router$A.get("/", async function(req, res, next) {
   try {
     const user = res.locals.user;
-    let { items, total } = await getRows({
-      auth: 0,
+    const query = req.query;
+    const { items, total } = await getRows({
       table: table$s,
       user,
-      query: req.query
+      query
     });
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      item.drawer = false;
+      item.created_format = intlDateTime(item.created);
+      items[i] = item;
+    }
     if (req.query.returnItems) {
       return res.status(200).json(items);
     }
@@ -6241,34 +5983,10 @@ router$A.get("/public", async function(req, res, next) {
     next(error);
   }
 });
-router$A.use(isAuthenticated);
-router$A.get("/", async function(req, res, next) {
+router$A.get("/ref/:ref", async function(req, res, next) {
   try {
-    const user = res.locals.user;
-    let { items, total } = await getRows({
-      table: table$s,
-      user,
-      query: req.query
-    });
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.insurance_plan) {
-        item.insurance_plan = JSON.parse(item.insurance_plan);
-        item.insurance_plan_format = item.insurance_plan.map((i2) => i2.description).join(", ");
-      } else {
-        item.insurance_plan = [];
-      }
-      if (item.insurance_plan_type) {
-        item.insurance_plan_type = JSON.parse(item.insurance_plan_type);
-        item.insurance_plan_type_format = item.insurance_plan_type.map((i2) => i2.description).join(", ");
-      } else {
-        item.insurance_plan_type = [];
-      }
-    }
-    if (req.query.returnItems) {
-      return res.status(200).json(items);
-    }
-    return res.status(200).json({ items, total });
+    const item = await getCategoryByRef(req.params.ref);
+    return res.status(200).json(item);
   } catch (error) {
     next(error);
   }
@@ -6281,24 +5999,7 @@ router$A.get("/:id", async function(req, res, next) {
       table: table$s,
       user
     });
-    if (item.insurance_plan) {
-      item.insurance_plan = JSON.parse(item.insurance_plan);
-    } else {
-      item.insurance_plan = [];
-    }
-    if (item.insurance_plan_type) {
-      item.insurance_plan_type = JSON.parse(item.insurance_plan_type);
-    } else {
-      item.insurance_plan_type = [];
-    }
     item.created_format = intlDateTime(item.created);
-    if (item.modified) {
-      item.modified_format = intlDateTime(item.modified);
-    }
-    item.files = await getFiles({
-      ref_id: item.id,
-      ref_key: table$s
-    });
     return res.status(200).json(item);
   } catch (error) {
     next(error);
@@ -6308,11 +6009,66 @@ router$A.post("/", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
-    data2.description = data2.description.toUpperCase();
+    let level = 0;
+    if (data2.parent_id) {
+      level = await getCategoryLevel(data2.parent_id);
+      const [exist] = await pool$1.query(`SELECT * FROM t_category WHERE parent_id=? AND description=? AND c_status=4`, [data2.parent_id, data2.description]);
+      if (exist) {
+        throw new BaseError(
+          "NO DATA UPDATED",
+          401,
+          true,
+          `Esta categoría ya esta agregada.`,
+          `Esta categoría ya esta agregada.`
+        );
+      }
+    }
     const response2 = await insert({
       user,
       table: table$s,
-      data: data2
+      data: { ...data2, level }
+    });
+    req.io.emit("update", {
+      table: table$s
+    });
+    if (response2) {
+      return res.status(200).json(response2);
+    } else {
+      throw new BaseError(
+        "NO DATA UPDATED",
+        401,
+        true,
+        `User ${user.description} couldn't insert data to ${table$s}.`,
+        `Cero datos agregados`
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router$A.post("/child", async function(req, res, next) {
+  try {
+    const user = res.locals.user;
+    const data2 = req.body;
+    const { id } = await getCategoryByRef(data2.ref);
+    const [exist] = await pool$1.query(`SELECT * FROM t_category WHERE parent_id=? AND description=? AND c_status=4`, [id, data2.description]);
+    if (exist) {
+      throw new BaseError(
+        "NO DATA UPDATED",
+        401,
+        true,
+        `Esta categoría ya esta agregada.`,
+        `Esta categoría ya esta agregada.`
+      );
+    }
+    const response2 = await insert({
+      user,
+      table: table$s,
+      data: {
+        description: data2.description,
+        level: 1,
+        parent_id: id
+      }
     });
     req.io.emit("update", {
       table: table$s
@@ -6336,15 +6092,44 @@ router$A.put("/:id", async function(req, res) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
-    data2.description = data2.description.toUpperCase();
+    let level = 0;
+    if (data2.parent_id) {
+      level = await getCategoryLevel(data2.parent_id);
+    }
     var response2 = await update({
       id: req.params.id,
       user,
       table: table$s,
-      data: data2
+      data: { ...data2, level }
     });
     req.io.emit("update", {
       table: table$s
+    });
+    if (response2) {
+      res.status(200).json(response2);
+    } else {
+      throw new BaseError(
+        "NO DATA UPDATED",
+        401,
+        true,
+        `User ${user.description} couldn't update data to ${table$s}.`,
+        `Cero datos actualizados`
+      );
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err);
+  }
+});
+router$A.put("/general/:id", async function(req, res) {
+  try {
+    const user = res.locals.user;
+    const data2 = req.body;
+    var response2 = await update({
+      id: req.params.id,
+      user,
+      table: table$s,
+      data: { ...data2 }
     });
     if (response2) {
       res.status(200).json(response2);
@@ -6412,7 +6197,24 @@ router$A.delete("/", async function(req, res) {
   }
 });
 const router$z = express.Router();
-const table$r = "t_role";
+const table$r = "t_insurance";
+router$z.get("/public", async function(req, res, next) {
+  try {
+    const user = res.locals.user;
+    let { items, total } = await getRows({
+      auth: 0,
+      table: table$r,
+      user,
+      query: req.query
+    });
+    if (req.query.returnItems) {
+      return res.status(200).json(items);
+    }
+    return res.status(200).json({ items, total });
+  } catch (error) {
+    next(error);
+  }
+});
 router$z.use(isAuthenticated);
 router$z.get("/", async function(req, res, next) {
   try {
@@ -6422,6 +6224,21 @@ router$z.get("/", async function(req, res, next) {
       user,
       query: req.query
     });
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.insurance_plan) {
+        item.insurance_plan = JSON.parse(item.insurance_plan);
+        item.insurance_plan_format = item.insurance_plan.map((i2) => i2.description).join(", ");
+      } else {
+        item.insurance_plan = [];
+      }
+      if (item.insurance_plan_type) {
+        item.insurance_plan_type = JSON.parse(item.insurance_plan_type);
+        item.insurance_plan_type_format = item.insurance_plan_type.map((i2) => i2.description).join(", ");
+      } else {
+        item.insurance_plan_type = [];
+      }
+    }
     if (req.query.returnItems) {
       return res.status(200).json(items);
     }
@@ -6438,8 +6255,24 @@ router$z.get("/:id", async function(req, res, next) {
       table: table$r,
       user
     });
+    if (item.insurance_plan) {
+      item.insurance_plan = JSON.parse(item.insurance_plan);
+    } else {
+      item.insurance_plan = [];
+    }
+    if (item.insurance_plan_type) {
+      item.insurance_plan_type = JSON.parse(item.insurance_plan_type);
+    } else {
+      item.insurance_plan_type = [];
+    }
     item.created_format = intlDateTime(item.created);
-    item.menu = JSON.parse(item.menu);
+    if (item.modified) {
+      item.modified_format = intlDateTime(item.modified);
+    }
+    item.files = await getFiles({
+      ref_id: item.id,
+      ref_key: table$r
+    });
     return res.status(200).json(item);
   } catch (error) {
     next(error);
@@ -6449,6 +6282,7 @@ router$z.post("/", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
+    data2.description = data2.description.toUpperCase();
     const response2 = await insert({
       user,
       table: table$r,
@@ -6476,6 +6310,7 @@ router$z.put("/:id", async function(req, res) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
+    data2.description = data2.description.toUpperCase();
     var response2 = await update({
       id: req.params.id,
       user,
@@ -6551,7 +6386,146 @@ router$z.delete("/", async function(req, res) {
   }
 });
 const router$y = express.Router();
-router$y.post("/log-close", async (req, res, next) => {
+const table$q = "t_role";
+router$y.use(isAuthenticated);
+router$y.get("/", async function(req, res, next) {
+  try {
+    const user = res.locals.user;
+    let { items, total } = await getRows({
+      table: table$q,
+      user,
+      query: req.query
+    });
+    if (req.query.returnItems) {
+      return res.status(200).json(items);
+    }
+    return res.status(200).json({ items, total });
+  } catch (error) {
+    next(error);
+  }
+});
+router$y.get("/:id", async function(req, res, next) {
+  try {
+    const user = res.locals.user;
+    const item = await getRowById({
+      id: req.params.id,
+      table: table$q,
+      user
+    });
+    item.created_format = intlDateTime(item.created);
+    item.menu = JSON.parse(item.menu);
+    return res.status(200).json(item);
+  } catch (error) {
+    next(error);
+  }
+});
+router$y.post("/", async function(req, res, next) {
+  try {
+    const user = res.locals.user;
+    const data2 = req.body;
+    const response2 = await insert({
+      user,
+      table: table$q,
+      data: data2
+    });
+    req.io.emit("update", {
+      table: table$q
+    });
+    if (response2) {
+      return res.status(200).json(response2);
+    } else {
+      throw new BaseError(
+        "NO DATA UPDATED",
+        401,
+        true,
+        `User ${user.description} couldn't insert data to ${table$q}.`,
+        `Cero datos agregados`
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router$y.put("/:id", async function(req, res) {
+  try {
+    const user = res.locals.user;
+    const data2 = req.body;
+    var response2 = await update({
+      id: req.params.id,
+      user,
+      table: table$q,
+      data: data2
+    });
+    req.io.emit("update", {
+      table: table$q
+    });
+    if (response2) {
+      res.status(200).json(response2);
+    } else {
+      throw new BaseError(
+        "NO DATA UPDATED",
+        401,
+        true,
+        `User ${user.description} couldn't update data to ${table$q}.`,
+        `Cero datos actualizados`
+      );
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err);
+  }
+});
+router$y.delete("/:id", async function(req, res) {
+  try {
+    let user = res.locals.user;
+    let response2 = await update({
+      user,
+      id: req.params.id,
+      table: table$q,
+      data: { c_status: 1 }
+    });
+    req.io.emit("update", {
+      table: table$q
+    });
+    if (response2) {
+      res.status(200).json(response2);
+    } else {
+      res.status(401).send({ msg: "Cero datos actualizados" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err);
+  }
+});
+router$y.delete("/", async function(req, res) {
+  try {
+    const user = res.locals.user;
+    const ids = req.body;
+    let response2;
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      response2 = await update({
+        user,
+        id,
+        table: table$q,
+        data: { c_status: 1 }
+      });
+    }
+    req.io.emit("update", {
+      table: table$q
+    });
+    if (response2) {
+      res.status(200).json(response2);
+    } else {
+      res.status(401).send({ msg: "Cero datos actualizados" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err);
+  }
+});
+const router$x = express.Router();
+router$x.post("/log-close", async (req, res, next) => {
   try {
     const data2 = req.body;
     await pool$1.query(`UPDATE t_event SET blocked=0, blocked_by_id = null WHERE id=? AND blocked_by_id=?`, [data2.id, data2.blocked_by_id]);
@@ -6560,8 +6534,8 @@ router$y.post("/log-close", async (req, res, next) => {
     console.log(error);
   }
 });
-router$y.use(isAuthenticated);
-router$y.get("/cedulados/:id", async (req, res, next) => {
+router$x.use(isAuthenticated);
+router$x.get("/cedulados/:id", async (req, res, next) => {
   try {
     const user = res.locals.user;
     let [cedulado] = await pool.query(
@@ -6607,7 +6581,7 @@ router$y.get("/cedulados/:id", async (req, res, next) => {
     next(err);
   }
 });
-router$y.get("/rnc", async (req, res, next) => {
+router$x.get("/rnc", async (req, res, next) => {
   try {
     const user = res.locals.user;
     let { items, total, sql, sql_total, columns } = await getRowsUtils({
@@ -6626,7 +6600,7 @@ router$y.get("/rnc", async (req, res, next) => {
     next(err);
   }
 });
-router$y.get("/countries", async (req, res, next) => {
+router$x.get("/countries", async (req, res, next) => {
   try {
     const user = res.locals.user;
     let { items, total, sql } = await getRowsUtils({
@@ -6652,7 +6626,7 @@ router$y.get("/countries", async (req, res, next) => {
     next(err);
   }
 });
-router$y.get("/countries/:id", async (req, res, next) => {
+router$x.get("/countries/:id", async (req, res, next) => {
   try {
     const user = res.locals.user;
     let { items, total } = await getRowsUtils({
@@ -6679,7 +6653,7 @@ router$y.get("/countries/:id", async (req, res, next) => {
     next(err);
   }
 });
-router$y.get("/cities", async (req, res, next) => {
+router$x.get("/cities", async (req, res, next) => {
   try {
     const user = res.locals.user;
     let { items, total, sql } = await getRowsUtils({
@@ -6700,7 +6674,7 @@ router$y.get("/cities", async (req, res, next) => {
     next(err);
   }
 });
-router$y.get("/cities/:id", async (req, res, next) => {
+router$x.get("/cities/:id", async (req, res, next) => {
   try {
     const user = res.locals.user;
     let { items } = await getRowsUtils({
@@ -6722,7 +6696,7 @@ router$y.get("/cities/:id", async (req, res, next) => {
     next(err);
   }
 });
-router$y.get("/states", async (req, res, next) => {
+router$x.get("/states", async (req, res, next) => {
   try {
     const user = res.locals.user;
     let { items, total, sql } = await getRowsUtils({
@@ -6743,7 +6717,7 @@ router$y.get("/states", async (req, res, next) => {
     next(err);
   }
 });
-router$y.get("/states/:id", async (req, res, next) => {
+router$x.get("/states/:id", async (req, res, next) => {
   try {
     const user = res.locals.user;
     let { items } = await getRowsUtils({
@@ -6765,7 +6739,7 @@ router$y.get("/states/:id", async (req, res, next) => {
     next(err);
   }
 });
-router$y.get("/cie10", async (req, res, next) => {
+router$x.get("/cie10", async (req, res, next) => {
   try {
     const user = res.locals.user;
     let items = await getRowsUtils({
@@ -6778,14 +6752,14 @@ router$y.get("/cie10", async (req, res, next) => {
     next(err);
   }
 });
-const router$x = express.Router();
-const table$q = "t_file";
-router$x.use(isAuthenticated);
-router$x.get("/", async function(req, res, next) {
+const router$w = express.Router();
+const table$p = "t_file";
+router$w.use(isAuthenticated);
+router$w.get("/", async function(req, res, next) {
   try {
     const user = res.locals.user;
     let { items, total } = await getRows({
-      table: table$q,
+      table: table$p,
       user,
       query: req.query
     });
@@ -6812,12 +6786,12 @@ router$x.get("/", async function(req, res, next) {
     next(error);
   }
 });
-router$x.get("/:id", async function(req, res, next) {
+router$w.get("/:id", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const item = await getRowById({
       id: req.params.id,
-      table: table$q,
+      table: table$p,
       user
     });
     if (item.file_date) {
@@ -6838,7 +6812,7 @@ router$x.get("/:id", async function(req, res, next) {
     next(error);
   }
 });
-router$x.post("/", function(req, res, next) {
+router$w.post("/", function(req, res, next) {
   try {
     const user = res.locals.user;
     const account = res.locals.account;
@@ -6876,7 +6850,7 @@ router$x.post("/", function(req, res, next) {
           }
           if (data2.ref_id) {
             await insert({
-              table: table$q,
+              table: table$p,
               user,
               data: {
                 ref_key: data2.ref_key,
@@ -6893,7 +6867,7 @@ router$x.post("/", function(req, res, next) {
           id: data2.ref_id
         });
         req.io.emit("update", {
-          table: table$q
+          table: table$p
         });
         return res.status(200).json(true);
       } catch (error) {
@@ -6904,7 +6878,7 @@ router$x.post("/", function(req, res, next) {
     next(error);
   }
 });
-router$x.put("/:id", async function(req, res) {
+router$w.put("/:id", async function(req, res) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
@@ -6919,14 +6893,14 @@ router$x.put("/:id", async function(req, res) {
     var response2 = await update({
       id: req.params.id,
       user,
-      table: table$q,
+      table: table$p,
       data: data2
     });
     req.io.emit("update", {
       table: data2.ref_key
     });
     req.io.emit("update", {
-      table: table$q
+      table: table$p
     });
     if (response2) {
       res.status(200).json(response2);
@@ -6935,7 +6909,7 @@ router$x.put("/:id", async function(req, res) {
         "NO DATA UPDATED",
         401,
         true,
-        `User ${user.description} couldn't update data to ${table$q}.`,
+        `User ${user.description} couldn't update data to ${table$p}.`,
         `Cero datos actualizados`
       );
     }
@@ -6944,7 +6918,7 @@ router$x.put("/:id", async function(req, res) {
     res.status(500).send(err);
   }
 });
-router$x.post("/migration/:table", function(req, res, next) {
+router$w.post("/migration/:table", function(req, res, next) {
   try {
     const user = res.locals.user;
     const account = res.locals.account;
@@ -6973,14 +6947,14 @@ router$x.post("/migration/:table", function(req, res, next) {
     next(error);
   }
 });
-router$x.delete("/:id", async function(req, res) {
+router$w.delete("/:id", async function(req, res) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
     const response2 = await update({
       user,
       id: req.params.id,
-      table: table$q,
+      table: table$p,
       data: { c_status: 1 }
     });
     req.io.emit("update", {
@@ -6997,7 +6971,7 @@ router$x.delete("/:id", async function(req, res) {
     res.status(500).send(err);
   }
 });
-router$x.delete("/", async function(req, res) {
+router$w.delete("/", async function(req, res) {
   try {
     const user = res.locals.user;
     const ids = req.body;
@@ -7007,12 +6981,12 @@ router$x.delete("/", async function(req, res) {
       response2 = await update({
         user,
         id,
-        table: table$q,
+        table: table$p,
         data: { c_status: 1 }
       });
     }
     req.io.emit("update", {
-      table: table$q
+      table: table$p
     });
     if (response2) {
       res.status(200).json(response2);
@@ -7024,16 +6998,16 @@ router$x.delete("/", async function(req, res) {
     res.status(500).send(err);
   }
 });
-const router$w = express.Router();
-router$w.use(isAuthenticated);
-router$w.get("/", async function(req, res, next) {
+const router$v = express.Router();
+router$v.use(isAuthenticated);
+router$v.get("/", async function(req, res, next) {
   try {
     res.status(200).json({ items: permissions });
   } catch (error) {
     next(error);
   }
 });
-router$w.get("/tables", async function(req, res, next) {
+router$v.get("/tables", async function(req, res, next) {
   try {
     const user = res.locals.user;
     let roles = await getRows({
@@ -7065,7 +7039,7 @@ router$w.get("/tables", async function(req, res, next) {
     next(error);
   }
 });
-router$w.get("/actions", async function(req, res, next) {
+router$v.get("/actions", async function(req, res, next) {
   try {
     let result = await pool$1.query("SELECT * FROM t_action");
     res.status(200).json(result);
@@ -7073,7 +7047,7 @@ router$w.get("/actions", async function(req, res, next) {
     next(error);
   }
 });
-router$w.put("/unixperms", async function(req, res, next) {
+router$v.put("/unixperms", async function(req, res, next) {
   try {
     if (!(res.locals.user.unixroles & 3)) {
       return res.status(401).json({ msg: "No esta Autorizado" });
@@ -7097,7 +7071,7 @@ router$w.put("/unixperms", async function(req, res, next) {
     next(error);
   }
 });
-router$w.put("/roles-permission", async function(req, res, next) {
+router$v.put("/roles-permission", async function(req, res, next) {
   try {
     if (!(res.locals.user.unixroles & 3)) {
       return res.status(401).json({ msg: "No esta Autorizado" });
@@ -7117,7 +7091,7 @@ router$w.put("/roles-permission", async function(req, res, next) {
     next(error);
   }
 });
-router$w.post("/add_privileges", async function(req, res) {
+router$v.post("/add_privileges", async function(req, res) {
   try {
     let data2 = req.body.data;
     for (const id of req.body.ids) {
@@ -7142,9 +7116,9 @@ router$w.post("/add_privileges", async function(req, res) {
     res.status(500).send(error);
   }
 });
-const router$v = express.Router();
-router$v.use(isAuthenticated);
-router$v.get("/", async function(req, res, next) {
+const router$u = express.Router();
+router$u.use(isAuthenticated);
+router$u.get("/", async function(req, res, next) {
   try {
     let result = await pool$1.query(
       "SELECT * FROM t_privilege WHERE c_type='table'"
@@ -7154,7 +7128,7 @@ router$v.get("/", async function(req, res, next) {
     next(err);
   }
 });
-router$v.get("/table/:id", async function(req, res, next) {
+router$u.get("/table/:id", async function(req, res, next) {
   try {
     const tables = await getTable();
     let privileges = await pool$1.query(
@@ -7181,7 +7155,7 @@ router$v.get("/table/:id", async function(req, res, next) {
     next(err);
   }
 });
-router$v.get("/:id", async function(req, res, next) {
+router$u.get("/:id", async function(req, res, next) {
   try {
     if (!(res.locals.user.unixroles & 3)) {
       res.status(401).json({ msg: "No esta Autorizado" });
@@ -7194,7 +7168,7 @@ router$v.get("/:id", async function(req, res, next) {
     next(err);
   }
 });
-router$v.post("/", async function(req, res, next) {
+router$u.post("/", async function(req, res, next) {
   try {
     if (!(res.locals.user.unixroles & 3)) {
       return res.status(401).json({ msg: "No esta Autorizado" });
@@ -7230,7 +7204,7 @@ router$v.post("/", async function(req, res, next) {
     next(err);
   }
 });
-router$v.put("/:id", async function(req, res, next) {
+router$u.put("/:id", async function(req, res, next) {
   try {
     if (!(res.locals.user.unixroles & 3)) {
       res.status(401).json({ msg: "No esta Autorizado" });
@@ -7244,7 +7218,7 @@ router$v.put("/:id", async function(req, res, next) {
     next(err);
   }
 });
-router$v.delete("/", async function(req, res, next) {
+router$u.delete("/", async function(req, res, next) {
   try {
     if (!(res.locals.user.unixroles & 3)) {
       res.status(401).json({ msg: "No esta Autorizado" });
@@ -7267,10 +7241,10 @@ router$v.delete("/", async function(req, res, next) {
     next(err);
   }
 });
-const router$u = express.Router();
-const table$p = "t_diagnosis";
-router$u.use(isAuthenticated);
-router$u.get("/user", async function(req, res, next) {
+const router$t = express.Router();
+const table$o = "t_diagnosis";
+router$t.use(isAuthenticated);
+router$t.get("/user", async function(req, res, next) {
   try {
     const items = await pool$1.query("SELECT diagnosis, diagnosis_ids  FROM t_patient WHERE 1 AND`c_status` = 4 AND (`diagnosis` IS NOT NULL OR `diagnosis` != '[]') ORDER BY created ASC");
     const diagnosisList = [];
@@ -7302,11 +7276,11 @@ router$u.get("/user", async function(req, res, next) {
     next(error);
   }
 });
-router$u.get("/", async function(req, res, next) {
+router$t.get("/", async function(req, res, next) {
   try {
     const user = res.locals.user;
     let { items, total } = await getRows({
-      table: table$p,
+      table: table$o,
       user,
       query: req.query
     });
@@ -7318,12 +7292,12 @@ router$u.get("/", async function(req, res, next) {
     next(error);
   }
 });
-router$u.get("/:id", async function(req, res, next) {
+router$t.get("/:id", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const item = await getRowById({
       id: req.params.id,
-      table: table$p,
+      table: table$o,
       user
     });
     if (isValidDate$1(item.created)) {
@@ -7337,17 +7311,17 @@ router$u.get("/:id", async function(req, res, next) {
     next(error);
   }
 });
-router$u.post("/", async function(req, res, next) {
+router$t.post("/", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
     const response2 = await insert({
       user,
-      table: table$p,
+      table: table$o,
       data: data2
     });
     req.io.emit("update", {
-      table: table$p,
+      table: table$o,
       item: data2,
       id: response2.id
     });
@@ -7358,7 +7332,7 @@ router$u.post("/", async function(req, res, next) {
         "NO DATA UPDATED",
         401,
         true,
-        `User ${user.description} couldn't insert data to ${table$p}.`,
+        `User ${user.description} couldn't insert data to ${table$o}.`,
         `Cero datos agregados`
       );
     }
@@ -7366,18 +7340,18 @@ router$u.post("/", async function(req, res, next) {
     next(error);
   }
 });
-router$u.put("/:id", async function(req, res) {
+router$t.put("/:id", async function(req, res) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
     var response2 = await update({
       id: req.params.id,
       user,
-      table: table$p,
+      table: table$o,
       data: data2
     });
     req.io.emit("update", {
-      table: table$p,
+      table: table$o,
       item: data2,
       id: response2.id
     });
@@ -7388,7 +7362,7 @@ router$u.put("/:id", async function(req, res) {
         "NO DATA UPDATED",
         401,
         true,
-        `User ${user.description} couldn't update data to ${table$p}.`,
+        `User ${user.description} couldn't update data to ${table$o}.`,
         `Cero datos actualizados`
       );
     }
@@ -7397,17 +7371,17 @@ router$u.put("/:id", async function(req, res) {
     res.status(500).send(err);
   }
 });
-router$u.delete("/:id", async function(req, res) {
+router$t.delete("/:id", async function(req, res) {
   try {
     let user = res.locals.user;
     let response2 = await update({
       user,
       id: req.params.id,
-      table: table$p,
+      table: table$o,
       data: { c_status: 1 }
     });
     req.io.emit("update", {
-      table: table$p
+      table: table$o
     });
     if (response2) {
       res.status(200).json(response2);
@@ -7419,7 +7393,7 @@ router$u.delete("/:id", async function(req, res) {
     res.status(500).send(err);
   }
 });
-router$u.delete("/", async function(req, res) {
+router$t.delete("/", async function(req, res) {
   try {
     const user = res.locals.user;
     const ids = req.body;
@@ -7429,12 +7403,12 @@ router$u.delete("/", async function(req, res) {
       response2 = await update({
         user,
         id,
-        table: table$p,
+        table: table$o,
         data: { c_status: 1 }
       });
     }
     req.io.emit("update", {
-      table: table$p
+      table: table$o
     });
     if (response2) {
       res.status(200).json(response2);
@@ -7446,14 +7420,14 @@ router$u.delete("/", async function(req, res) {
     res.status(500).send(err);
   }
 });
-const router$t = express.Router();
-const table$o = "t_event";
-router$t.use(isAuthenticated);
-router$t.get("/stats", async function(req, res, next) {
+const router$s = express.Router();
+const table$n = "t_event";
+router$s.use(isAuthenticated);
+router$s.get("/stats", async function(req, res, next) {
   try {
     const user = res.locals.user;
     let { items } = await getRows({
-      table: table$o,
+      table: table$n,
       user,
       query: req.query
     });
@@ -7786,11 +7760,11 @@ async function updateInsured(data2, user) {
     console.log(error);
   }
 }
-router$t.get("/alert-list", async function(req, res, next) {
+router$s.get("/alert-list", async function(req, res, next) {
   try {
     const user = res.locals.user;
     let { items, total, sql, sqlTotal } = await getRows({
-      table: table$o,
+      table: table$n,
       user,
       query: req.query,
       optsServer: {
@@ -7827,12 +7801,12 @@ router$t.get("/alert-list", async function(req, res, next) {
     next(error);
   }
 });
-router$t.get("/", async function(req, res, next) {
+router$s.get("/", async function(req, res, next) {
   var _a, _b;
   try {
     const user = res.locals.user;
     let { items, total, sql } = await getRows({
-      table: table$o,
+      table: table$n,
       user,
       query: req.query,
       optsServer: {
@@ -7893,12 +7867,12 @@ router$t.get("/", async function(req, res, next) {
     next(error);
   }
 });
-router$t.get("/:id", async function(req, res, next) {
+router$s.get("/:id", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const item = await getRowById({
       id: req.params.id,
-      table: table$o,
+      table: table$n,
       user,
       query: {
         where: {
@@ -7951,7 +7925,7 @@ router$t.get("/:id", async function(req, res, next) {
     }
     item.files = await getFiles({
       ref_id: item.id,
-      ref_key: table$o
+      ref_key: table$n
     });
     if (item.files) {
       item.HIPAA_file = item.files.filter((i) => {
@@ -8005,12 +7979,12 @@ router$t.get("/:id", async function(req, res, next) {
     next(error);
   }
 });
-router$t.post("/", async function(req, res, next) {
+router$s.post("/", async function(req, res, next) {
   try {
     let response2;
     const user = res.locals.user;
     const data2 = req.body;
-    data2.code = await getCode({ table: table$o });
+    data2.code = await getCode({ table: table$n });
     if (data2.request_date) {
       data2.request_date = mysqlDateTime(convertToValidDate(data2.request_date));
     } else {
@@ -8030,7 +8004,7 @@ router$t.post("/", async function(req, res, next) {
     data2.color = await getEventColor(data2.$event_state_id);
     response2 = await insert({
       user,
-      table: table$o,
+      table: table$n,
       data: {
         ...data2,
         copay: cleanCurrency(data2.copay),
@@ -8088,7 +8062,7 @@ router$t.post("/", async function(req, res, next) {
       });
     }
     req.io.emit("update", {
-      table: table$o
+      table: table$n
     });
     if (response2) {
       return res.status(200).json(response2);
@@ -8097,7 +8071,7 @@ router$t.post("/", async function(req, res, next) {
         "NO DATA UPDATED",
         401,
         true,
-        `User ${user.description} couldn't insert data to ${table$o}.`,
+        `User ${user.description} couldn't insert data to ${table$n}.`,
         `Cero datos agregados`
       );
     }
@@ -8105,14 +8079,14 @@ router$t.post("/", async function(req, res, next) {
     next(error);
   }
 });
-router$t.put("/sort/:id", async function(req, res) {
+router$s.put("/sort/:id", async function(req, res) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
     const response2 = await update({
       id: req.params.id,
       user,
-      table: table$o,
+      table: table$n,
       data: {
         sort: data2.sort
       }
@@ -8124,7 +8098,7 @@ router$t.put("/sort/:id", async function(req, res) {
         "NO DATA UPDATED",
         401,
         true,
-        `User ${user.description} couldn't update data to ${table$o}.`,
+        `User ${user.description} couldn't update data to ${table$n}.`,
         `Cero datos actualizados`
       );
     }
@@ -8133,14 +8107,14 @@ router$t.put("/sort/:id", async function(req, res) {
     res.status(500).send(err);
   }
 });
-router$t.put("/general/:id", async function(req, res) {
+router$s.put("/general/:id", async function(req, res) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
     const response2 = await update({
       id: req.params.id,
       user,
-      table: table$o,
+      table: table$n,
       data: {
         ...data2
       },
@@ -8149,7 +8123,7 @@ router$t.put("/general/:id", async function(req, res) {
       }
     });
     req.io.emit("update", {
-      table: table$o
+      table: table$n
     });
     if (response2) {
       res.status(200).json(response2);
@@ -8158,7 +8132,7 @@ router$t.put("/general/:id", async function(req, res) {
         "NO DATA UPDATED",
         401,
         true,
-        `User ${user.description} couldn't update data to ${table$o}.`,
+        `User ${user.description} couldn't update data to ${table$n}.`,
         `Cero datos actualizados`
       );
     }
@@ -8167,7 +8141,7 @@ router$t.put("/general/:id", async function(req, res) {
     res.status(500).send(err);
   }
 });
-router$t.put("/:id", async function(req, res) {
+router$s.put("/:id", async function(req, res) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
@@ -8192,7 +8166,7 @@ router$t.put("/:id", async function(req, res) {
     const response2 = await update({
       id: req.params.id,
       user,
-      table: table$o,
+      table: table$n,
       data: {
         ...data2,
         copay: cleanCurrency(data2.copay),
@@ -8200,652 +8174,6 @@ router$t.put("/:id", async function(req, res) {
       },
       log: true
     });
-    req.io.emit("update", {
-      table: table$o
-    });
-    if (response2) {
-      res.status(200).json(response2);
-    } else {
-      throw new BaseError(
-        "NO DATA UPDATED",
-        401,
-        true,
-        `User ${user.description} couldn't update data to ${table$o}.`,
-        `Cero datos actualizados`
-      );
-    }
-  } catch (err) {
-    console.error(err);
-    res.status(500).send(err);
-  }
-});
-router$t.delete("/:id", async function(req, res) {
-  try {
-    let user = res.locals.user;
-    let response2 = await update({
-      user,
-      id: req.params.id,
-      table: table$o,
-      data: { c_status: 1 }
-    });
-    req.io.emit("update", {
-      table: table$o
-    });
-    if (response2) {
-      res.status(200).json(response2);
-    } else {
-      res.status(401).send({ msg: "Cero datos actualizados" });
-    }
-  } catch (err) {
-    console.error(err);
-    res.status(500).send(err);
-  }
-});
-router$t.delete("/", async function(req, res) {
-  try {
-    const user = res.locals.user;
-    const ids = req.body;
-    let response2;
-    for (let i = 0; i < ids.length; i++) {
-      const id = ids[i];
-      response2 = await update({
-        user,
-        id,
-        table: table$o,
-        data: { c_status: 1 }
-      });
-    }
-    req.io.emit("update", {
-      table: table$o
-    });
-    if (response2) {
-      res.status(200).json(response2);
-    } else {
-      res.status(401).send({ msg: "Cero datos actualizados" });
-    }
-  } catch (err) {
-    console.log(err);
-    res.status(500).send(err);
-  }
-});
-const router$s = express.Router();
-const table$n = "t_catalogue";
-router$s.use(isAuthenticated);
-router$s.get("/", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    let { items, total, sql } = await getRows({
-      table: table$n,
-      user,
-      query: req.query
-    });
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      item.quantity = 1;
-      if (!item.minimun) {
-        item.minimun = 0;
-      }
-      if (!item.maximun) {
-        item.maximun = 0;
-      }
-      item.has_exoneration = 0;
-      item.exoneration = 0;
-      item.c_status_format = formatCStatus(item.c_status);
-      if (item.price) {
-        item.price_format = currency(item.price);
-      } else {
-        item.price_format = currency(0);
-        item.price = 0;
-      }
-      if (item.cost) {
-        item.cost_format = currency(item.cost);
-      } else {
-        item.cost_format = currency(0);
-        item.cost = 0;
-      }
-      if (item.gap) {
-        item.gap_format = currency(item.gap);
-      } else {
-        item.gap_format = currency(0);
-        item.gap = 0;
-      }
-      if (item.coverage) {
-        item.coverage_format = currency(item.coverage);
-      } else {
-        item.coverage_format = currency(0);
-        item.coverage = 0;
-      }
-      if (item.expiration_date && isValid(item.expiration_date)) {
-        item.expiration_date_format = intlDate(item.expiration_date);
-      }
-      if (!item.minimun || !item.maximun) {
-        item.status_class = "bg-orange-2";
-        item.status_description = "No definido";
-      } else if (item.on_stock < item.minimun) {
-        item.status_class = "bg-red-200";
-        item.status_description = "Nivel Crítico de Inventario";
-      } else if (item.on_stock > item.maximun) {
-        item.status_class = "bg-sky-200";
-        item.status_description = "Inventario Excedente";
-      } else if (item.on_stock >= item.minimun && item.on_stock <= item.maximun) {
-        item.status_class = "bg-green-200";
-        item.status_description = "Inventario Óptimo";
-      }
-      item.created_format = intlDateTime(item.created);
-      items[i] = item;
-    }
-    if (req.query.returnItems) {
-      return res.status(200).json(items);
-    }
-    return res.status(200).json({ items, total });
-  } catch (error) {
-    next(error);
-  }
-});
-router$s.get("/report", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const account = res.locals.account;
-    req.query.order = {
-      description: "ASC"
-    };
-    let { items } = await getRows({
-      table: "t_catalogue",
-      user,
-      query: req.query
-    });
-    const report = {
-      on_stock: 0,
-      on_stock_general: 0,
-      on_stock_farmacia: 0,
-      on_stock_cosmiatria: 0,
-      items: [],
-      date: /* @__PURE__ */ new Date(),
-      date_format: /* @__PURE__ */ new Date(),
-      day: null,
-      year: null
-    };
-    items.forEach((item) => {
-      if (item.expiration_date && item.expiration_date !== "0000-00-00") {
-        item.expiration_date_format = intlDate(item.expiration_date);
-      }
-      report.on_stock += item.on_stock;
-      if (item.on_stock) {
-        report.items.push(item);
-      }
-    });
-    report.images = {
-      logoText: convertImagetoBase64("logoText.png")
-    };
-    report.user = user;
-    report.on_stock = report.on_stock;
-    report.date_format = format$2(report.date, "dd-MM-yyyy");
-    report.day = format$2(report.date, "dd");
-    report.year = format$2(report.date, "yyyy");
-    const bodyTemplate = await getBody({
-      table: "t_report_inventory",
-      account,
-      data: {
-        ...report,
-        account_description: account.description
-      }
-    });
-    report.filename = `REPORTE-INVENTARIO`;
-    const url = await generatePDF({
-      account,
-      data: report,
-      table: "t_report_inventory",
-      filename: report.filename,
-      landscape: false,
-      bodyTemplate,
-      header: false,
-      footer: false,
-      margin: {
-        top: "100px",
-        bottom: "100px",
-        right: "30px",
-        left: "30px"
-      }
-    });
-    return res.status(200).json(url);
-  } catch (error) {
-    next(error);
-  }
-});
-router$s.get("/insurance/:id", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const { items, total, sql } = await getRows({
-      table: table$n,
-      user,
-      query: req.query
-    });
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      item.quantity = 1;
-      item.has_exoneration = 0;
-      item.exoneration = 0;
-      if (item.price) {
-        item.price_format = currency(item.price);
-      } else {
-        item.price_format = currency(0);
-        item.price = 0;
-      }
-      if (item.coverage) {
-        item.coverage_format = currency(item.coverage);
-      } else {
-        item.coverage_format = currency(0);
-        item.coverage = 0;
-      }
-      if (item.cost) {
-        item.cost_format = currency(item.cost);
-      } else {
-        item.cost_format = currency(0);
-        item.cost = 0;
-      }
-      if (item.gap) {
-        item.gap_format = currency(item.gap);
-      } else {
-        item.gap_format = currency(0);
-        item.gap = 0;
-      }
-      if (item.expiration_date && isValid(item.expiration_date)) {
-        item.expiration_date = intlDate(item.expiration_date);
-      }
-      const [insurance] = await pool$1.query(
-        `SELECT * FROM t_catalogue_insurance WHERE insurance_id=? AND catalogue_id=? AND c_status & ?`,
-        [
-          req.params.id,
-          item.id,
-          req.query.where.c_status || req.query.where["bi:c_status"]
-        ]
-      );
-      if (insurance) {
-        if (insurance.description) {
-          item.description = insurance.description;
-        }
-        if (insurance.c_status) {
-          item.c_status = insurance.c_status;
-        }
-        if (!isNaN(insurance.price)) {
-          item.price_format = currency(insurance.price);
-          item.price = insurance.price;
-        }
-        if (!isNaN(insurance.coverage)) {
-          item.coverage_format = currency(insurance.coverage);
-          item.coverage = insurance.coverage;
-        }
-        if (!isNaN(insurance.gap)) {
-          item.gap_format = currency(insurance.gap);
-          item.gap = insurance.gap;
-        }
-      }
-      items[i] = item;
-    }
-    if (req.query.returnItems) {
-      return res.status(200).json(items);
-    }
-    res.status(200).send({ items, total });
-  } catch (error) {
-    next(error);
-  }
-});
-router$s.get("/promotion/:id", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const { items, total } = await getRows({
-      table: table$n,
-      user,
-      query: req.query
-    });
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      item.quantity = 1;
-      item.has_exoneration = 0;
-      item.exoneration = 0;
-      if (item.price) {
-        item.price_format = currency(item.price);
-        item.original_price_format = currency(item.price);
-      } else {
-        item.price_format = currency(0);
-        item.original_price_format = currency(0);
-        item.price = 0;
-      }
-      if (item.coverage) {
-        item.coverage_format = currency(item.coverage);
-      } else {
-        item.coverage_format = currency(0);
-        item.coverage = 0;
-      }
-      if (item.cost) {
-        item.cost_format = currency(item.cost);
-      } else {
-        item.cost_format = currency(0);
-        item.cost = 0;
-      }
-      if (item.gap) {
-        item.gap_format = currency(item.gap);
-      } else {
-        item.gap_format = currency(0);
-        item.gap = 0;
-      }
-      if (item.expiration_date && isValid(item.expiration_date)) {
-        item.expiration_date = intlDate(item.expiration_date);
-      }
-      item.original_price = item.price;
-      item.percent = 0;
-      item.c_status = 2;
-      const [promotion] = await pool$1.query(
-        `SELECT * FROM t_catalogue_promotion WHERE promotion_id=? AND catalogue_id=? AND c_status & ?`,
-        [
-          req.params.id,
-          item.id,
-          req.query.where.c_status || req.query.where["bi:c_status"]
-        ]
-      );
-      if (promotion) {
-        item.has_promotion = 1;
-        if (promotion.description) {
-          item.description = promotion.description;
-        }
-        item.promotion_description = promotion.promotion;
-        if (promotion.detail) {
-          item.promotion_detail = promotion.detail;
-        }
-        if (promotion.c_status) {
-          item.c_status = promotion.c_status;
-        }
-        if (!isNaN(promotion.price)) {
-          item.price_format = currency(promotion.price);
-          item.price = promotion.price;
-        }
-        if (!isNaN(promotion.percent)) {
-          item.percent = promotion.percent;
-        }
-      }
-      items[i] = item;
-    }
-    if (req.query.returnItems) {
-      return res.status(200).json(items);
-    }
-    res.status(200).send({ items, total });
-  } catch (error) {
-    next(error);
-  }
-});
-router$s.get("/:id", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const item = await getRowById({
-      id: req.params.id,
-      table: table$n,
-      user
-    });
-    if (item.expiration_date && isValid(item.expiration_date)) {
-      item.expiration_date = intlDate(item.expiration_date);
-    }
-    item.on_new_stock = item.on_stock;
-    item.created_format = intlDateTime(item.created);
-    if (item.modified) {
-      item.modified_format = intlDateTime(item.modified);
-    }
-    return res.status(200).json(item);
-  } catch (error) {
-    next(error);
-  }
-});
-router$s.post("/", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const data2 = req.body;
-    data2.code = await getCode({ table: table$n });
-    if (data2.expiration_date) {
-      data2.expiration_date_valid = convertToValidDate(
-        data2.expiration_date
-      );
-      data2.expiration_date = mysqlDateTime(
-        addCurrentTimeToDate(data2.expiration_date_valid)
-      );
-    } else {
-      data2.expiration_date = null;
-    }
-    const response2 = await insert({
-      user,
-      table: table$n,
-      data: {
-        ...data2,
-        price: cleanCurrency(req.body.price),
-        cost: cleanCurrency(req.body.cost),
-        coverage: cleanCurrency(req.body.coverage),
-        gap: cleanCurrency(req.body.gap)
-      }
-    });
-    req.io.emit("update", {
-      table: table$n
-    });
-    if (response2) {
-      return res.status(200).json(response2);
-    } else {
-      throw new BaseError(
-        "NO DATA UPDATED",
-        401,
-        true,
-        `User ${user.description} couldn't insert data to ${table$n}.`,
-        `Cero datos agregados`
-      );
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-router$s.post("/barcode", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const account = res.locals.account;
-    const data2 = req.body;
-    data2.account = account;
-    const xmlSerializer = new XMLSerializer();
-    const document = new DOMImplementation().createDocument(
-      "http://www.w3.org/1999/xhtml",
-      "html",
-      null
-    );
-    for (let i = 0; i < data2.rows.length; i++) {
-      const row = data2.rows[i];
-      const svgNode = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "svg"
-      );
-      JsBarcode(svgNode, row.barcode, {
-        xmlDocument: document,
-        width: 2,
-        height: 30,
-        fontSize: 16
-      });
-      row.price_format = currency(row.price);
-      row.svgBarcode = xmlSerializer.serializeToString(svgNode);
-    }
-    const bodyTemplate = await getBody({
-      table: "barcode",
-      account,
-      data: data2
-    });
-    data2.filename = `${data2.code}-MEDICAMENTO`;
-    const filename = await generatePDF({
-      account,
-      data: data2,
-      table: "barcode",
-      id: null,
-      filename: data2.filename,
-      bodyTemplate,
-      header: false,
-      footer: false,
-      landscape: true,
-      scale: 0.8,
-      width: "70mm",
-      height: "60mm",
-      // width: "81.3mm",
-      margin: {
-        top: "0",
-        bottom: "2mm",
-        right: "4mm",
-        left: "4mm"
-      }
-    });
-    req.io.emit("print-invoice", {
-      account,
-      user,
-      token: res.locals.token,
-      api: process.env.DOMAIN,
-      url: filename,
-      options: {
-        printer: account.printer.label,
-        scale: "fit",
-        // pageSize: "40mm * 20mm",
-        copies: data2.rows[0].quantity
-      }
-    });
-    return res.status(200).json(filename);
-  } catch (error) {
-    next(error);
-  }
-});
-router$s.post("/barcode/pdf", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const account = res.locals.account;
-    const data2 = req.body;
-    const base64Data = await pdfUrlToBase64(data2.filename);
-    req.io.emit("print-invoice", {
-      user,
-      data: base64Data,
-      options: {
-        silent: true,
-        printBackground: true,
-        deviceName: account.printer.label,
-        copies: 1
-      }
-    });
-    return res.status(200).json(true);
-  } catch (error) {
-    console.log(error);
-  }
-});
-router$s.post("/insurance", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const data2 = req.body;
-    data2.catalogue_id = data2.id;
-    const { items } = await getRows({
-      auth: 0,
-      table: "t_catalogue_insurance",
-      user,
-      query: {
-        where: {
-          catalogue_id: data2.catalogue_id,
-          insurance_id: data2.insurance_id,
-          "bi:c_status": 6
-        }
-      }
-    });
-    if (items.length) {
-      const item = items[0];
-      await update({
-        id: item.id,
-        user,
-        table: "t_catalogue_insurance",
-        data: data2
-      });
-      return res.status(200).json(true);
-    } else {
-      delete data2.id;
-      await insert({
-        auth: 0,
-        user,
-        table: "t_catalogue_insurance",
-        data: data2
-      });
-      return res.status(200).json(true);
-    }
-  } catch (err) {
-    next(err);
-  }
-});
-router$s.post("/promotion", async function(req, res, next) {
-  try {
-    const user = res.locals.user;
-    const data2 = req.body;
-    data2.catalogue_id = data2.id;
-    const { items } = await getRows({
-      auth: 0,
-      table: "t_catalogue_promotion",
-      user,
-      query: {
-        where: {
-          catalogue_id: data2.catalogue_id,
-          promotion_id: data2.promotion_id,
-          "bi:c_status": 6
-        }
-      }
-    });
-    if (items.length) {
-      const item = items[0];
-      await update({
-        id: item.id,
-        user,
-        table: "t_catalogue_promotion",
-        data: data2
-      });
-      return res.status(200).json(true);
-    } else {
-      delete data2.id;
-      await insert({
-        auth: 0,
-        user,
-        table: "t_catalogue_promotion",
-        data: data2
-      });
-      return res.status(200).json(true);
-    }
-  } catch (err) {
-    next(err);
-  }
-});
-router$s.put("/:id", async function(req, res) {
-  try {
-    const user = res.locals.user;
-    const data2 = req.body;
-    if (data2.on_stock > data2.on_new_stock) {
-      data2.on_stock = data2.on_stock - data2.on_new_stock;
-      await (void 0)({ ...data2, quantity: data2.on_stock }, user);
-    } else if (data2.on_stock < data2.on_new_stock) {
-      const quantity = data2.on_new_stock - data2.on_stock;
-      data2.on_stock = data2.on_new_stock;
-      await (void 0)({ ...data2, quantity }, user);
-    }
-    if (data2.expiration_date) {
-      data2.expiration_date_valid = convertToValidDate(
-        data2.expiration_date
-      );
-      data2.expiration_date = mysqlDateTime(
-        addCurrentTimeToDate(data2.expiration_date_valid)
-      );
-    } else {
-      data2.expiration_date = null;
-    }
-    var response2 = await update({
-      id: req.params.id,
-      user,
-      table: table$n,
-      data: {
-        ...data2,
-        price: cleanCurrency(req.body.price),
-        cost: cleanCurrency(req.body.cost),
-        coverage: cleanCurrency(req.body.coverage),
-        gap: cleanCurrency(req.body.gap)
-      }
-    });
-    (void 0)(user);
     req.io.emit("update", {
       table: table$n
     });
@@ -8891,7 +8219,6 @@ router$s.delete("/", async function(req, res) {
   try {
     const user = res.locals.user;
     const ids = req.body;
-    console.log(ids);
     let response2;
     for (let i = 0; i < ids.length; i++) {
       const id = ids[i];
@@ -16271,17 +15598,16 @@ router$1.get("/medical-guide2/:id", async function(req, res, next) {
   }
 });
 const router = express.Router();
-router.use("/user", router$C);
-router.use("/role", router$z);
-router.use("/category", router$B);
-router.use("/insurance", router$A);
-router.use("/file", router$x);
-router.use("/utility", router$y);
-router.use("/permission", router$w);
-router.use("/privilege", router$v);
-router.use("/diagnosis", router$u);
-router.use("/event", router$t);
-router.use("/catalogue", router$s);
+router.use("/user", router$B);
+router.use("/role", router$y);
+router.use("/category", router$A);
+router.use("/insurance", router$z);
+router.use("/file", router$w);
+router.use("/utility", router$x);
+router.use("/permission", router$v);
+router.use("/privilege", router$u);
+router.use("/diagnosis", router$t);
+router.use("/event", router$s);
 router.use("/comunication", router$r);
 router.use("/procedure", router$q);
 router.use("/account", router$p);
