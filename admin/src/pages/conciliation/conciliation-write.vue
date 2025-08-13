@@ -447,7 +447,6 @@ function onReset() {
 async function onPrint() {
     state.submitting = true
     const url = await $api.get(`conciliation/pdf/${props.id}`)
-    console.log(11, url);
     downloadResource(url, `${state.item.code}-${state.item.insurance_description}`.toUpperCase())
     state.submitting = false
 }

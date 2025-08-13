@@ -57,6 +57,7 @@ module.exports = {
   // add your custom rules here
   rules: {
     'vue/no-unused-vars': 'off',
+    'vue/no-multiple-template-root': 'off',
     'prefer-promise-reject-errors': 'off',
     'vue/no-mutating-props': 'off',
     // allow debugger during development only

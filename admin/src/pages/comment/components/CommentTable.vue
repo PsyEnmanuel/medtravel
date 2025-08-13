@@ -1,13 +1,11 @@
 <template>
     <div>
         <div class="flex flex-col gap-2">
-            <q-form v-if="add" ref="writeForm" class="flex flex-col gap-1" autofocus @submit="onSubmit"
-                @reset="onReset">
+            <q-form v-if="add" ref="writeForm" class="flex flex-col gap-1" autofocus @submit="onSubmit" @reset="onReset">
                 <div class="bg-default p-1 rounded-md text-center font-bold text-xs">
                     Comentarios Administrativos
                 </div>
-                <q-input dense outlined v-model="state.item.text" :label="$t('comment')" type="textarea" :rows="3"
-                    :rules="[requiredInput]" hide-bottom-space>
+                <q-input dense outlined v-model="state.item.text" :label="$t('comment')" type="textarea" :rows="3" :rules="[requiredInput]" hide-bottom-space>
                 </q-input>
                 <q-btn flat class="button-icon bg-primary text-white" label="agregar" type="submit">
                 </q-btn>
@@ -17,24 +15,20 @@
             </div>
             <div class="flex flex-col gap-2">
                 <div class="flex flex-nowrap w-full gap-1">
-                    <q-input class="w-full md:w-auto" dense outlined debounce="300" v-model="state.search"
-                        :placeholder="$t('search')" hide-bottom-space>
+                    <q-input class="w-full md:w-auto" dense outlined debounce="300" v-model="state.search" :placeholder="$t('search')" hide-bottom-space>
                         <template v-slot:append>
                             <q-icon name="search" />
                         </template>
                     </q-input>
-                    <q-btn v-if="!add" flat class="button h-[40px]" icon="add" :label="$isDesktop && $t('comentario')"
-                        @click="state.dialogCreate = true" />
+                    <q-btn v-if="!add" flat class="button h-[40px]" icon="add" :label="$isDesktop && $t('comentario')" @click="state.dialogCreate = true" />
                 </div>
                 <div v-if="$isDesktop" class="ml-auto">
-                    <PaginationTable :rowsNumber="state.pagination.rowsNumber" :itemsRange="itemsRange"
-                        :tableRef="tableRef" />
+                    <PaginationTable :rowsNumber="state.pagination.rowsNumber" :itemsRange="itemsRange" :tableRef="tableRef" />
                 </div>
             </div>
-            <q-table :grid="isGrid" hide-pagination :rows="state.rows" :columns="state.columns" row-key="id"
-                ref="tableRef" @request="onRequest" flat selection="none" v-model:pagination="state.pagination"
-                v-model:selected="state.selected" :selected-rows-label="getSelectedString" :loading="state.loading"
-                rows-per-page-label="Lineas" :wrap-cells="true">
+            <q-table :grid="isGrid" hide-pagination :rows="state.rows" :columns="state.columns" row-key="id" ref="tableRef" @request="onRequest" flat selection="none"
+                v-model:pagination="state.pagination" v-model:selected="state.selected" :selected-rows-label="getSelectedString" :loading="state.loading" rows-per-page-label="Lineas"
+                :wrap-cells="true">
                 <template v-slot:no-data="{ icon, filter }">
                     <div class="full-width row flex-center text-primary q-gutter-sm">
                         <span>
@@ -46,8 +40,7 @@
                 <template v-slot:body="props">
                     <q-tr :props="props">
                         <q-td key="action" :props="props">
-                            <q-btn flat class="button text-primary rounded-md" size="sm" label="Editar" no-caps
-                                @click="state.selectedId = props.row.id; state.dialogWrite = true;" />
+                            <q-btn flat class="button text-primary rounded-md" size="sm" label="Editar" no-caps @click="state.selectedId = props.row.id; state.dialogWrite = true;" />
                         </q-td>
                         <q-td key="text" :props="props">
                             <div class="line-clamp-3 text-xs">
@@ -78,18 +71,14 @@
                 </template>
             </q-table>
         </div>
-        <q-dialog v-model="state.dialogWrite" @update:model-value="state.dialogWrite = false"
-            :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="100">
+        <q-dialog v-model="state.dialogWrite" @update:model-value="state.dialogWrite = false" :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="100">
             <q-card>
-                <CommentWrite @close="state.dialogWrite = false; state.selectedId = 0" @submit="onSubmit" isDrawer
-                    :id="state.selectedId" isEdit :width="$isDesktop ? '400px' : '100%'" />
+                <CommentWrite @close="state.dialogWrite = false; state.selectedId = 0" @submit="state.item.text = $event; onSubmit()" isDrawer :id="state.selectedId" isEdit :width="$isDesktop ? '400px' : '100%'" />
             </q-card>
         </q-dialog>
-        <q-dialog v-model="state.dialogCreate" @update:model-value="state.dialogCreate = false"
-            :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="100">
+        <q-dialog v-model="state.dialogCreate" @update:model-value="state.dialogCreate = false" :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="100">
             <q-card>
-                <CommentWrite @close="state.dialogCreate = false;" @submit="onSubmit" isDrawer
-                    :width="$isDesktop ? '400px' : '100%'" />
+                <CommentWrite @close="state.dialogCreate = false;" @submit="state.item.text = $event; onSubmit()" isDrawer :width="$isDesktop ? '400px' : '100%'" />
             </q-card>
         </q-dialog>
     </div>
@@ -200,10 +189,11 @@ function onReset() {
     writeForm.value?.resetValidation()
 }
 
-async function onSubmit(text) {
+async function onSubmit() {
     try {
+        console.log(state.item.text);
         if (props.refId) {
-            const res = await $api.post(`comment`, { ...state.item, text: text || state.item.text });
+            const res = await $api.post(`comment`, { ...state.item, text: state.item.text });
             if (res) {
                 $q.notify({
                     type: 'success',
@@ -214,10 +204,9 @@ async function onSubmit(text) {
         } else {
             if (props.refKey === 't_event' && props.comment_state_id) {
                 const cat = $cats.value.event_state.find(i => i.id === props.comment_state_id)
-                console.log(cat);
                 state.item.comment_state = cat.description
             }
-            state.rows.push({ ...state.item, text: text || state.item.text })
+            state.rows.push({ ...state.item, text: state.item.text })
             $emit('submit', state.rows)
         }
         state.dialogWrite = false

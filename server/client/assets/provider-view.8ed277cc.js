@@ -1,0 +1,1 @@
+import{t as a,v as s,x as t,z as r,b8 as c,S as p}from"./index.6dfca1d0.js";const _={__name:"provider-view",props:{id:Number},setup(e){return(i,o)=>(a(),s(p,{class:"px-1.5 py-2 lg:px-5 lg:py-6"},{default:t(()=>[r(c,{id:e.id},null,8,["id"])]),_:1}))}};export{_ as default};

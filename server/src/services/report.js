@@ -168,7 +168,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
                 body: [
                   [
                     {
-                      image: _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(doctor_profile_pic.url)),
+                      image: _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(doctor_profile_pic?.url)),
                       width: 100,
                       height: 120
                     },

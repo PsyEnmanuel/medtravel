@@ -1209,10 +1209,103 @@ const getBody = async ({ table: table2, data: data2, account, file = "body" }) =
         account
       }
     );
-  } catch (err) {
-    console.log(err);
+  } catch (error) {
+    console.log(error);
   }
 };
+function generateConciliation({ item, itineraries, provider, files, account, user }) {
+  try {
+    let buildClaimDetailPdf = function(rows, patientName = "") {
+      const header = [
+        { text: "FECHA", style: "th", noWrap: true },
+        { text: "PROVEEDOR", style: "th", noWrap: true },
+        { text: "PRESTADOR DE SERVICIOS", style: "th", noWrap: true },
+        { text: "CONCEPTO", style: "th" },
+        { text: "MONTO FACTURADO", style: "thR" },
+        { text: "DESCUENTO DE AJUSTE", style: "thR" },
+        { text: "MONTO A PROCESAR", style: "thR" },
+        { text: "DEDUCIBLE", style: "thR" },
+        { text: "COPAGO", style: "thR" },
+        { text: "CUBIERTO", style: "thR" },
+        { text: "PAGO ASEGURADORA", style: "thR" },
+        { text: "RESP. ASEGURADORA", style: "thR" },
+        { text: "AUTORIZACIÓN", style: "th", noWrap: true },
+        { text: "NOTA", style: "th" }
+      ];
+      const body = [header];
+      rows.forEach((r) => {
+        body.push([
+          { text: safe(r.fecha), alignment: "center", noWrap: true },
+          safe(r.proveedor),
+          safe(r.prestador),
+          safe(r.concepto),
+          currency(r.monto_facturado),
+          currency(r.descuento_ajuste),
+          currency(r.monto_procesar),
+          currency(r.deducible),
+          currency(r.copago),
+          currency(r.cubierto),
+          currency(r.pago_aseguradora),
+          currency(r.resp_aseguradora),
+          safe(r.autorizacion),
+          safe(r.nota)
+        ]);
+      });
+      return {
+        pageSize: "LETTER",
+        pageOrientation: "landscape",
+        pageMargins: [18, 18, 18, 18],
+        defaultStyle: { fontSize: 8 },
+        content: [
+          patientName ? { text: patientName, bold: true, fontSize: 10, margin: [0, 0, 0, 6] } : {},
+          {
+            table: {
+              headerRows: 1,
+              // tune widths if you need more/less room per column
+              widths: [
+                42,
+                90,
+                105,
+                "*",
+                60,
+                68,
+                68,
+                55,
+                50,
+                55,
+                82,
+                82,
+                72,
+                80
+              ],
+              body
+            },
+            layout: {
+              fillColor: (rowIndex) => rowIndex === 0 ? "#0d2f57" : null,
+              hLineWidth: () => 0.5,
+              vLineWidth: () => 0.5,
+              hLineColor: () => "#c8d4e0",
+              vLineColor: () => "#c8d4e0",
+              paddingLeft: () => 3,
+              paddingRight: () => 3,
+              paddingTop: () => 4,
+              paddingBottom: () => 4
+            }
+          }
+        ],
+        styles: {
+          th: { color: "white", bold: true },
+          thR: { color: "white", bold: true, alignment: "right" }
+        }
+      };
+      function safe(v) {
+        return (v ?? "").toString();
+      }
+    };
+  } catch (error) {
+    console.log(error);
+  }
+}
 let browser;
 const uploadDir = path__default.join(path__default.resolve(), "/privated/uploads/");
 const imagesBase64Dir$1 = path__default.join(path__default.resolve(), "/public/base64/");
@@ -1234,7 +1327,11 @@ async function pdfToImg2(pdf_document) {
     for (let i = 0; i < images.length; i++) {
       const image = images[i];
       const filename = `tempora${i}.png`;
-      const tmpImage = path__default.join(uploadDir, filename);
+      const pdfFolder = path__default.join(process.cwd(), "privated", "uploads", "tmp");
+      if (!fs.existsSync(pdfFolder)) {
+        await fs.promises.mkdir(pdfFolder, { recursive: true });
+      }
+      const tmpImage = path__default.join(pdfFolder, filename);
       const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
       const buffer = Buffer.from(base64Data, "base64");
       await fs.writeFileSync(tmpImage, buffer);
@@ -1247,6 +1344,11 @@ async function pdfToImg2(pdf_document) {
 }
 function convertImagetoBase64(file) {
   const imageBuffer = fs.readFileSync(`${imagesBase64Dir$1}/${file}`);
+  const base64Image = imageBuffer.toString("base64");
+  return `data:image/png;base64,${base64Image}`;
+}
+function convertImageUrltoBase64(filePath2) {
+  const imageBuffer = fs.readFileSync(filePath2);
   const base64Image = imageBuffer.toString("base64");
   return `data:image/png;base64,${base64Image}`;
 }
@@ -1545,6 +1647,12 @@ async function generatePDFWithPdfmake({
       medium: path__default.resolve("fonts/noway-medium-webfont.ttf"),
       italics: path__default.resolve("fonts/noway_regular_italic-webfont.ttf"),
       bolditalics: path__default.resolve("fonts/noway_bold_italic-webfont.ttf")
+    },
+    OpenSans: {
+      normal: path__default.resolve("fonts/OpenSans-Regular.ttf"),
+      bold: path__default.resolve("fonts/OpenSans-Bold.ttf"),
+      semibold: path__default.resolve("fonts/OpenSans-Semibold.ttf"),
+      italic: path__default.resolve("fonts/OpenSans-Italic.ttf")
     }
   };
   const printer = new PdfPrinter(defaultFonts);
@@ -11653,6 +11761,134 @@ router$i.delete("/", async function(req, res) {
 const router$h = express.Router();
 const table$d = "t_book";
 router$h.use(isAuthenticated);
+router$h.get("/pdf2/:code", async function(req, res, next) {
+  try {
+    const user = res.locals.user;
+    const account = res.locals.account;
+    const { items: books } = await getRows({
+      table: table$d,
+      user,
+      query: {
+        where: {
+          code: req.params.code,
+          c_status: 4
+        }
+      }
+    });
+    const item = books[0];
+    const items = books.filter((i) => i.$book_type_id === 98);
+    const payments = books.filter((i) => i.$book_type_id === 354);
+    item.book_date_format = format(new Date(item.book_date), "dd-MM-yyyy");
+    item.sequence = String(item.code).substring(1);
+    item.day = format(item.book_date, "dd");
+    item.year = format(item.created, "yyyy");
+    item.images = {
+      logoText: convertImagetoBase64("logoText.png")
+    };
+    for (let i = 0; i < items.length; i++) {
+      const item2 = items[i];
+      if (item2.billed_amount_total) {
+        item2.billed_amount_format = currency(item2.billed_amount, item2.currency);
+      }
+      if (item2.coverage) {
+        item2.coverage_format = currency(item2.coverage, item2.currency);
+      }
+      if (item2.discount) {
+        item2.discount_format = currency(item2.discount, item2.currency);
+      }
+      if (item2.deductible) {
+        item2.deductible_format = currency(item2.deductible, item2.currency);
+      }
+      if (item2.copago) {
+        item2.copago_format = currency(item2.copago, item2.currency);
+      }
+      if (item2.covered) {
+        item2.covered_format = currency(item2.covered, item2.currency);
+      }
+      if (item2.insurance_payment) {
+        item2.insurance_payment_format = currency(item2.insurance_payment, item2.currency);
+      }
+      if (item2.insurance_responsability) {
+        item2.insurance_responsability_format = currency(item2.insurance_responsability, item2.currency);
+      }
+      item2.book_date_format = intlDate(item2.book_date);
+    }
+    for (let i = 0; i < payments.length; i++) {
+      const item2 = payments[i];
+      if (item2.insurance_payment) {
+        item2.insurance_payment_format = currency(item2.insurance_payment, item2.currency);
+      }
+      if (item2.insurance_responsability) {
+        item2.insurance_responsability_format = currency(item2.insurance_responsability, item2.currency);
+      }
+      item2.book_date_format = intlDate(item2.book_date);
+    }
+    if (item.billed_amount_total) {
+      item.billed_amount_total_format = currency(item.billed_amount_total, item.currency);
+    }
+    if (item.coverage_total) {
+      item.coverage_total_format = currency(item.coverage_total, item.currency);
+    }
+    if (item.discount_total) {
+      item.discount_total_format = currency(item.discount_total, item.currency);
+    }
+    if (item.deductible_total) {
+      item.deductible_total_format = currency(item.deductible_total, item.currency);
+    }
+    if (item.copago_total) {
+      item.copago_total_format = currency(item.copago_total, item.currency);
+    }
+    if (item.covered_total) {
+      item.covered_total_format = currency(item.covered_total, item.currency);
+    }
+    if (item.insurance_payment_total) {
+      item.insurance_payment_total_format = currency(item.insurance_payment_total, item.currency);
+    }
+    if (item.insurance_responsability_total) {
+      item.insurance_responsability_total_format = currency(item.insurance_responsability_total, item.currency);
+    }
+    if (item.diagnosis) {
+      item.diagnosis = JSON.parse(item.diagnosis);
+    }
+    if (item.notes) {
+      item.notes = JSON.parse(item.notes);
+    }
+    const filename = `${item.code}-${item.book_date_format}`;
+    const { docDefinition } = await generateConciliation({
+      item,
+      items,
+      payments,
+      account,
+      user
+    });
+    const pdfUrl = await generatePDFWithPdfmake({
+      account,
+      table: "t_book",
+      filename,
+      docDefinition
+    });
+    const images = [];
+    const pdfs = [filePath(pdfUrl)];
+    const files = await getFiles({ ref_key: "t_book", ref_id: item.id });
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type === "image") {
+        const filePath$1 = filePath(file.url);
+        images.push(filePath$1);
+      }
+      if (file.icon === "pdf") {
+        const filePath$1 = filePath(file.url);
+        pdfs.push(filePath$1);
+      }
+    }
+    const newpdf = await imageToPDF(images);
+    const buf = await mergePDF([...pdfs, ...newpdf]);
+    await replaceFile(pdfs[0], buf);
+    return res.status(200).json(filename);
+  } catch (error) {
+    next(error);
+  }
+});
 router$h.get("/pdf/:code", async function(req, res, next) {
   try {
     const user = res.locals.user;
@@ -15286,46 +15522,579 @@ const carnet = fs.readFileSync(`${imagesBase64Dir}/guia2.png`).toString("base64"
 const content1 = fs.readFileSync(`${imagesBase64Dir}/guia3.png`).toString("base64");
 const content2 = fs.readFileSync(`${imagesBase64Dir}/guia4.png`).toString("base64");
 const branches = fs.readFileSync(`${imagesBase64Dir}/guia19.png`).toString("base64");
-const BACKGROUNDS = [
-  frontPage,
-  // page 1
-  carnet,
-  // page 2
-  content1,
-  // page 3
-  content2,
-  // page 4
-  content2,
-  // page 5
-  content2,
-  // page 6
-  content1,
-  // page 7
-  content1,
-  // page 8
-  content2,
-  // page 9
-  content1,
-  // page 10
-  content2,
-  // page 11
-  content1,
-  // page 12
-  content2,
-  // page 13
-  content1,
-  // page 14
-  content2,
-  // page 15
-  content2,
-  // page 16
-  content2,
-  // page 17
-  content1,
-  // page 18
-  branches
-  // page 19
-];
+const BACKGROUNDS = { frontPage, carnet, imagesAndContent: content1, titlePages: content2, lastPage: branches };
+async function generateMedicalGuideDoc({ item, itineraries, provider, files, account, user }) {
+  let provider_files;
+  if (provider) {
+    item.provider_description = provider.description;
+    item.provider_detail = provider.detail;
+    item.provider_location = provider.city ? `${provider.city}, ${provider.country}` : provider.country;
+    item.provider_place = `${provider.description}, ${provider.country}, ${provider.city}`;
+    provider_files = await getFiles({ ref_key: "t_provider", ref_id: item.provider_id });
+    if (provider_files == null ? void 0 : provider_files.length) {
+      const [provider_file] = provider_files.filter((i) => i.$file_type_id === 198);
+      const [provider_mapa] = provider_files.filter((i) => i.$file_type_id === 380);
+      item.provider_file = provider_file == null ? void 0 : provider_file.url;
+      item.provider_map = provider_mapa == null ? void 0 : provider_mapa.url;
+    }
+    item.provider_profile_pic = await getProfilePic({ ref_key: "t_provider", ref_id: item.provider_id });
+  }
+  if (itineraries.length) {
+    for (let itinerary of itineraries) {
+      const provider2 = await getRowById({
+        id: itinerary.provider_id,
+        table: "t_provider",
+        user
+      });
+      if (provider2) {
+        itinerary.provider_logo = provider2.logo;
+        itinerary.provider_address = provider2.address;
+        itinerary.provider_city = provider2.city;
+        itinerary.provider_country = provider2.country;
+      }
+      if (itinerary.attendance_datetime) {
+        itinerary.attendance_day = intlDay(itinerary.attendance_datetime);
+        itinerary.attendance_date = intlDate(itinerary.attendance_datetime);
+        itinerary.attendance_time = intlTimeClean(itinerary.attendance_datetime);
+        itinerary.attendance_time_format = extractAMPM(itinerary.attendance_time);
+      }
+      const doctor = await getRowById({
+        id: itinerary.doctor_id,
+        table: "t_doctor",
+        user
+      });
+      if (doctor) {
+        itinerary.doctor_address = doctor.address;
+        itinerary.doctor_name = doctor.description;
+        itinerary.doctor_bio = doctor.bio;
+        itinerary.doctor_profile_pic = await getProfilePic({ ref_key: "t_doctor", ref_id: itinerary.doctor_id });
+        if (doctor.postnominal) {
+          itinerary.doctor_posnominal = JSON.parse(doctor.postnominal);
+        } else {
+          itinerary.doctor_posnominal = [];
+        }
+        if (doctor.speciality) {
+          itinerary.doctor_speciality = JSON.parse(doctor.speciality);
+        } else {
+          itinerary.doctor_speciality = [];
+        }
+      }
+    }
+  }
+  let carnets = [];
+  let vobs = [];
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.$file_type_id === 314) {
+      const url = getFilePathFromUrl(file.url);
+      carnets.push(url);
+    }
+    if (file.$file_type_id === 197) {
+      if (file.icon === "pdf") {
+        const url = getFilePathFromUrl(file.url);
+        const allFiles = await pdfToImg2(url);
+        for (let j = 0; j < allFiles.length; j++) {
+          const vobs_file = publicPath({ account, table: "t_event", filename: allFiles[j] });
+          const url2 = getFilePathFromUrl(vobs_file);
+          vobs.push(url2);
+        }
+      } else {
+        const url = getFilePathFromUrl(file.url);
+        vobs.push(url);
+      }
+    }
+  }
+  item.carnets = carnets;
+  item.vobs = vobs;
+  const events_itineraries = itineraries.map((itinerary) => {
+    const {
+      attendance_day,
+      attendance_date,
+      attendance_time,
+      attendance_time_format,
+      provider_description,
+      provider_address,
+      doctor_description,
+      doctor_speciality
+    } = itinerary;
+    return [
+      {
+        stack: [
+          { text: attendance_day.toUpperCase(), bold: false, fontSize: 9 },
+          { text: attendance_date, bold: true, fontSize: 9 }
+        ],
+        style: "tableSubHeader",
+        alignment: "center"
+      },
+      {
+        stack: [
+          { text: `${attendance_time} ${attendance_time_format}`, bold: true, fontSize: 9 },
+          { text: "CONSULTA", fontSize: 8 }
+        ],
+        style: "tableSubHeader",
+        alignment: "center"
+      },
+      {
+        stack: [
+          { text: provider_description, bold: true, fontSize: 9, lineHeight: 0.7 },
+          { text: provider_address, fontSize: 8 }
+        ],
+        style: "tableSubHeader",
+        alignment: "center"
+      },
+      {
+        stack: [
+          { text: doctor_description, bold: true, fontSize: 9, lineHeight: 0.7 },
+          {
+            text: doctor_speciality.length > 1 ? doctor_speciality.map((s) => s.description).join(", ") : doctor_speciality[0].description,
+            fontSize: 8
+          }
+        ],
+        style: "tableSubHeader",
+        alignment: "center"
+      }
+    ];
+  });
+  const doctors = itineraries.map((itinerary) => {
+    const {
+      doctor_profile_pic,
+      doctor_name,
+      doctor_posnominal,
+      doctor_bio,
+      doctor_speciality
+    } = itinerary;
+    return [
+      {
+        table: {
+          widths: [100, "*"],
+          body: [
+            [
+              {
+                image: convertImageUrltoBase64(getFilePathFromUrl(doctor_profile_pic == null ? void 0 : doctor_profile_pic.url)),
+                width: 100,
+                height: 120
+              },
+              {
+                stack: [
+                  { text: `${doctor_name}${doctor_posnominal ? `, ${doctor_posnominal.length > 1 ? doctor_posnominal.join(", ") : doctor_posnominal[0]}` : ""}`, style: "doctor_name" },
+                  { text: doctor_speciality.length > 1 ? doctor_speciality.map((s) => s.description).join(", ") : doctor_speciality[0].description, style: "doctor_title" }
+                ],
+                margin: [10, 40, 0, 0]
+              }
+            ]
+          ]
+        },
+        layout: {
+          hLineWidth: () => 0,
+          vLineWidth: () => 0,
+          paddingLeft: () => 10,
+          paddingRight: () => 10,
+          paddingTop: () => 10,
+          paddingBottom: () => 10,
+          fillColor: "#183F73"
+        }
+      },
+      { text: "\n" },
+      {
+        text: doctor_bio,
+        style: "paragraph"
+      }
+    ];
+  });
+  const docDefinition = {
+    pageSize: "A4",
+    pageMargins: [40, 150, 40, 60],
+    background: function(currentPage) {
+      let bg = BACKGROUNDS.titlePages;
+      if (currentPage === 1) {
+        bg = BACKGROUNDS.frontPage;
+      }
+      if (currentPage > 1 && currentPage < item.carnets.length + 2) {
+        bg = BACKGROUNDS.carnet;
+      }
+      if (currentPage > item.carnets.length + 1 && currentPage < item.carnets.length + 3) {
+        bg = BACKGROUNDS.imagesAndContent;
+      }
+      if (currentPage > item.carnets.length + 4 && currentPage < item.vobs.length + item.carnets.length + 5) {
+        bg = BACKGROUNDS.imagesAndContent;
+      }
+      if (currentPage > item.vobs.length + item.carnets.length + 5 && currentPage < item.vobs.length + item.carnets.length + 8) {
+        bg = BACKGROUNDS.imagesAndContent;
+      }
+      if (currentPage > item.vobs.length + item.carnets.length + 8 && currentPage < item.vobs.length + item.carnets.length + 10) {
+        bg = BACKGROUNDS.imagesAndContent;
+      }
+      if (currentPage > item.vobs.length + item.carnets.length + 10 && currentPage < item.vobs.length + item.carnets.length + 12) {
+        bg = BACKGROUNDS.imagesAndContent;
+      }
+      if (currentPage > item.vobs.length + item.carnets.length + 12 && currentPage < item.vobs.length + item.carnets.length + itineraries.length + 14) {
+        bg = BACKGROUNDS.imagesAndContent;
+      }
+      if (currentPage > item.vobs.length + item.carnets.length + itineraries.length + 18 && currentPage < item.vobs.length + item.carnets.length + itineraries.length + 19) {
+        bg = BACKGROUNDS.imagesAndContent;
+      }
+      if (currentPage === item.vobs.length + item.carnets.length + itineraries.length + 16) {
+        bg = BACKGROUNDS.lastPage;
+      }
+      return {
+        image: `data:image/png;base64,${bg}`,
+        width: 595,
+        height: 842
+      };
+    },
+    content: [
+      { text: "", pageBreak: "after" },
+      // page1
+      ...item.carnets.length ? item.carnets.map((carnet2) => ({ image: convertImageUrltoBase64(carnet2), width: 350, alignment: "center" })) : [{}],
+      { text: "", pageBreak: "after" },
+      // page2
+      { image: "logo", width: 350, alignment: "center", pageBreak: "after" },
+      // page3
+      { text: "CONTENIDO", style: "title", margin: [30, 35, 0, 0] },
+      // page4 start
+      {
+        type: "square",
+        style: "item",
+        ul: [
+          "Pre-certificación",
+          "Citas Medicas",
+          "Sobre el Doctor",
+          "Sobre el Hospital",
+          "Sobre la Ciudad",
+          "Estadía y Hospital",
+          "Atracciones",
+          "Otras Informaciones"
+        ],
+        margin: [30, 0, 0, 0],
+        pageBreak: "after"
+      },
+      // page4 end
+      {
+        text: "PRE-CERTIFICACIÓN",
+        style: "title",
+        alignment: "center",
+        absolutePosition: { x: 0, y: 390 },
+        pageBreak: "after"
+      },
+      // page5
+      ...item.vobs.length ? item.vobs.map((vob) => ({ image: convertImageUrltoBase64(vob), width: 350, alignment: "center" })) : [{}],
+      { text: "", pageBreak: "after" },
+      // break after vobs
+      {
+        text: "CITAS MÉDICAS",
+        style: "title",
+        alignment: "center",
+        absolutePosition: { x: 0, y: 390 },
+        pageBreak: "after"
+      },
+      // page6
+      {
+        table: {
+          widths: ["30%", "18%", "30%", "27%"],
+          body: [
+            [
+              { text: "FECHA", style: "tableHeader", alignment: "center" },
+              { text: "HORA", style: "tableHeader", alignment: "center" },
+              { text: "LUGAR", style: "tableHeader", alignment: "center" },
+              { text: "DOCTOR", style: "tableHeader", alignment: "center" }
+            ],
+            ...events_itineraries,
+            [
+              { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 },
+              { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 },
+              { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 },
+              { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 }
+            ]
+          ]
+        },
+        layout: {
+          fillColor: function(rowIndex, node) {
+            const lastRowIndex = node.table.body.length - 1;
+            if (rowIndex === 0) {
+              return "#1b355e";
+            }
+            if (rowIndex === lastRowIndex) {
+              return "#f2f2f2";
+            }
+            return null;
+          },
+          hLineWidth: function() {
+            return 0.3;
+          },
+          vLineWidth: function() {
+            return 0.3;
+          },
+          hLineColor: function() {
+            return "white";
+          },
+          vLineColor: function() {
+            return "white";
+          }
+        },
+        margin: [-15, 0, 15, 0],
+        pageBreak: "after"
+      },
+      // page7 
+      {
+        stack: [
+          { text: "CONTACTOS", style: "title", margin: [0, 0, 0, 10] },
+          {
+            columns: [
+              {
+                stack: [
+                  { text: "Laura Suárez", style: "contactInfo", bold: true, lineHeight: 0.8 },
+                  { text: "Client liaison, International Patient Center", style: "contactInfo" },
+                  { text: "International and Specialized Services", style: "contactInfo" },
+                  { text: "Massachusetts General Hospital", style: "contactInfo" },
+                  { text: "| Mass Eye and Ear", style: "contactInfo" },
+                  { text: "55 Fruit St, Blake building, Site 180 Boston,", style: "contactInfo" },
+                  { text: "MA 02114", style: "contactInfo" },
+                  { text: "T 617-726-1442 | F 617-726-2543", style: "contactInfo" },
+                  { text: "Email: LSUAREZ5@mgh.harvard.edu", link: "mailto:LSUAREZ5@mgh.harvard.edu", style: "contactInfo", bold: true, margin: [0, 0, 0, 15] },
+                  { text: "Gleisi Tatis Herrera", style: "contactInfo", bold: true, lineHeight: 0.8 },
+                  { text: "Oficial de Coordinaciones Medicas", style: "contactInfo" },
+                  { text: "Seguros de Personas internacional", style: "contactInfo" },
+                  { text: "Matos Corredores de Seguros", style: "contactInfo" },
+                  { text: "T. 809-620-0000 / C. 829-745-2816 / ", style: "contactInfo" },
+                  { text: "F. 857-702-9210", style: "contactInfo" },
+                  { text: "Email: gtatis@momatos.com", link: "mailto:gtatis@momatos.com", style: "contactInfo", bold: true }
+                ],
+                width: "50%"
+              },
+              {
+                stack: [
+                  { text: "Manuel José Matos", style: "contactInfo", bold: true, lineHeight: 0.8 },
+                  { text: "Director Ejecutivo", style: "contactInfo" },
+                  { text: "Matos Corredores de Seguros", style: "contactInfo" },
+                  { text: "T. 809-620-0000 / C. 829-421-1761 / F. 857-702-9210", style: "contactInfo" },
+                  { text: "Email: manueljmatos@momatos.com", link: "mailto:manueljmatos@momatos.com", style: "contactInfo", bold: true, margin: [0, 0, 0, 15] },
+                  { text: "José Luís Martínez", style: "contactInfo", bold: true, lineHeight: 0.8 },
+                  { text: "Gerente de Coordinaciones Medicas", style: "contactInfo" },
+                  { text: "Seguros de Personas internacional", style: "contactInfo" },
+                  { text: "Matos Corredores de Seguros", style: "contactInfo" },
+                  { text: "T. 809-620-0000 / C. 829-421-1761 / F. 857-702-9210", style: "contactInfo" },
+                  { text: "Email: jmartinez@momatos.com", link: "mailto:jmartinez@momatos.com", style: "contactInfo", bold: true, margin: [0, 0, 0, 15] },
+                  { text: "Priscila García", style: "contactInfo", bold: true, lineHeight: 0.8 },
+                  { text: "Gerente de Negocios", style: "contactInfo" },
+                  { text: "Seguros de Personas internacional", style: "contactInfo" },
+                  { text: "Matos Corredores de Seguros", style: "contactInfo" },
+                  { text: "T. 809-620-0000 / C. 829-760-4624 / F. 857-702-9210", style: "contactInfo" },
+                  { text: "Email: pgarcia@momatos.com", link: "mailto:pgarcia@momatos.com", style: "contactInfo", bold: true }
+                ],
+                width: "50%"
+              }
+            ]
+          }
+        ],
+        margin: [0, 20, 0, 0],
+        pageBreak: "after"
+      },
+      // page8
+      {
+        text: "SOBRE EL DOCTOR",
+        style: "title",
+        alignment: "center",
+        absolutePosition: { x: 0, y: 390 },
+        pageBreak: "after"
+      },
+      // page9
+      {
+        stack: doctors,
+        pageBreak: "after"
+      },
+      // page10
+      {
+        text: "SOBRE EL HOSPITAL",
+        style: "title",
+        alignment: "center",
+        absolutePosition: { x: 0, y: 390 },
+        pageBreak: "after"
+      },
+      // page11
+      {
+        text: item.provider_description,
+        style: "item",
+        bold: true,
+        margin: [0, 0, 0, 10]
+      },
+      {
+        text: item.provider_detail,
+        style: "body"
+      },
+      {
+        margin: [0, 15, 0, 5],
+        table: {
+          widths: ["auto", "*"],
+          body: [
+            [
+              { text: "UBICACIÓN:", style: "locationLabel" },
+              { text: item.provider_location, style: "locationValue" }
+            ]
+          ]
+        },
+        layout: {
+          fillColor: (rowIndex) => {
+            return rowIndex === 0 ? "#1a3354" : null;
+          },
+          paddingLeft: () => 6,
+          paddingRight: () => 6,
+          paddingTop: () => 4,
+          hLineWidth: () => 0,
+          vLineWidth: () => 0,
+          paddingBottom: () => 4
+        }
+      },
+      {
+        text: "",
+        // image: 'cityImage',
+        // width: 500,
+        // margin: [0, 10, 0, 0],
+        pageBreak: "after"
+      },
+      // page12
+      {
+        text: "SOBRE LA CIUDAD",
+        style: "title",
+        alignment: "center",
+        absolutePosition: { x: 0, y: 390 },
+        pageBreak: "after"
+      },
+      // page13
+      {
+        text: "ESTADÍA & HOSPITALES",
+        style: "title",
+        alignment: "center",
+        absolutePosition: { x: 0, y: 390 },
+        pageBreak: "after"
+      },
+      // page15
+      {
+        text: "ATRACCIONES",
+        style: "title",
+        alignment: "center",
+        absolutePosition: { x: 0, y: 390 },
+        pageBreak: "after"
+      },
+      // page16
+      {
+        text: "OTRAS INFORMACIONES",
+        style: "title",
+        alignment: "center",
+        absolutePosition: { x: 0, y: 390 },
+        pageBreak: "after"
+      },
+      // page17
+      {
+        text: "¿CÓMO LLEGAR?",
+        style: "headerMap",
+        alignment: "center",
+        margin: [0, 50, 0, 10]
+      },
+      {
+        columns: [
+          {
+            width: "*",
+            stack: [
+              {
+                text: [
+                  { text: "UBICACIÓN: ", bold: true },
+                  item.provider_location
+                ],
+                alignment: "center",
+                margin: [0, 0, 0, 5]
+              },
+              {
+                text: item.provider_place,
+                italics: true,
+                alignment: "center",
+                margin: [0, 0, 0, 20]
+              }
+            ]
+          }
+        ]
+      },
+      // page18
+      {
+        image: "map",
+        width: 500,
+        alignment: "center",
+        pageBreak: "after"
+      }
+    ],
+    images: {
+      logo: convertImageUrltoBase64(getFilePathFromUrl(item.provider_profile_pic.url)),
+      map: convertImageUrltoBase64(getFilePathFromUrl(item.provider_map))
+    },
+    styles: {
+      title: {
+        fontSize: 44,
+        bold: true,
+        lineHeight: 0.85,
+        color: "#20375c"
+      },
+      tableHeader: {
+        bold: true,
+        fontSize: 14,
+        color: "white",
+        margin: [0, 5, 0, 0]
+      },
+      tableSubHeader: {
+        margin: [0, 5, 0, 5]
+      },
+      contactInfo: {
+        color: "#20375c",
+        fontSize: 10.5
+      },
+      pageTitle: {
+        fontSize: 24,
+        bold: true,
+        lineHeight: 0.2,
+        alignment: "center"
+      },
+      headerMap: {
+        bold: true,
+        fontSize: 35,
+        color: "#20375c"
+      },
+      item: {
+        fontSize: 24,
+        color: "#20375c",
+        lineHeight: 1.2
+      },
+      doctor_name: {
+        font: "OpenSans",
+        fontSize: 20,
+        lineHeight: 0.8,
+        bold: true,
+        color: "#FFFFFF"
+      },
+      doctor_title: {
+        font: "OpenSans",
+        fontSize: 20,
+        color: "#FFFFFF"
+      },
+      paragraph: {
+        font: "OpenSans",
+        fontSize: 13,
+        color: "#20375c"
+      },
+      locationLabel: {
+        fontSize: 10,
+        bold: true,
+        color: "#ffffff"
+      },
+      locationValue: {
+        fontSize: 10,
+        color: "#ffffff"
+      },
+      defaultStyle: {
+        fontSize: 10,
+        color: "#333333"
+      }
+    }
+  };
+  return { docDefinition };
+}
 const router$1 = express.Router();
 router$1.use(isAuthenticated);
 router$1.get("/medical-guide/:id", async function(req, res, next) {
@@ -15457,7 +16226,6 @@ router$1.get("/medical-guide/:id", async function(req, res, next) {
         left: "0"
       }
     });
-    console.log(filename);
     return res.status(200).json({ item, filename });
   } catch (error) {
     next(error);
@@ -15483,298 +16251,13 @@ router$1.get("/medical-guide2/:id", async function(req, res, next) {
         }
       }
     });
-    if (itineraries.length) {
-      for (let itinerary of itineraries) {
-        const provider2 = await getRowById({
-          id: itinerary.provider_id,
-          table: "t_provider",
-          user
-        });
-        if (provider2) {
-          itinerary.provider_address = provider2.address;
-          itinerary.provider_city = provider2.city;
-          itinerary.provider_country = provider2.country;
-        }
-        if (itinerary.attendance_datetime) {
-          itinerary.attendance_day = intlDay(itinerary.attendance_datetime);
-          itinerary.attendance_date = intlDate(itinerary.attendance_datetime);
-          itinerary.attendance_time = intlTimeClean(itinerary.attendance_datetime);
-          itinerary.attendance_time_format = extractAMPM(itinerary.attendance_time);
-        }
-        const doctor = await getRowById({
-          id: itinerary.doctor_id,
-          table: "t_doctor",
-          user
-        });
-        if (doctor) {
-          itinerary.doctor_address = doctor.speciality;
-          if (doctor.speciality) {
-            doctor.speciality = JSON.parse(doctor.speciality);
-          } else {
-            doctor.speciality = [];
-          }
-        }
-      }
-    }
     const provider = await getRowById({
       id: item.provider_id,
       table: "t_provider",
       user
     });
     const files = await getFiles({ ref_key: "t_event", ref_id: req.params.id });
-    console.log({ provider, files });
-    const docDefinition = {
-      pageSize: "A4",
-      pageMargins: [40, 150, 40, 60],
-      background: function(currentPage) {
-        const bg = BACKGROUNDS[currentPage - 1];
-        if (!bg)
-          return null;
-        return {
-          image: `data:image/png;base64,${bg}`,
-          width: 595,
-          height: 842
-        };
-      },
-      content: [
-        { text: "", pageBreak: "after" },
-        // page1
-        { text: "Carnet", pageBreak: "after" },
-        // page2
-        { text: "Logo", pageBreak: "after" },
-        // page3
-        { text: "CONTENIDO", style: "title", margin: [30, 35, 0, 0] },
-        // page4 start
-        {
-          type: "square",
-          style: "item",
-          ul: [
-            "Pre-certificación",
-            "Citas Medicas",
-            "Sobre el Doctor",
-            "Sobre el Hospital",
-            "Sobre la Ciudad",
-            "Estadía y Hospital",
-            "Atracciones",
-            "Otras Informaciones"
-          ],
-          margin: [30, 0, 0, 0],
-          pageBreak: "after"
-        },
-        // page4 end
-        {
-          text: "PRE-CERTIFICACIÓN",
-          style: "title",
-          alignment: "center",
-          absolutePosition: { x: 0, y: 390 },
-          pageBreak: "after"
-        },
-        // page5
-        {
-          text: "CITAS MÉDICAS",
-          style: "title",
-          alignment: "center",
-          absolutePosition: { x: 0, y: 390 },
-          pageBreak: "after"
-        },
-        // page6
-        {
-          table: {
-            widths: ["30%", "18%", "30%", "27%"],
-            body: [
-              [
-                { text: "FECHA", style: "tableHeader", alignment: "center" },
-                { text: "HORA", style: "tableHeader", alignment: "center" },
-                { text: "LUGAR", style: "tableHeader", alignment: "center" },
-                { text: "DOCTOR", style: "tableHeader", alignment: "center" }
-              ],
-              [
-                {
-                  stack: [
-                    { text: "DÍA,", bold: false, fontSize: 9 },
-                    { text: "FECHA", bold: true, fontSize: 9 }
-                  ],
-                  style: "tableSubHeader",
-                  alignment: "left"
-                },
-                {
-                  stack: [
-                    { text: "HORA", fontSize: 9 },
-                    { text: "TIPO DE SERVICIOS", fontSize: 8 }
-                  ],
-                  style: "tableSubHeader",
-                  alignment: "center"
-                },
-                {
-                  stack: [
-                    { text: "NOMBRE DEL HOSPITAL", bold: true, fontSize: 9, lineHeight: 0.7 },
-                    { text: "DIRECCIÓN", fontSize: 8 }
-                  ],
-                  style: "tableSubHeader",
-                  alignment: "center"
-                },
-                {
-                  stack: [
-                    { text: "NOMBRE DEL DOCTOR", bold: true, fontSize: 9, lineHeight: 0.7 },
-                    { text: "ESPECIALIDAD", fontSize: 8 }
-                  ],
-                  style: "tableSubHeader",
-                  alignment: "center"
-                }
-              ],
-              // Empty data row example
-              [
-                { text: "", minHeight: 80 },
-                { text: "", minHeight: 80 },
-                { text: "", minHeight: 80 },
-                { text: "", minHeight: 80 }
-              ]
-            ]
-          },
-          layout: {
-            fillColor: function(rowIndex) {
-              return rowIndex === 0 ? "#1b355e" : null;
-            },
-            hLineWidth: function() {
-              return 0.5;
-            },
-            vLineWidth: function() {
-              return 0.5;
-            },
-            hLineColor: function() {
-              return "#CCCCCC";
-            },
-            vLineColor: function() {
-              return "#CCCCCC";
-            }
-          }
-        },
-        { text: "\n" },
-        {
-          text: "NOTAS:",
-          style: "notesHeader"
-        },
-        {
-          ul: [
-            { text: "Por favor llegar al Hospital al 30 minutos antes de la hora de su cita. A su llegada, favor dirigirse directamente a la Oficina Internacional.", style: "notesContent" },
-            { text: "Recuerde traer con usted identificación (pasaporte y/o licencia de conducir junto a su carnet de seguro médico internacional).", style: "notesContent" },
-            { text: "El día de su cirugía, favor llegar al Hospital a las 5:30 a.m. para iniciar su preparación prequirúrgica.", style: "notesContent" },
-            { text: "Las consultas médicas con proveedores afiliados a la red están sujetas a un copago de US$25.00.", style: "notesContent" },
-            { text: "Los Dres. Igor Palacios, MD, Allan Pineda, MD y John Siliski, MD, forman parte de los proveedores afiliados a la red de Humano (United Healthcare).", style: "notesContent" },
-            { text: "De acuerdo al plan bajo el cual está amparado, su deducible internacional anual es de US$2,500.00, el cual no ha sido copado.", style: "notesContent" },
-            { text: "Luego de copar su deducible, su cobertura es al 100% según las condiciones de su contrato.", style: "notesContent" },
-            { text: "La compra de medicamentos se maneja mediante reembolso.", style: "notesContent" },
-            { text: "En caso de incurrir en cualquier gasto, favor de siempre pedir: Factura detallada de los servicios, que contenga procedimientos y diagnósticos con sus códigos. Asimismo Recibo de pago.", style: "notesContent" }
-          ],
-          pageBreak: "after"
-        },
-        // page7
-        { text: "", pageBreak: "after" },
-        // page8
-        {
-          text: "SOBRE EL DOCTOR",
-          style: "title",
-          alignment: "center",
-          absolutePosition: { x: 0, y: 390 },
-          pageBreak: "after"
-        },
-        // page9
-        { text: "", pageBreak: "after" },
-        // page10
-        {
-          text: "SOBRE EL HOSPITAL",
-          style: "title",
-          alignment: "center",
-          absolutePosition: { x: 0, y: 390 },
-          pageBreak: "after"
-        },
-        // page11
-        { text: "", pageBreak: "after" },
-        // page12
-        {
-          text: "SOBRE LA CIUDAD",
-          style: "title",
-          alignment: "center",
-          absolutePosition: { x: 0, y: 390 },
-          pageBreak: "after"
-        },
-        // page13
-        { text: "", pageBreak: "after" },
-        // page14
-        {
-          text: "ESTADÍA & HOSPITALES",
-          style: "title",
-          alignment: "center",
-          absolutePosition: { x: 0, y: 390 },
-          pageBreak: "after"
-        },
-        // page15
-        {
-          text: "ATRACCIONES",
-          style: "title",
-          alignment: "center",
-          absolutePosition: { x: 0, y: 390 },
-          pageBreak: "after"
-        },
-        // page16
-        {
-          text: "OTRAS INFORMACIONES",
-          style: "title",
-          alignment: "center",
-          absolutePosition: { x: 0, y: 390 },
-          pageBreak: "after"
-        },
-        // page17
-        { text: "", pageBreak: "after" },
-        // page18
-        { text: "" }
-        // page19
-      ],
-      styles: {
-        title: {
-          fontSize: 44,
-          bold: true,
-          lineHeight: 0.85,
-          color: "#20375c"
-        },
-        tableHeader: {
-          bold: true,
-          fontSize: 14,
-          color: "white",
-          margin: [0, 5, 0, 0]
-        },
-        tableSubHeader: {
-          margin: [0, 5, 0, 5]
-        },
-        notesHeader: {
-          bold: true,
-          fontSize: 16,
-          color: "#20375c",
-          margin: [0, 80, 0, 5]
-        },
-        notesContent: {
-          italics: true,
-          color: "gray",
-          fontSize: 10.5
-        },
-        pageTitle: {
-          fontSize: 24,
-          color: "#20375c",
-          bold: true,
-          lineHeight: 1.2,
-          alignment: "center"
-        },
-        item: {
-          fontSize: 24,
-          color: "#20375c",
-          lineHeight: 1.2
-        },
-        defaultStyle: {
-          fontSize: 10,
-          color: "#333333"
-        }
-      }
-    };
+    const { docDefinition } = await generateMedicalGuideDoc({ item, itineraries, provider, files, account, user });
     const pdfUrl = await generatePDFWithPdfmake({
       account,
       table: "t_event",

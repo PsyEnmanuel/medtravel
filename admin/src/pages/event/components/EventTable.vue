@@ -1,14 +1,12 @@
 <template>
     <div class="flex justify-between md:flex-nowrap mb-2">
         <div class="flex flex-nowrap w-full gap-2">
-            <q-input class="w-full md:w-auto" dense outlined debounce="300" v-model="state.search"
-                :placeholder="$t('search')">
+            <q-input class="w-full md:w-auto" dense outlined debounce="300" v-model="state.search" :placeholder="$t('search')">
                 <template v-slot:append>
                     <q-icon name="search" />
                 </template>
             </q-input>
-            <q-btn flat class="button h-full" icon="add" :label="$isDesktop && $t('add')"
-                @click="state.dialogCreate = true" />
+            <q-btn flat class="button h-full" icon="add" :label="$isDesktop && $t('add')" @click="state.dialogCreate = true" />
 
         </div>
         <div v-if="$isDesktop" class="grid grid-flow-col auto-cols-max gap-2">
@@ -22,8 +20,8 @@
     </div>
     <div class="flex lg:flex-nowrap w-full gap-2">
         <div v-if="$me.unixroles & 16 ? false : true" class="flex items-center px-4 border border-dashed">
-            <q-option-group :disable="$me.unixroles & 16 ? true : false" class="flex text-xs" size="xs"
-                :options="options.event_type" type="checkbox" v-model="state.query.where['in:$event_type_id']" />
+            <q-option-group :disable="$me.unixroles & 16 ? true : false" class="flex text-xs" size="xs" :options="options.event_type" type="checkbox"
+                v-model="state.query.where['in:$event_type_id']" />
         </div>
         <div class="flex items-center justify-center px-4 border border-dashed text-xs">
             <q-checkbox class="flex" size="xs" :options="[{
@@ -31,28 +29,23 @@
                 value: 2
             }]" v-model="state.query.where['t_event.c_status']" :true-value="2" :false-value="4" label="Canceladas" />
         </div>
-        <q-checkbox size="xs" v-if="$me.high_profile" class="border border-dashed px-4 h-[40px] text-xs"
-            v-model="state.query.where.high_profile" :true-value="1" :false-value="null">Alto perfil</q-checkbox>
-        <q-checkbox size="xs" class="border border-dashed px-4 h-[40px] text-xs" v-model="state.query.where.pregnant"
-            :true-value="1" :false-value="null">Maternidad</q-checkbox>
-        <q-btn v-if="state.selected.length" flat class="button h-full bg-primary text-white" icon-right="sym_o_remove"
-            :label="$isDesktop ? 'Remover' : ''" no-caps @click="onDeleteRows" />
+        <q-checkbox size="xs" v-if="$me.high_profile" class="border border-dashed px-4 h-[40px] text-xs" v-model="state.query.where.high_profile" :true-value="1" :false-value="null">Alto
+            perfil</q-checkbox>
+        <q-checkbox size="xs" class="border border-dashed px-4 h-[40px] text-xs" v-model="state.query.where.pregnant" :true-value="1" :false-value="null">Maternidad</q-checkbox>
+        <q-btn v-if="state.selected.length" flat class="button h-full bg-primary text-white" icon-right="sym_o_remove" :label="$isDesktop ? 'Remover' : ''" no-caps @click="onDeleteRows" />
     </div>
     <div>
-        <q-option-group class="flex text-xs" size="sm" v-model="state.query.where['in:$event_state_id']"
-            toggle-color="secondary" toggle-text-color="text-font" :options="options.event_state" type="checkbox" />
+        <q-option-group class="flex text-xs" size="sm" v-model="state.query.where['in:$event_state_id']" toggle-color="secondary" toggle-text-color="text-font" :options="options.event_state"
+            type="checkbox" />
     </div>
     <div class="grid lg:grid-cols-4 gap-1 mb-1">
-        <UserSelect @setUser="state.query.where.user_id = $event" @clearUser="state.query.where.user_id = null"
-            :model-value="state.user_description" label="Coordinador" :unixroles="24" />
-        <ProviderSelect class="w-full" @setProvider="state.query.where['t_event.provider_id'] = $event"
-            @clearProvider="state.query.where['t_event.provider_id'] = null"
+        <UserSelect @setUser="state.query.where.user_id = $event" @clearUser="state.query.where.user_id = null" :model-value="state.user_description" label="Coordinador" :unixroles="24" />
+        <ProviderSelect class="w-full" @setProvider="state.query.where['t_event.provider_id'] = $event" @clearProvider="state.query.where['t_event.provider_id'] = null"
             :model-value="state.provider_description" />
     </div>
-    <q-table :grid="!$isDesktop" hide-pagination :rows="state.rows" :columns="state.columns" row-key="id" ref="tableRef"
-        @request="onRequest" flat selection="multiple" v-model:pagination="state.pagination"
-        v-model:selected="state.selected" :selected-rows-label="getSelectedString" :loading="state.loading"
-        rows-per-page-label="Lineas" :wrap-cells="true" :visibleColumns="state.visibleColumns">
+    <q-table :grid="!$isDesktop" hide-pagination :rows="state.rows" :columns="state.columns" row-key="id" ref="tableRef" @request="onRequest" flat selection="multiple"
+        v-model:pagination="state.pagination" v-model:selected="state.selected" :selected-rows-label="getSelectedString" :loading="state.loading" rows-per-page-label="Lineas" :wrap-cells="true"
+        :visibleColumns="state.visibleColumns">
         <template v-slot:no-data="{ icon, message, filter }">
             <div class="full-width row flex-center text-primary q-gutter-sm">
                 <span>
@@ -73,19 +66,14 @@
         <template v-slot:body-cell-action="props">
             <q-td :props="props">
                 <div class="grid grid-cols-2 gap-1">
-                    <q-btn flat class="button text-primary rounded-md" size="sm" label="consultar" no-caps
-                        @click="$router.push(`${$path.event}/${$path.event_consult}/${props.row.id}`)" />
-                    <q-btn flat class="button text-primary rounded-md" size="sm" label="Editar" no-caps
-                        @click="state.selectedId = props.row.id; state.dialogWrite = true;" />
-                    <q-btn flat class="button text-primary rounded-md" size="sm" label="Itinerario" no-caps
-                        @click="state.eventSelected = props.row; state.itineraryDialog = true;" />
+                    <q-btn flat class="button text-primary rounded-md" size="sm" label="consultar" no-caps @click="$router.push(`${$path.event}/${$path.event_consult}/${props.row.id}`)" />
+                    <q-btn flat class="button text-primary rounded-md" size="sm" label="Editar" no-caps @click="state.selectedId = props.row.id; state.dialogWrite = true;" />
+                    <q-btn flat class="button text-primary rounded-md" size="sm" label="Itinerario" no-caps @click="state.eventSelected = props.row; state.itineraryDialog = true;" />
                     <template v-if="props.row.book_code">
-                        <q-btn flat class="button bg-secondary text-white rounded-md" size="sm" label="Coinciliada"
-                            no-caps :to="`/conciliaciones/editar/${props.row.book_code}`" />
+                        <q-btn flat class="button bg-secondary text-white rounded-md" size="sm" label="Coinciliada" no-caps :to="`/conciliaciones/editar/${props.row.book_code}`" />
                     </template>
                     <template v-else>
-                        <q-btn v-if="props.row.policy_id" flat class="button text-primary rounded-md" size="sm"
-                            label="Coinciliar" no-caps :to="`/conciliaciones/crear?eventId=${props.row.id}`">
+                        <q-btn v-if="props.row.policy_id" flat class="button text-primary rounded-md" size="sm" label="Coinciliar" no-caps :to="`/conciliaciones/crear?eventId=${props.row.id}`">
                         </q-btn>
                         <q-btn v-else flat class="button text-primary rounded-md" size="sm" label="Coinciliar*" no-caps>
                             <q-popup-proxy transition-show="flip-up" transition-hide="flip-down">
@@ -132,11 +120,20 @@
             </q-td>
         </template>
 
+        <template v-slot:body-cell-insured="props">
+            <q-td :props="props">
+                <span><router-link :to="`${$path.insured}/${$path.insured_consult}/${props.row.insured_id}`" class="text-secondary font-semibold hover:opacity-50">{{
+                    props.row.insured }}</router-link></span>
+            </q-td>
+        </template>
+
         <template v-slot:body-cell-provider_description="props">
             <q-td :props="props">
                 <div class="flex flex-col text-xs">
-                    <span>P: {{ props.row.provider_description }}</span>
-                    <span>C: {{ props.row.contact_description }}</span>
+                    <span>P: <router-link :to="`${$path.provider}/${$path.provider_consult}/${props.row.provider_id}`" class="text-secondary font-semibold hover:opacity-50">{{
+                        props.row.provider_description }}</router-link></span>
+                    <span>C: <router-link :to="`${$path.contact}/${$path.contact_consult}/${props.row.contact_id}`" class="text-secondary font-semibold hover:opacity-50">{{
+                        props.row.contact_description }}</router-link></span>
                 </div>
             </q-td>
         </template>
@@ -144,8 +141,9 @@
         <template v-slot:body-cell-doctor_description="props">
             <q-td :props="props">
                 <div v-if="props.row.doctor_description" class="flex flex-col text-xs">
-                    <div v-for="(doctor_description, index) in props.row.doctor_description" :key="doctor_description">
-                        <span>{{ index + 1 }}: {{ doctor_description }}</span>
+                    <div v-for="(doctor_description, index) in props.row.doctor_description" :key="doctor_description" class="border-b border-default">
+                        <span><router-link :to="`${$path.doctor}/${$path.doctor_consult}/${props.row.doctor_id}`" class="text-secondary font-semibold hover:opacity-50">{{
+                            doctor_description }}</router-link></span>
                     </div>
                 </div>
             </q-td>
@@ -162,40 +160,32 @@
 
         <template v-slot:item="props">
             <div class="q-py-xs col-xs-12" :style="props.selected ? 'transform: scale(0.95);' : ''">
-                <EventCard :item="props.row" @selected="state.selectedId = $event; state.dialogWrite = true;"
-                    @openItinerary="state.eventSelected = $event; state.itineraryDialog = true;"
-                    @copy="state.selectedId = $event; state.dialogCopy = true;"  />
+                <EventCard :item="props.row" @selected="state.selectedId = $event; state.dialogWrite = true;" @openItinerary="state.eventSelected = $event; state.itineraryDialog = true;"
+                    @copy="state.selectedId = $event; state.dialogCopy = true;" />
             </div>
         </template>
         <template v-slot:bottom v-if="!$isDesktop">
             <q-btn flat class="button bg-primary-light w-full" no-caps @click="addMore">Cargar más</q-btn>
         </template>
     </q-table>
-    <q-dialog class="q-pa-none" v-model="state.dialogWrite" :position="$isDesktop ? 'right' : 'standard'" full-height
-        :full-width="$isDesktop" maximized :transition-duration="100">
+    <q-dialog class="q-pa-none" v-model="state.dialogWrite" :position="$isDesktop ? 'right' : 'standard'" full-height :full-width="$isDesktop" maximized :transition-duration="100">
         <q-card>
-            <EventWrite @close="state.dialogWrite = false" isDrawer :id="state.selectedId" isEdit
-                :width="$isDesktop ? '100%' : '100%'" />
+            <EventWrite @close="state.dialogWrite = false" isDrawer :id="state.selectedId" isEdit :width="$isDesktop ? '100%' : '100%'" />
         </q-card>
     </q-dialog>
-    <q-dialog v-model="state.dialogCreate" :position="$isDesktop ? 'right' : 'standard'" full-height maximized
-        :transition-duration="100">
+    <q-dialog v-model="state.dialogCreate" :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="100">
         <q-card>
-            <EventWrite @close="state.dialogCreate = false" isDrawer :width="$isDesktop ? '100%' : '100%'"
-                :insuredId="insuredId" />
+            <EventWrite @close="state.dialogCreate = false" isDrawer :width="$isDesktop ? '100%' : '100%'" :insuredId="insuredId" />
         </q-card>
     </q-dialog>
-    <q-dialog v-model="state.dialogCopy" :position="$isDesktop ? 'right' : 'standard'" full-height maximized
-        :transition-duration="100">
+    <q-dialog v-model="state.dialogCopy" :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="100">
         <q-card>
-            <EventWrite @close="state.dialogCopy = false" isDrawer :width="$isDesktop ? '100%' : '100%'"
-                :copyId="state.selectedId" />
+            <EventWrite @close="state.dialogCopy = false" isDrawer :width="$isDesktop ? '100%' : '100%'" :copyId="state.selectedId" />
         </q-card>
     </q-dialog>
     <q-dialog v-model="state.itineraryDialog" full-height maximized>
         <q-card class="shadow pt-4 lg:px-6 pb-4 flex-col w-[400px]">
-            <EventItinerary isEdit :id="state.eventSelected.id" isDrawer @close="state.itineraryDialog = false"
-                displayAdd />
+            <EventItinerary isEdit :id="state.eventSelected.id" isDrawer @close="state.itineraryDialog = false" displayAdd />
         </q-card>
     </q-dialog>
 </template>
@@ -358,7 +348,6 @@ watch(() => updateStore.table.t_event, (data) => {
 }, { deep: true })
 
 watch(() => state.query.where["t_event.c_status"], (val) => {
-    console.log(val);
     if (val === 2) {
         state.visibleColumns = state.columns.filter(i => {
             return i.name === 'reason_cancellation' && !i.required

@@ -16,6 +16,174 @@ const table = "t_book";
 
 router.use(isAuthenticated);
 
+router.get("/pdf2/:code", async function (req, res, next) {
+  try {
+    const user = res.locals.user;
+    const account = res.locals.account;
+
+    const { items: books } = await _query.getRows({
+      table,
+      user,
+      query: {
+        where: {
+          code: req.params.code,
+          c_status: 4,
+        },
+      },
+    });
+
+    const item = books[0];
+
+    const items = books.filter((i) => i.$book_type_id === 98);
+    const payments = books.filter((i) => i.$book_type_id === 354);
+
+    item.book_date_format = format(new Date(item.book_date), "dd-MM-yyyy");
+    item.sequence = String(item.code).substring(1);
+    item.day = format(item.book_date, "dd");
+
+    item.year = format(item.created, "yyyy");
+
+    item.images = {
+      logoText: _upload.convertImagetoBase64("logoText.png"),
+    };
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      if (item.billed_amount_total) {
+        item.billed_amount_format = _utility.currency(item.billed_amount, item.currency);
+      }
+
+      if (item.coverage) {
+        item.coverage_format = _utility.currency(item.coverage, item.currency);
+      }
+
+      if (item.discount) {
+        item.discount_format = _utility.currency(item.discount, item.currency);
+      }
+
+      if (item.deductible) {
+        item.deductible_format = _utility.currency(item.deductible, item.currency);
+      }
+
+      if (item.copago) {
+        item.copago_format = _utility.currency(item.copago, item.currency);
+      }
+
+      if (item.covered) {
+        item.covered_format = _utility.currency(item.covered, item.currency);
+      }
+
+      if (item.insurance_payment) {
+        item.insurance_payment_format = _utility.currency(item.insurance_payment, item.currency);
+      }
+
+      if (item.insurance_responsability) {
+        item.insurance_responsability_format = _utility.currency(item.insurance_responsability, item.currency);
+      }
+
+      item.book_date_format = _date.intlDate(item.book_date);
+
+    }
+
+    for (let i = 0; i < payments.length; i++) {
+      const item = payments[i];
+
+      if (item.insurance_payment) {
+        item.insurance_payment_format = _utility.currency(item.insurance_payment, item.currency);
+      }
+
+      if (item.insurance_responsability) {
+        item.insurance_responsability_format = _utility.currency(item.insurance_responsability, item.currency);
+      }
+
+      item.book_date_format = _date.intlDate(item.book_date);
+    }
+
+    if (item.billed_amount_total) {
+      item.billed_amount_total_format = _utility.currency(item.billed_amount_total, item.currency);
+    }
+
+    if (item.coverage_total) {
+      item.coverage_total_format = _utility.currency(item.coverage_total, item.currency);
+    }
+
+    if (item.discount_total) {
+      item.discount_total_format = _utility.currency(item.discount_total, item.currency);
+    }
+
+    if (item.deductible_total) {
+      item.deductible_total_format = _utility.currency(item.deductible_total, item.currency);
+    }
+
+    if (item.copago_total) {
+      item.copago_total_format = _utility.currency(item.copago_total, item.currency);
+    }
+
+    if (item.covered_total) {
+      item.covered_total_format = _utility.currency(item.covered_total, item.currency);
+    }
+
+    if (item.insurance_payment_total) {
+      item.insurance_payment_total_format = _utility.currency(item.insurance_payment_total, item.currency);
+    }
+
+    if (item.insurance_responsability_total) {
+      item.insurance_responsability_total_format = _utility.currency(item.insurance_responsability_total, item.currency);
+    }
+
+    if (item.diagnosis) {
+      item.diagnosis = JSON.parse(item.diagnosis)
+    }
+
+    if (item.notes) {
+      item.notes = JSON.parse(item.notes)
+    }
+
+    const filename = `${item.code}-${item.book_date_format}`;
+
+    const { docDefinition } = await _template.generateConciliation({
+      item,
+      items,
+      payments,
+      account,
+      user
+    })
+
+    const pdfUrl = await _upload.generatePDFWithPdfmake({
+      account,
+      table: "t_book",
+      filename,
+      docDefinition,
+    });
+
+    const images = [];
+    const pdfs = [_upload.filePath(pdfUrl)];
+
+    const files = await _query.getFiles({ ref_key: 't_book', ref_id: item.id })
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type === "image") {
+        const filePath = _upload.filePath(file.url);
+        images.push(filePath);
+      }
+      if (file.icon === "pdf") {
+        const filePath = _upload.filePath(file.url);
+        pdfs.push(filePath);
+      }
+    }
+    const newpdf = await _upload.imageToPDF(images);
+    const buf = await _upload.mergePDF([...pdfs, ...newpdf]);
+
+    await _upload.replaceFile(pdfs[0], buf);
+
+    return res.status(200).json(filename);
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/pdf/:code", async function (req, res, next) {
   try {
     const user = res.locals.user;
@@ -208,8 +376,6 @@ router.get("/", async function (req, res, next) {
         "GROUP_CONCAT(DISTINCT item_description SEPARATOR '|') AS label, min(id) AS id",
       ];
     }
-
-
 
     let { items, total, sql } = await _query.getRows({
       table,
