@@ -56,7 +56,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         });
         if (doctor) {
           itinerary.doctor_address = doctor.address;
-          itinerary.doctor_name = doctor.description;
+          itinerary.doctor_description = doctor.description;
           itinerary.doctor_bio = doctor.bio;
           itinerary.doctor_profile_pic = await _query.getProfilePic({ ref_key: "t_doctor", ref_id: itinerary.doctor_id });
           
@@ -141,9 +141,9 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
               { 
                 stack: [
                   { text: doctor_description, bold: true, fontSize: 9, lineHeight: 0.7 },
-                  { text: doctor_speciality.length > 1 
+                  { text: doctor_speciality ? doctor_speciality.length > 1 
                     ? doctor_speciality.map(s => s.description).join(', ')
-                    : doctor_speciality[0].description,
+                    : doctor_speciality[0].description : '',
                     fontSize: 8 
                   }
                 ],
@@ -153,10 +153,10 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
             ]
     });
 
-    const doctors = itineraries.map(itinerary => {
+    const doctors = itineraries.filter(itinerary_doctor => itinerary_doctor.doctor_description).map(itinerary => {
       const {
         doctor_profile_pic,
-        doctor_name,
+        doctor_description,
         doctor_posnominal,
         doctor_bio, 
         doctor_speciality
@@ -167,15 +167,15 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
                 widths: [100, '*'],
                 body: [
                   [
-                    {
+                    ...(doctor_profile_pic?.url ? [{
                       image: _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(doctor_profile_pic.url)),
                       width: 100,
                       height: 120
-                    },
+                    }]: []),
                     {
                       stack: [
-                        { text: `${doctor_name}${doctor_posnominal ? `, ${doctor_posnominal.length > 1 ? doctor_posnominal.join(', ') : doctor_posnominal[0]}` :''}`, style: 'doctor_name' },
-                        { text: doctor_speciality.length > 1 ? doctor_speciality.map(s => s.description).join(', ') : doctor_speciality[0].description, style: 'doctor_title' }
+                        { text: `${doctor_description}${doctor_posnominal ? `, ${doctor_posnominal.length > 1 ? doctor_posnominal.join(', ') : doctor_posnominal[0]}` :''}`, style: 'doctor_name' },
+                        { text: doctor_speciality ? doctor_speciality.length > 1 ? doctor_speciality.map(s => s.description).join(', ') : doctor_speciality[0].description : '', style: 'doctor_title' }
                       ],
                       margin: [10, 40, 0, 0]
                     }
@@ -203,35 +203,115 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       pageSize: "A4",
       pageMargins: [40, 150, 40, 60], 
       background: function (currentPage) {
+        const hasLogo = !!item.provider_profile_pic?.url;
+        const hasVobs = (item.vobs?.length || 0) > 0;
+        const hasEvents = (events_itineraries?.length || 0) > 0;
+        const hasDoctors = (doctors?.length || 0) > 0;
+        const hasProviderInfo = !!(item.provider_description || item.provider_detail || item.provider_location);
+        const hasHowTo = !!(item.provider_location || item.provider_place);
+        const hasMap = !!item.provider_map;
+
+        let page = 1; // first page after cover (page 1)
+
+        // Helper to build ranges
+        const ranges = {};
+        const addRange = (key, pages) => {
+          if (pages <= 0) return null;
+          const start = page;
+          const end = start + pages - 1;
+          ranges[key] = [start, end];
+          page = end + 1;
+          return ranges[key];
+        };
+
+        // 1) Carnets (N pages)
+        addRange('carnets', item.carnets?.length || 0);
+
+        // 2) Logo (1 page if present)
+        addRange('logo', hasLogo ? 1 : 0);
+
+        // 3) CONTENIDO (always 1 page)
+        addRange('contenido', 1);
+
+        // 4) PRE-CERT title (1) + VOBS (M pages) if present
+        if (hasVobs) {
+          addRange('precertTitle', 1);
+          addRange('vobs', item.vobs.length);
+        }
+
+        // 5) CITAS MÉDICAS: title (1) + table (1) if there are events
+        if (hasEvents) {
+          addRange('citasTitle', 1);
+          addRange('citasTable', 1);
+        }
+
+        // 6) CONTACTOS (always 1 page)
+        addRange('contactos', 1);
+
+        // 7) SOBRE EL DOCTOR: title (1) + content (1) if present
+        if (hasDoctors) {
+          addRange('doctorTitle', 1);
+          addRange('doctorContent', 1);
+        }
+
+        // 8) SOBRE EL HOSPITAL: title (1) + content (1) if provider info exists
+        if (hasProviderInfo) {
+          addRange('hospitalTitle', 1);
+          addRange('hospitalContent', 1);
+        }
+
+        // 9) ¿CÓMO LLEGAR? (1) if there is place/location
+        if (hasHowTo) {
+          addRange('howTo', 1);
+        }
+
+        // 10) MAP (1) if exists (your content has pageBreak:'after' on map)
+        if (hasMap) {
+          addRange('map', 1);
+        }
+        // Compute the real last page AFTER all other sections are added
+        const totalPages = page + 1; // page always points to the next available page
+        const lastPage = [totalPages, totalPages];
+
+        // Small helper
+        const inRange = (p, range) => range && p >= range[0] && p <= range[1];
+
+        // Choose background
         let bg = BACKGROUNDS.titlePages;
-        if(currentPage === 1) {
+
+        if (currentPage === 1) {
           bg = BACKGROUNDS.frontPage;
-        }
-        if(currentPage > 1 && currentPage < item.carnets.length + 2) {
+        } else if (inRange(currentPage, ranges.carnets)) {
           bg = BACKGROUNDS.carnet;
-        }
-        if(currentPage > item.carnets.length + 1  && currentPage < item.carnets.length + 3) {
+        } else if (
+          // explicitly include LOGO as images+content
+          (ranges.logo && currentPage === ranges.logo[0]) ||
+
+          // pre-cert title + vobs
+          (ranges.precertTitle && currentPage === ranges.precertTitle[0]) ||
+          inRange(currentPage, ranges.vobs) ||
+
+          // citas title + citas table
+          (ranges.citasTitle && currentPage === ranges.citasTitle[0]) ||
+          (ranges.citasTable && currentPage === ranges.citasTable[0]) ||
+
+          // contactos
+          (ranges.contactos && currentPage === ranges.contactos[0]) ||
+
+          // doctor title + content
+          (ranges.doctorTitle && currentPage === ranges.doctorTitle[0]) ||
+          (ranges.doctorContent && currentPage === ranges.doctorContent[0]) ||
+
+          // hospital title + content
+          (ranges.hospitalTitle && currentPage === ranges.hospitalTitle[0]) ||
+          (ranges.hospitalContent && currentPage === ranges.hospitalContent[0]) ||
+
+          // cómo llegar + map
+          (ranges.howTo && currentPage === ranges.howTo[0]) ||
+          (ranges.map && currentPage === ranges.map[0])
+        ) {
           bg = BACKGROUNDS.imagesAndContent;
-        }
-        if(currentPage > item.carnets.length + 4 && currentPage < item.vobs.length + item.carnets.length + 5) {
-          bg = BACKGROUNDS.imagesAndContent
-        }
-        if(currentPage > item.vobs.length + item.carnets.length + 5 && currentPage < item.vobs.length + item.carnets.length + 8) {
-          bg = BACKGROUNDS.imagesAndContent
-        }
-        if(currentPage > item.vobs.length + item.carnets.length + 8 && currentPage < item.vobs.length + item.carnets.length + 10) {
-          bg = BACKGROUNDS.imagesAndContent
-        }
-        if(currentPage > item.vobs.length + item.carnets.length + 10 && currentPage < item.vobs.length + item.carnets.length + 12) {
-          bg = BACKGROUNDS.imagesAndContent
-        }
-        if(currentPage > item.vobs.length + item.carnets.length + 12 && currentPage < item.vobs.length + item.carnets.length + itineraries.length + 14) {
-          bg = BACKGROUNDS.imagesAndContent
-        }
-        if(currentPage > item.vobs.length + item.carnets.length + itineraries.length + 18 && currentPage < item.vobs.length + item.carnets.length + itineraries.length + 19) {
-          bg = BACKGROUNDS.imagesAndContent
-        }
-        if(currentPage === item.vobs.length + item.carnets.length + itineraries.length + 16){
+        } else if (lastPage && currentPage === lastPage[0]) {
           bg = BACKGROUNDS.lastPage;
         }
 
@@ -243,10 +323,8 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       },
       content: [
         { text: '', pageBreak: 'after' }, // page1
-        ...(item.carnets.length ? item.carnets.map(carnet => ({ image: _upload.convertImageUrltoBase64(carnet), width: 350, alignment: 'center', })) : [{}]),
-        { text: '', pageBreak: 'after' }, // page2
-        ...(!!item.provider_profile_pic?.url ? [{ image: 'logo', width: 350, alignment: 'center'}]: []),
-        { text: '', pageBreak: 'after' }, // page3
+        ...(item.carnets.length ? item.carnets.map(carnet => ({ image: _upload.convertImageUrltoBase64(carnet), width: 350, alignment: 'center', pageBreak: 'after' })) : [{}]), // page2
+        ...(!!item.provider_profile_pic?.url ? [{ image: 'logo', width: 350, alignment: 'center', pageBreak: 'after' }]: []), // page3
         { text:'CONTENIDO', style: "title", margin: [30,35, 0, 0] }, // page4 start
         {
           type: 'square',
@@ -263,24 +341,24 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           ], 
           margin: [30, 0, 0, 0],
           pageBreak: 'after'
-        }, // page4 end
-        {
-          text: 'PRE-CERTIFICACIÓN',
-          style: 'title',
-			    alignment: 'center',
-          absolutePosition: { x: 0, y: 390 }, 
-          pageBreak: 'after'
-        }, // page5
-        ...(item.vobs.length ? item.vobs.map(vob => ({ image: _upload.convertImageUrltoBase64(vob), width: 350, alignment: 'center', })) : [{}]),
-        { text: '', pageBreak: 'after' }, // break after vobs
-        {
-          text: 'CITAS MÉDICAS',
-          style: 'title',
-			    alignment: 'center',
-          absolutePosition: { x: 0, y: 390 },
-          pageBreak: 'after'
-        }, // page6
-        {
+        },
+        ...(item.vobs.length ? [{
+              text: 'PRE-CERTIFICACIÓN',
+              style: 'title',
+              alignment: 'center',
+              absolutePosition: { x: 0, y: 390 }, 
+              pageBreak: 'after'
+            },
+        ...item.vobs.map(vob => ({ image: _upload.convertImageUrltoBase64(vob), width: 350, alignment: 'center', pageBreak: 'after' }))] 
+        : [{}]),
+        ...(events_itineraries.length ? [{
+            text: 'CITAS MÉDICAS',
+            style: 'title',
+            alignment: 'center',
+            absolutePosition: { x: 0, y: 390 },
+            pageBreak: 'after'
+          },
+          {
           table: {
             widths: ['30%', '18%', '30%', '27%'],
             body: [
@@ -317,7 +395,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           },
           margin: [-15, 0, 15, 0],
           pageBreak: 'after'
-        },  // page7 
+        }] : []),
         {
           stack: [
             { text: 'CONTACTOS', style: 'title', margin: [0, 0, 0, 10] },
@@ -374,128 +452,125 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           ],
           margin: [0, 20, 0, 0],
           pageBreak: 'after'
-        }, // page8
-        { 
+        },
+        ...(doctors.length ? [{ 
           text: 'SOBRE EL DOCTOR',
           style: 'title',
 			    alignment: 'center',
           absolutePosition: { x: 0, y: 390 }, 
           pageBreak: 'after' 
-        }, // page9
+        },
         { 
           stack: doctors, 
           pageBreak: 'after'
-        }, // page10
-        { 
-          text: 'SOBRE EL HOSPITAL',
-          style: 'title',
-			    alignment: 'center',
-          absolutePosition: { x: 0, y: 390 }, 
-          pageBreak: 'after' 
-        }, // page11
-        {
-          text: item.provider_description,
-          style: 'item',
-          bold: true,
-          margin: [0, 0, 0, 10],
-        },
-        {
-          text: item.provider_detail,
-          style: 'body',
-        },
-        {
-          margin: [0, 15, 0, 5],
-          table: {
-            widths: ['auto', '*'],
-            body: [
-              [
-                { text: 'UBICACIÓN:', style: 'locationLabel' },
-                { text: item.provider_location, style: 'locationValue' }
+        }] : []),
+        ...(item.provider_description || item.provider_detail || item.provider_location ? [
+          { 
+            text: 'SOBRE EL HOSPITAL',
+            style: 'title',
+            alignment: 'center',
+            absolutePosition: { x: 0, y: 390 }, 
+            pageBreak: 'after' 
+          },
+          {
+            text: item.provider_description,
+            style: 'item',
+            bold: true,
+            margin: [0, 0, 0, 10],
+          }, 
+          {
+            text: item.provider_detail,
+            style: 'body',
+          }, 
+          {
+            margin: [0, 15, 0, 5],
+            table: {
+              widths: ['auto', '*'],
+              body: [
+                [
+                  { text: 'UBICACIÓN:', style: 'locationLabel' },
+                  { text: item.provider_location, style: 'locationValue' }
+                ]
               ]
-            ]
-          },
-          layout: {
-            fillColor: (rowIndex) => {
-              return rowIndex === 0 ? '#1a3354' : null;
             },
-            paddingLeft: () => 6,
-            paddingRight: () => 6,
-            paddingTop: () => 4,
-            hLineWidth: () => 0,
-            vLineWidth: () => 0,
-            paddingBottom: () => 4
-          },
-        },
-        {
-          text:'',
-          // image: 'cityImage',
-          // width: 500,
-          // margin: [0, 10, 0, 0],
-          pageBreak: 'after'
-        }, // page12
-        {
-          text: 'SOBRE LA CIUDAD',
-          style: 'title',
-			    alignment: 'center',
-          absolutePosition: { x: 0, y: 390 }, 
-          pageBreak: 'after'
-        }, // page13
-        {
-          text: 'ESTADÍA & HOSPITALES',
-          style: 'title',
-			    alignment: 'center',
-          absolutePosition: { x: 0, y: 390 }, 
-          pageBreak: 'after'
-        }, // page15
-        {
-          text: 'ATRACCIONES',
-          style: 'title',
-			    alignment: 'center',
-          absolutePosition: { x: 0, y: 390 }, 
-          pageBreak: 'after'
-        }, // page16
-        {
-          text: 'OTRAS INFORMACIONES',
-          style: 'title',
-			    alignment: 'center',
-          absolutePosition: { x: 0, y: 390 }, 
-          pageBreak: 'after'
-        }, // page17
-        {
-          text: '¿CÓMO LLEGAR?',
-          style: 'headerMap',
-          alignment: 'center',
-          margin: [0, 50, 0, 10],
-        },
-        {
-          columns: [
+            layout: {
+              fillColor: (rowIndex) => {
+                return rowIndex === 0 ? '#1a3354' : null;
+              },
+              paddingLeft: () => 6,
+              paddingRight: () => 6,
+              paddingTop: () => 4,
+              hLineWidth: () => 0,
+              vLineWidth: () => 0,
+              paddingBottom: () => 4
+            },
+            pageBreak: 'after'
+          }] : []),
+        // {
+        //   text: 'SOBRE LA CIUDAD',
+        //   style: 'title',
+			  //   alignment: 'center',
+        //   absolutePosition: { x: 0, y: 390 }, 
+        //   pageBreak: 'after'
+        // }, // page13
+        // {
+        //   text: 'ESTADÍA & HOSPITALES',
+        //   style: 'title',
+			  //   alignment: 'center',
+        //   absolutePosition: { x: 0, y: 390 }, 
+        //   pageBreak: 'after'
+        // }, // page15
+        // {
+        //   text: 'ATRACCIONES',
+        //   style: 'title',
+			  //   alignment: 'center',
+        //   absolutePosition: { x: 0, y: 390 }, 
+        //   pageBreak: 'after'
+        // }, // page16
+        // {
+        //   text: 'OTRAS INFORMACIONES',
+        //   style: 'title',
+			  //   alignment: 'center',
+        //   absolutePosition: { x: 0, y: 390 }, 
+        //   pageBreak: 'after'
+        // }, // page17
+        ...(item.provider_location || item.provider_place ? [
             {
-              width: '*',
-              stack: [
-                {
-                  text: [
-                    { text: 'UBICACIÓN: ', bold: true },
-                    item.provider_location,
-                  ],
-                  alignment: 'center',
-                  margin: [0, 0, 0, 5],
-                },
-                {
-                  text: item.provider_place,
-                  italics: true,
-                  alignment: 'center',
-                  margin: [0, 0, 0, 20],
-                },
-              ],
-            },
-          ], 
-        }, // page18
+            text: '¿CÓMO LLEGAR?',
+            style: 'headerMap',
+            alignment: 'center',
+            margin: [0, 50, 0, 10],
+          },
+          {
+            columns: [
+              {
+                width: '*',
+                stack: [
+                  {
+                    text: [
+                      { text: 'UBICACIÓN: ', bold: true },
+                      item.provider_location,
+                    ],
+                    alignment: 'center',
+                    margin: [0, 0, 0, 5],
+                  },
+                  {
+                    text: item.provider_place,
+                    italics: true,
+                    alignment: 'center',
+                    margin: [0, 0, 0, 20],
+                  },
+                ],
+              },
+            ], 
+            pageBreak: 'after'
+          },
+        ] : []),
         ...(item.provider_map ? [{
           image: 'map',
           width: 500,
-          alignment: 'center',
-        }] : []),
-        { text: '', pageBreak: 'after' }, // page19
+          alignment: 'center'
+        }] : []), // page19
       ],
       images: {
         logo: item.provider_profile_pic?.url ? _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(item.provider_profile_pic.url)) : undefined,
