@@ -23,13 +23,15 @@ export function returnError(err, req, res, next) {
   const _err = JSON.stringify(err)
   const user = res?.locals?.user;
   console.log(err);
-  _comunication.postMarkErrors({
-    MessageStream: "outbound",
-    From: `${process.env.MAIL_USER}`,
-    To: `enmanuelpsy@gmail.com`,
-    Subject: `MEDTRAVEL - ERRORS ✔`, // Subject line
-    HtmlBody: `<pre>Usuario: ${user?.description}, ${req?.url}, ${req?.method}</pre><br /><pre>${err.stack}</pre><br /><pre>${err}</pre><br /><pre>${_err}</pre>`,
-  })
+  if(process.env.NODE_ENV === 'production') {
+    _comunication.postMarkErrors({
+      MessageStream: "outbound",
+      From: `${process.env.MAIL_USER}`,
+      To: `enmanuelpsy@gmail.com`,
+      Subject: `MEDTRAVEL - ERRORS ✔`, // Subject line
+      HtmlBody: `<pre>Usuario: ${user?.description}, ${req?.url}, ${req?.method}</pre><br /><pre>${err.stack}</pre><br /><pre>${err}</pre><br /><pre>${_err}</pre>`,
+    })
+  }
 
   logger.error(err);
   res.status(err.statusCode || 500).json(err);

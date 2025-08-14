@@ -2,6 +2,7 @@ import * as path from "path";
 import path__default from "path";
 import dotenv from "dotenv";
 import express, { response } from "express";
+import fs from "fs";
 import createError from "http-errors";
 import http from "http";
 import cors from "cors";
@@ -18,7 +19,6 @@ import ejs from "ejs";
 import multer from "multer";
 import puppeteer from "puppeteer";
 import sharp from "sharp";
-import fs from "fs";
 import { format, isValid, differenceInDays, getDaysInMonth, setDate, formatDistanceToNow, setDefaultOptions } from "date-fns";
 import excelToJson from "convert-excel-to-json";
 import { load } from "@pspdfkit/nodejs";
@@ -1187,95 +1187,211 @@ const getBody = async ({ table: table2, data: data2, account, file = "body" }) =
     console.log(error);
   }
 };
-function generateConciliation({ item, itineraries, provider, files, account, user }) {
+function generateConciliation({ item, items }) {
   try {
-    let buildClaimDetailPdf = function(rows, patientName = "") {
-      const header = [
-        { text: "FECHA", style: "th", noWrap: true },
-        { text: "PROVEEDOR", style: "th", noWrap: true },
-        { text: "PRESTADOR DE SERVICIOS", style: "th", noWrap: true },
-        { text: "CONCEPTO", style: "th" },
-        { text: "MONTO FACTURADO", style: "thR" },
-        { text: "DESCUENTO DE AJUSTE", style: "thR" },
-        { text: "MONTO A PROCESAR", style: "thR" },
-        { text: "DEDUCIBLE", style: "thR" },
-        { text: "COPAGO", style: "thR" },
-        { text: "CUBIERTO", style: "thR" },
-        { text: "PAGO ASEGURADORA", style: "thR" },
-        { text: "RESP. ASEGURADORA", style: "thR" },
-        { text: "AUTORIZACIÓN", style: "th", noWrap: true },
-        { text: "NOTA", style: "th" }
-      ];
-      const body = [header];
-      rows.forEach((r) => {
-        body.push([
-          { text: safe(r.fecha), alignment: "center", noWrap: true },
-          safe(r.proveedor),
-          safe(r.prestador),
-          safe(r.concepto),
-          currency(r.monto_facturado),
-          currency(r.descuento_ajuste),
-          currency(r.monto_procesar),
-          currency(r.deducible),
-          currency(r.copago),
-          currency(r.cubierto),
-          currency(r.pago_aseguradora),
-          currency(r.resp_aseguradora),
-          safe(r.autorizacion),
-          safe(r.nota)
-        ]);
-      });
-      return {
-        pageSize: "LETTER",
-        pageOrientation: "landscape",
-        pageMargins: [18, 18, 18, 18],
-        defaultStyle: { fontSize: 8 },
-        content: [
-          patientName ? { text: patientName, bold: true, fontSize: 10, margin: [0, 0, 0, 6] } : {},
-          {
-            table: {
-              headerRows: 1,
-              // tune widths if you need more/less room per column
-              widths: [
-                42,
-                90,
-                105,
-                "*",
-                60,
-                68,
-                68,
-                55,
-                50,
-                55,
-                82,
-                82,
-                72,
-                80
-              ],
-              body
-            },
-            layout: {
-              fillColor: (rowIndex) => rowIndex === 0 ? "#0d2f57" : null,
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-              hLineColor: () => "#c8d4e0",
-              vLineColor: () => "#c8d4e0",
-              paddingLeft: () => 3,
-              paddingRight: () => 3,
-              paddingTop: () => 4,
-              paddingBottom: () => 4
-            }
-          }
-        ],
-        styles: {
-          th: { color: "white", bold: true },
-          thR: { color: "white", bold: true, alignment: "right" }
+    const header = [
+      { text: "FECHA", style: "th", noWrap: true },
+      { text: "PROVEEDOR", style: "th", noWrap: true },
+      { text: "PRESTADOR DE\nSERVICIOS", style: "th", alignment: "center" },
+      { text: "CONCEPTO", style: "th" },
+      { text: "MONTO\nFACTURADO", style: "thR", alignment: "right" },
+      { text: "DESCUENTO DE\nAJUSTE", style: "thR", alignment: "right" },
+      { text: "MONTO A\nPROCESAR", style: "thR", alignment: "right" },
+      { text: "DEDUCIBLE", style: "thR" },
+      { text: "COPAGO", style: "thR" },
+      { text: "CUBIERTO", style: "thR" },
+      { text: "PAGO\nASEGURADORA", style: "thR", alignment: "right" },
+      { text: "RESP.\nASEGURADORA", style: "thR", alignment: "right" },
+      { text: "AUTORIZACIÓN", style: "th" },
+      { text: "NOTA", style: "th" }
+    ];
+    const body = [header];
+    items.forEach((r) => {
+      body.push([
+        { text: intlDate(r.book_date), alignment: "center", noWrap: true },
+        r.provider_description,
+        r.doctor_description,
+        r.item_description,
+        { text: currency(r.billed_amount), style: "num" },
+        { text: currency(r.discount), style: "num" },
+        { text: currency(r.coverage), style: "num" },
+        { text: currency(r.deducible), style: "num" },
+        { text: currency(r.copago), style: "num" },
+        { text: currency(r.covered), style: "num" },
+        { text: currency(r.insurance_payment), style: "num" },
+        { text: currency(r.insurance_responsability), style: "num" },
+        r.insurance_claim || "",
+        r.note || ""
+      ]);
+    });
+    const docDefinition = {
+      pageSize: "LETTER",
+      pageOrientation: "landscape",
+      // márgenes más estrechos
+      pageMargins: [12, 18, 12, 18],
+      defaultStyle: { fontSize: 7, lineHeight: 1.15 },
+      content: [
+        item.insured_description ? { text: item.insured_description, bold: true, fontSize: 9, margin: [0, 0, 0, 6] } : {},
+        {
+          table: {
+            headerRows: 1,
+            // valores más bajos para que todo quepa
+            widths: [32, 60, 60, "*", 46, 50, 50, 40, 40, 44, 60, 60, 50, 55],
+            body
+          },
+          layout: {
+            fillColor: (rowIndex) => rowIndex === 0 ? "#0d2f57" : rowIndex % 2 ? "#f5f8fb" : null,
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => "#c8d4e0",
+            vLineColor: () => "#c8d4e0",
+            paddingLeft: () => 2,
+            paddingRight: () => 2,
+            paddingTop: () => 2,
+            paddingBottom: () => 2
+          },
+          dontBreakRows: true,
+          keepWithHeaderRows: 1
         }
-      };
-      function safe(v) {
-        return (v ?? "").toString();
+      ],
+      styles: {
+        th: { color: "white", bold: true },
+        thR: { color: "white", bold: true, alignment: "right" },
+        num: { alignment: "right" }
       }
     };
+    const logoB64 = convertImagetoBase64("logoText.png");
+    const dd = {
+      pageSize: "LETTER",
+      pageOrientation: "landscape",
+      pageMargins: [0, 90, 0, 60],
+      header: (currentPage, pageCount, pageSize) => {
+        return {
+          stack: [
+            // Fondo gris
+            {
+              canvas: [
+                { type: "rect", x: 0, y: 0, w: pageSize.width, h: 40, color: "#f2f2f2" }
+              ]
+            },
+            // Contenido del header
+            {
+              margin: [40, -35, 40, 0],
+              columns: [
+                {
+                  image: "logoBupa",
+                  // tu logo base64
+                  width: 60,
+                  alignment: "center",
+                  margin: [0, -5, 0, 0]
+                  // para centrar verticalmente
+                },
+                {
+                  text: "Explicación de Beneficios",
+                  style: "headerTitle",
+                  alignment: "center",
+                  margin: [0, 10, 0, 0]
+                },
+                {
+                  stack: [
+                    { text: "07-07-2025", fontSize: 9 },
+                    { text: `Página ${currentPage} de ${pageCount}`, fontSize: 9 }
+                  ],
+                  width: 80,
+                  margin: [0, 5, 0, 0]
+                  // centra verticalmente el bloque derecho
+                }
+              ]
+            }
+          ]
+        };
+      },
+      footer: (currentPage) => {
+        if (currentPage === 1) {
+          return {
+            margin: [40, 0, 40, 20],
+            stack: [
+              { text: "ESTE DOCUMENTO NO ES UNA FACTURA.", style: "footerNote", alignment: "center" },
+              { text: "Este documento es una explicación de los beneficios pagaderos bajo su seguro de salud.", style: "footerText", alignment: "center" }
+            ]
+          };
+        }
+        return null;
+      },
+      content: [
+        {
+          margin: [40, 0, 40, 0],
+          columns: [
+            {
+              width: "60%",
+              stack: [
+                { text: "Asegurado Principal", style: "sectionTitle" },
+                { text: item.insured_description, style: "text" },
+                { text: "DOMICILIO REGISTRADO", style: "text" },
+                { text: "SANTO DOMINGO, DOMINICAN REPUBLIC", style: "text", margin: [0, 0, 0, 10] },
+                { text: "Número de Póliza", style: "sectionTitle" },
+                { text: item.policy_number, style: "text", margin: [0, 0, 0, 10] },
+                { text: "Producto", style: "sectionTitle" },
+                { text: "NOMBRE DEL PLAN", style: "text", margin: [0, 0, 0, 10] },
+                { text: "Agente", style: "sectionTitle" },
+                { text: "MATOS CORREDORES DE SEGUROS, SRL", style: "text" }
+              ]
+            },
+            {
+              width: "40%",
+              stack: [
+                { text: "Servicio al Cliente", style: "sectionTitle" },
+                { text: "Para cualquier pregunta puede contactarnos a través de", style: "text" },
+                { text: "https://www.momatos.com/contactanos y enviarnos una consulta.", style: "text" },
+                { text: "También puede contactarnos en nuestra línea de Servicio al Cliente al:", style: "text" },
+                { text: "(809) 620-0000", style: "phone" },
+                { text: "o consulte su número local en nuestra página web:", style: "text" },
+                { text: "https://www.momatos.com/contactanos", style: "text" }
+              ]
+            }
+          ]
+        },
+        {
+          style: { fontSize: 7, lineHeight: 1.15 },
+          table: {
+            headerRows: 1,
+            // valores más bajos para que todo quepa
+            widths: [32, 60, 60, "*", 46, 50, 50, 40, 40, 44, 60, 60, 50, 55],
+            body
+          },
+          layout: {
+            fillColor: (rowIndex) => rowIndex === 0 ? "#EAEAEA" : rowIndex % 2 ? "#f5f8fb" : null,
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => "#c8d4e0",
+            vLineColor: () => "#c8d4e0",
+            paddingLeft: () => 2,
+            paddingRight: () => 2,
+            paddingTop: () => 2,
+            paddingBottom: () => 2
+          },
+          dontBreakRows: true,
+          keepWithHeaderRows: 1,
+          pageBreak: "before"
+        }
+      ],
+      styles: {
+        headerTitle: { fontSize: 14, bold: true },
+        sectionTitle: { fontSize: 9, bold: true, margin: [0, 5, 0, 1] },
+        text: { fontSize: 9 },
+        phone: { fontSize: 10, bold: true },
+        footerNote: { fontSize: 9, bold: true },
+        footerText: { fontSize: 8 },
+        th: { color: "black", bold: true, lineHeight: 0.7 },
+        thR: { color: "black", bold: true, alignment: "right", lineHeight: 0.7 },
+        num: { alignment: "right" }
+      },
+      images: {
+        logoBupa: logoB64
+        // aquí usamos tu función para obtener base64
+      }
+    };
+    return { docDefinition: dd };
   } catch (error) {
     console.log(error);
   }
@@ -1608,9 +1724,9 @@ async function generatePDF({
 async function generatePDFWithPdfmake({
   account,
   table: table2,
-  id,
   filename,
   docDefinition,
+  id = null,
   fonts = null,
   outputPath = null
 }) {
@@ -5400,6 +5516,27 @@ function setAgeStats(stats, age) {
       break;
   }
 }
+async function webpToBase64(webpUrl) {
+  const buffer = await sharp(webpUrl).png().toBuffer();
+  return `data:image/png;base64,${buffer.toString("base64")}`;
+}
+async function handleImageOrFile(file) {
+  try {
+    if (file && file.url && file.url.toLowerCase().endsWith(".webp")) {
+      const pathImg = getFilePathFromUrl(file.url);
+      const img = await webpToBase64(pathImg);
+      return img;
+    } else if (file && file.url) {
+      const url = getFilePathFromUrl(file.url);
+      return convertImageUrltoBase64(url);
+    } else {
+      throw new Error("Invalid image path or URL provided.");
+    }
+  } catch (error) {
+    console.error("Error handling image:", error);
+    throw error;
+  }
+}
 const myFormat = format$1.printf(({ level, message, timestamp }) => {
   return `${gray(timestamp)} ${level}: ${message}`;
 });
@@ -5453,14 +5590,16 @@ function returnError(err, req, res, next) {
   const _err = JSON.stringify(err);
   const user = (_a = res == null ? void 0 : res.locals) == null ? void 0 : _a.user;
   console.log(err);
-  postMarkErrors({
-    MessageStream: "outbound",
-    From: `${process.env.MAIL_USER}`,
-    To: `enmanuelpsy@gmail.com`,
-    Subject: `MEDTRAVEL - ERRORS ✔`,
-    // Subject line
-    HtmlBody: `<pre>Usuario: ${user == null ? void 0 : user.description}, ${req == null ? void 0 : req.url}, ${req == null ? void 0 : req.method}</pre><br /><pre>${err.stack}</pre><br /><pre>${err}</pre><br /><pre>${_err}</pre>`
-  });
+  if (process.env.NODE_ENV === "production") {
+    postMarkErrors({
+      MessageStream: "outbound",
+      From: `${process.env.MAIL_USER}`,
+      To: `enmanuelpsy@gmail.com`,
+      Subject: `MEDTRAVEL - ERRORS ✔`,
+      // Subject line
+      HtmlBody: `<pre>Usuario: ${user == null ? void 0 : user.description}, ${req == null ? void 0 : req.url}, ${req == null ? void 0 : req.method}</pre><br /><pre>${err.stack}</pre><br /><pre>${err}</pre><br /><pre>${_err}</pre>`
+    });
+  }
   logger.error(err);
   res.status(err.statusCode || 500).json(err);
 }
@@ -5470,6 +5609,8 @@ function isOperationalError(error) {
   }
   return false;
 }
+const packageJsonPath$1 = path__default.resolve("package.json");
+const packageJson$1 = JSON.parse(fs.readFileSync(packageJsonPath$1, "utf-8"));
 const router$B = express.Router();
 const table$t = "t_user";
 const saltRounds = 10;
@@ -5728,6 +5869,7 @@ router$B.get("/me", async function(req, res, next) {
     }, []);
     user.menu = Array.from(new Set(menu));
     user.roles_format = JSON.parse(user.roles).join(",");
+    user.version = packageJson$1.version;
     res.status(200).send(user);
   } catch (error) {
     next(error);
@@ -6862,6 +7004,7 @@ router$w.post("/", function(req, res, next) {
             });
           }
         }
+        console.log(data2.ref_key, data2.ref_id);
         req.io.emit("update", {
           table: data2.ref_key,
           id: data2.ref_id
@@ -11109,37 +11252,6 @@ router$h.get("/pdf2/:code", async function(req, res, next) {
     item.sequence = String(item.code).substring(1);
     item.day = format(item.book_date, "dd");
     item.year = format(item.created, "yyyy");
-    item.images = {
-      logoText: convertImagetoBase64("logoText.png")
-    };
-    for (let i = 0; i < items.length; i++) {
-      const item2 = items[i];
-      if (item2.billed_amount_total) {
-        item2.billed_amount_format = currency(item2.billed_amount, item2.currency);
-      }
-      if (item2.coverage) {
-        item2.coverage_format = currency(item2.coverage, item2.currency);
-      }
-      if (item2.discount) {
-        item2.discount_format = currency(item2.discount, item2.currency);
-      }
-      if (item2.deductible) {
-        item2.deductible_format = currency(item2.deductible, item2.currency);
-      }
-      if (item2.copago) {
-        item2.copago_format = currency(item2.copago, item2.currency);
-      }
-      if (item2.covered) {
-        item2.covered_format = currency(item2.covered, item2.currency);
-      }
-      if (item2.insurance_payment) {
-        item2.insurance_payment_format = currency(item2.insurance_payment, item2.currency);
-      }
-      if (item2.insurance_responsability) {
-        item2.insurance_responsability_format = currency(item2.insurance_responsability, item2.currency);
-      }
-      item2.book_date_format = intlDate(item2.book_date);
-    }
     for (let i = 0; i < payments.length; i++) {
       const item2 = payments[i];
       if (item2.insurance_payment) {
@@ -11191,6 +11303,7 @@ router$h.get("/pdf2/:code", async function(req, res, next) {
     const pdfUrl = await generatePDFWithPdfmake({
       account,
       table: "t_book",
+      id: item.id,
       filename,
       docDefinition
     });
@@ -11211,7 +11324,7 @@ router$h.get("/pdf2/:code", async function(req, res, next) {
     const newpdf = await imageToPDF(images);
     const buf = await mergePDF([...pdfs, ...newpdf]);
     await replaceFile(pdfs[0], buf);
-    return res.status(200).json(filename);
+    return res.status(200).json(pdfUrl);
   } catch (error) {
     next(error);
   }
@@ -14851,7 +14964,7 @@ const content2 = fs.readFileSync(`${imagesBase64Dir}/guia4.png`).toString("base6
 const branches = fs.readFileSync(`${imagesBase64Dir}/guia19.png`).toString("base64");
 const BACKGROUNDS = { frontPage, carnet, imagesAndContent: content1, titlePages: content2, lastPage: branches };
 async function generateMedicalGuideDoc({ item, itineraries, provider, files, account, user }) {
-  var _a, _b;
+  var _a, _b, _c;
   let provider_files;
   if (provider) {
     item.provider_description = provider.description;
@@ -14865,7 +14978,8 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
       item.provider_file = provider_file == null ? void 0 : provider_file.url;
       item.provider_map = provider_mapa == null ? void 0 : provider_mapa.url;
     }
-    item.provider_profile_pic = await getProfilePic({ ref_key: "t_provider", ref_id: item.provider_id });
+    const logoImg = await getProfilePic({ ref_key: "t_provider", ref_id: item.provider_id });
+    item.provider_profile_pic = await handleImageOrFile(logoImg);
   }
   if (itineraries.length) {
     for (let itinerary of itineraries) {
@@ -14893,9 +15007,10 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
       });
       if (doctor) {
         itinerary.doctor_address = doctor.address;
-        itinerary.doctor_name = doctor.description;
+        itinerary.doctor_description = doctor.description;
         itinerary.doctor_bio = doctor.bio;
-        itinerary.doctor_profile_pic = await getProfilePic({ ref_key: "t_doctor", ref_id: itinerary.doctor_id });
+        const doctorProfile = await getProfilePic({ ref_key: "t_doctor", ref_id: itinerary.doctor_id });
+        itinerary.doctor_profile_pic = await handleImageOrFile(doctorProfile);
         if (doctor.postnominal) {
           itinerary.doctor_posnominal = JSON.parse(doctor.postnominal);
         } else {
@@ -14914,8 +15029,8 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     if (file.$file_type_id === 314) {
-      const url = getFilePathFromUrl(file.url);
-      carnets.push(url);
+      const img = await handleImageOrFile(file);
+      carnets.push(img);
     }
     if (file.$file_type_id === 197) {
       if (file.icon === "pdf") {
@@ -14974,7 +15089,7 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
         stack: [
           { text: doctor_description, bold: true, fontSize: 9, lineHeight: 0.7 },
           {
-            text: doctor_speciality.length > 1 ? doctor_speciality.map((s) => s.description).join(", ") : doctor_speciality[0].description,
+            text: doctor_speciality ? doctor_speciality.length > 1 ? doctor_speciality.map((s) => s.description).join(", ") : doctor_speciality[0].description : "",
             fontSize: 8
           }
         ],
@@ -14983,10 +15098,10 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
       }
     ];
   });
-  const doctors = itineraries.map((itinerary) => {
+  const doctors = itineraries.filter((itinerary_doctor) => itinerary_doctor.doctor_description).map((itinerary) => {
     const {
       doctor_profile_pic,
-      doctor_name,
+      doctor_description,
       doctor_posnominal,
       doctor_bio,
       doctor_speciality
@@ -14997,15 +15112,15 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
           widths: [100, "*"],
           body: [
             [
-              {
-                image: convertImageUrltoBase64(getFilePathFromUrl(doctor_profile_pic == null ? void 0 : doctor_profile_pic.url)),
+              ...doctor_profile_pic ? [{
+                image: doctor_profile_pic,
                 width: 100,
                 height: 120
-              },
+              }] : [{ text: "", image: "", width: 100, height: 120 }],
               {
                 stack: [
-                  { text: `${doctor_name}${doctor_posnominal ? `, ${doctor_posnominal.length > 1 ? doctor_posnominal.join(", ") : doctor_posnominal[0]}` : ""}`, style: "doctor_name" },
-                  { text: doctor_speciality.length > 1 ? doctor_speciality.map((s) => s.description).join(", ") : doctor_speciality[0].description, style: "doctor_title" }
+                  { text: `${doctor_description}${doctor_posnominal ? `, ${doctor_posnominal.length > 1 ? doctor_posnominal.join(", ") : doctor_posnominal[0]}` : ""}`, style: "doctor_name" },
+                  { text: doctor_speciality ? doctor_speciality.length > 1 ? doctor_speciality.map((s) => s.description).join(", ") : doctor_speciality[0].description : "", style: "doctor_title" }
                 ],
                 margin: [10, 40, 0, 0]
               }
@@ -15029,40 +15144,96 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
       }
     ];
   });
+  const hasLogo = !!item.provider_profile_pic;
+  const hasCarnets = ((_a = item.carnets) == null ? void 0 : _a.length) || 0 > 0;
+  const hasVobs = (((_b = item.vobs) == null ? void 0 : _b.length) || 0) > 0;
+  const hasEvents = ((events_itineraries == null ? void 0 : events_itineraries.length) || 0) > 0;
+  const hasDoctors = ((doctors == null ? void 0 : doctors.length) || 0) > 0;
+  const hasProviderInfo = !!(item.provider_description || item.provider_detail || item.provider_location);
+  const hasHowTo = !!(item.provider_location || item.provider_place || !!item.provider_map);
+  const hasMap = !!item.provider_map;
+  const sectionTitlesMap = {
+    precertTitle: "Pre-certificación",
+    citasTitle: "Citas Médicas",
+    doctorTitle: "Sobre el Doctor",
+    hospitalTitle: "Sobre el Hospital",
+    howTo: "Sobre la Ciudad",
+    contact: "Contactos",
+    hospitalContent: "Estadía y Hospital",
+    atracciones: "Atracciones",
+    otras: "Otras Informaciones"
+  };
+  const dynamicUL = [
+    hasVobs ? sectionTitlesMap.precertTitle : null,
+    hasEvents ? sectionTitlesMap.citasTitle : null,
+    hasDoctors ? sectionTitlesMap.doctorTitle : null,
+    hasProviderInfo ? sectionTitlesMap.hospitalTitle : null,
+    hasHowTo ? sectionTitlesMap.howTo : null,
+    sectionTitlesMap.contact,
+    hasProviderInfo ? sectionTitlesMap.hospitalContent : null,
+    ((_c = item.atracciones) == null ? void 0 : _c.length) > 0 ? sectionTitlesMap.atracciones : null,
+    sectionTitlesMap.otras
+  ].filter(Boolean);
   const docDefinition = {
     pageSize: "A4",
     pageMargins: [40, 150, 40, 60],
     background: function(currentPage) {
+      var _a2;
+      let page = 2;
+      const ranges = {};
+      const addRange = (key, pages) => {
+        if (!pages || pages <= 0)
+          return null;
+        const start = page;
+        const end = start + pages - 1;
+        ranges[key] = [start, end];
+        page = end + 1;
+        return ranges[key];
+      };
+      if (hasCarnets) {
+        addRange("carnets", (_a2 = item.carnets) == null ? void 0 : _a2.length);
+      }
+      if (hasLogo) {
+        addRange("logo", 1);
+      }
+      addRange("contenido", 1);
+      if (hasVobs) {
+        addRange("precertTitle", 1);
+        addRange("vobs", item.vobs.length);
+      }
+      if (hasEvents) {
+        addRange("citasTitle", 1);
+        addRange("citasTable", 1);
+      }
+      addRange("contactos", 1);
+      if (hasDoctors) {
+        addRange("doctorTitle", 1);
+        addRange("doctorContent", 1);
+      }
+      if (hasProviderInfo) {
+        addRange("hospitalTitle", 1);
+        addRange("hospitalContent", 1);
+      }
+      if (hasHowTo) {
+        addRange("howTo", 1);
+      }
+      const lastPage = page;
+      const inRange = (p, range) => range && p >= range[0] && p <= range[1];
       let bg = BACKGROUNDS.titlePages;
       if (currentPage === 1) {
         bg = BACKGROUNDS.frontPage;
-      }
-      if (currentPage > 1 && currentPage < item.carnets.length + 2) {
-        bg = BACKGROUNDS.carnet;
-      }
-      if (currentPage > item.carnets.length + 1 && currentPage < item.carnets.length + 3) {
-        bg = BACKGROUNDS.imagesAndContent;
-      }
-      if (currentPage > item.carnets.length + 4 && currentPage < item.vobs.length + item.carnets.length + 5) {
-        bg = BACKGROUNDS.imagesAndContent;
-      }
-      if (currentPage > item.vobs.length + item.carnets.length + 5 && currentPage < item.vobs.length + item.carnets.length + 8) {
-        bg = BACKGROUNDS.imagesAndContent;
-      }
-      if (currentPage > item.vobs.length + item.carnets.length + 8 && currentPage < item.vobs.length + item.carnets.length + 10) {
-        bg = BACKGROUNDS.imagesAndContent;
-      }
-      if (currentPage > item.vobs.length + item.carnets.length + 10 && currentPage < item.vobs.length + item.carnets.length + 12) {
-        bg = BACKGROUNDS.imagesAndContent;
-      }
-      if (currentPage > item.vobs.length + item.carnets.length + 12 && currentPage < item.vobs.length + item.carnets.length + itineraries.length + 14) {
-        bg = BACKGROUNDS.imagesAndContent;
-      }
-      if (currentPage > item.vobs.length + item.carnets.length + itineraries.length + 18 && currentPage < item.vobs.length + item.carnets.length + itineraries.length + 19) {
-        bg = BACKGROUNDS.imagesAndContent;
-      }
-      if (currentPage === item.vobs.length + item.carnets.length + itineraries.length + 16) {
+      } else if (currentPage === lastPage) {
         bg = BACKGROUNDS.lastPage;
+      } else if (ranges.carnets && inRange(currentPage, ranges.carnets)) {
+        bg = BACKGROUNDS.carnet;
+      } else if (["contenido", "precertTitle", "citasTitle", "doctorTitle", "hospitalTitle"].some(
+        (key) => ranges[key] && inRange(currentPage, ranges[key])
+      )) {
+        bg = BACKGROUNDS.titlePages;
+      } else if (Object.entries(ranges).some(
+        ([key, range]) => range && !["contenido", "precertTitle", "citasTitle", "doctorTitle", "hospitalTitle", "carnets"].includes(key) && inRange(currentPage, range)
+      )) {
+        bg = BACKGROUNDS.imagesAndContent;
       }
       return {
         image: `data:image/png;base64,${bg}`,
@@ -15072,98 +15243,81 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
     },
     content: [
       { text: "", pageBreak: "after" },
-      // page1
-      ...item.carnets.length ? item.carnets.map((carnet2) => ({ image: convertImageUrltoBase64(carnet2), width: 350, alignment: "center" })) : [{}],
-      { text: "", pageBreak: "after" },
-      // page2
-      ...!!((_a = item.provider_profile_pic) == null ? void 0 : _a.url) ? [{ image: "logo", width: 350, alignment: "center" }] : [],
-      { text: "", pageBreak: "after" },
-      // page3
+      ...hasCarnets ? item.carnets.map((carnet2) => ({ image: carnet2, width: 350, alignment: "center", pageBreak: "after" })) : [{}],
+      ...hasLogo ? [{ image: "logo", width: 350, alignment: "center", pageBreak: "after" }] : [],
       { text: "CONTENIDO", style: "title", margin: [30, 35, 0, 0] },
-      // page4 start
       {
         type: "square",
         style: "item",
-        ul: [
-          "Pre-certificación",
-          "Citas Medicas",
-          "Sobre el Doctor",
-          "Sobre el Hospital",
-          "Sobre la Ciudad",
-          "Estadía y Hospital",
-          "Atracciones",
-          "Otras Informaciones"
-        ],
+        ul: dynamicUL,
         margin: [30, 0, 0, 0],
         pageBreak: "after"
       },
-      // page4 end
-      {
-        text: "PRE-CERTIFICACIÓN",
-        style: "title",
-        alignment: "center",
-        absolutePosition: { x: 0, y: 390 },
-        pageBreak: "after"
-      },
-      // page5
-      ...item.vobs.length ? item.vobs.map((vob) => ({ image: convertImageUrltoBase64(vob), width: 350, alignment: "center" })) : [{}],
-      { text: "", pageBreak: "after" },
-      // break after vobs
-      {
-        text: "CITAS MÉDICAS",
-        style: "title",
-        alignment: "center",
-        absolutePosition: { x: 0, y: 390 },
-        pageBreak: "after"
-      },
-      // page6
-      {
-        table: {
-          widths: ["30%", "18%", "30%", "27%"],
-          body: [
-            [
-              { text: "FECHA", style: "tableHeader", alignment: "center" },
-              { text: "HORA", style: "tableHeader", alignment: "center" },
-              { text: "LUGAR", style: "tableHeader", alignment: "center" },
-              { text: "DOCTOR", style: "tableHeader", alignment: "center" }
-            ],
-            ...events_itineraries,
-            [
-              { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 },
-              { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 },
-              { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 },
-              { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 }
+      ...hasVobs ? [
+        {
+          text: "PRE-CERTIFICACIÓN",
+          style: "title",
+          alignment: "center",
+          absolutePosition: { x: 0, y: 390 },
+          pageBreak: "after"
+        },
+        ...item.vobs.map((vob) => ({ image: convertImageUrltoBase64(vob), width: 350, alignment: "center", pageBreak: "after" }))
+      ] : [{}],
+      ...hasEvents ? [
+        {
+          text: "CITAS MÉDICAS",
+          style: "title",
+          alignment: "center",
+          absolutePosition: { x: 0, y: 390 },
+          pageBreak: "after"
+        },
+        {
+          table: {
+            widths: ["30%", "18%", "30%", "27%"],
+            body: [
+              [
+                { text: "FECHA", style: "tableHeader", alignment: "center" },
+                { text: "HORA", style: "tableHeader", alignment: "center" },
+                { text: "LUGAR", style: "tableHeader", alignment: "center" },
+                { text: "DOCTOR", style: "tableHeader", alignment: "center" }
+              ],
+              ...events_itineraries,
+              [
+                { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 },
+                { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 },
+                { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 },
+                { text: " ", style: "tableHeader", alignment: "center", minHeight: 40 }
+              ]
             ]
-          ]
-        },
-        layout: {
-          fillColor: function(rowIndex, node) {
-            const lastRowIndex = node.table.body.length - 1;
-            if (rowIndex === 0) {
-              return "#1b355e";
+          },
+          layout: {
+            fillColor: function(rowIndex, node) {
+              const lastRowIndex = node.table.body.length - 1;
+              if (rowIndex === 0) {
+                return "#1b355e";
+              }
+              if (rowIndex === lastRowIndex) {
+                return "#f2f2f2";
+              }
+              return null;
+            },
+            hLineWidth: function() {
+              return 0.3;
+            },
+            vLineWidth: function() {
+              return 0.3;
+            },
+            hLineColor: function() {
+              return "white";
+            },
+            vLineColor: function() {
+              return "white";
             }
-            if (rowIndex === lastRowIndex) {
-              return "#f2f2f2";
-            }
-            return null;
           },
-          hLineWidth: function() {
-            return 0.3;
-          },
-          vLineWidth: function() {
-            return 0.3;
-          },
-          hLineColor: function() {
-            return "white";
-          },
-          vLineColor: function() {
-            return "white";
-          }
-        },
-        margin: [-15, 0, 15, 0],
-        pageBreak: "after"
-      },
-      // page7 
+          margin: [-15, 0, 15, 0],
+          pageBreak: "after"
+        }
+      ] : [],
       {
         stack: [
           { text: "CONTACTOS", style: "title", margin: [0, 0, 0, 10] },
@@ -15218,141 +15372,130 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
         margin: [0, 20, 0, 0],
         pageBreak: "after"
       },
-      // page8
-      {
-        text: "SOBRE EL DOCTOR",
-        style: "title",
-        alignment: "center",
-        absolutePosition: { x: 0, y: 390 },
-        pageBreak: "after"
-      },
-      // page9
-      {
-        stack: doctors,
-        pageBreak: "after"
-      },
-      // page10
-      {
-        text: "SOBRE EL HOSPITAL",
-        style: "title",
-        alignment: "center",
-        absolutePosition: { x: 0, y: 390 },
-        pageBreak: "after"
-      },
-      // page11
-      {
-        text: item.provider_description,
-        style: "item",
-        bold: true,
-        margin: [0, 0, 0, 10]
-      },
-      {
-        text: item.provider_detail,
-        style: "body"
-      },
-      {
-        margin: [0, 15, 0, 5],
-        table: {
-          widths: ["auto", "*"],
-          body: [
-            [
-              { text: "UBICACIÓN:", style: "locationLabel" },
-              { text: item.provider_location, style: "locationValue" }
+      ...hasDoctors ? [
+        {
+          text: "SOBRE EL DOCTOR",
+          style: "title",
+          alignment: "center",
+          absolutePosition: { x: 0, y: 390 },
+          pageBreak: "after"
+        },
+        {
+          stack: doctors,
+          pageBreak: "after"
+        }
+      ] : [],
+      ...hasProviderInfo ? [
+        {
+          text: "SOBRE EL HOSPITAL",
+          style: "title",
+          alignment: "center",
+          absolutePosition: { x: 0, y: 390 },
+          pageBreak: "after"
+        },
+        {
+          text: item.provider_description,
+          style: "item",
+          bold: true,
+          margin: [0, 0, 0, 10]
+        },
+        {
+          text: item.provider_detail,
+          style: "body"
+        },
+        {
+          margin: [0, 15, 0, 5],
+          table: {
+            widths: ["auto", "*"],
+            body: [
+              [
+                { text: "UBICACIÓN:", style: "locationLabel" },
+                { text: item.provider_location, style: "locationValue" }
+              ]
             ]
+          },
+          layout: {
+            fillColor: (rowIndex) => {
+              return rowIndex === 0 ? "#1a3354" : null;
+            },
+            paddingLeft: () => 6,
+            paddingRight: () => 6,
+            paddingTop: () => 4,
+            hLineWidth: () => 0,
+            vLineWidth: () => 0,
+            paddingBottom: () => 4
+          },
+          pageBreak: "after"
+        }
+      ] : [],
+      // {
+      //   text: 'SOBRE LA CIUDAD',
+      //   style: 'title',
+      //   alignment: 'center',
+      //   absolutePosition: { x: 0, y: 390 }, 
+      //   pageBreak: 'after'
+      // }, // page13
+      // {
+      //   text: 'ESTADÍA & HOSPITALES',
+      //   style: 'title',
+      //   alignment: 'center',
+      //   absolutePosition: { x: 0, y: 390 }, 
+      //   pageBreak: 'after'
+      // }, // page15
+      // {
+      //   text: 'ATRACCIONES',
+      //   style: 'title',
+      //   alignment: 'center',
+      //   absolutePosition: { x: 0, y: 390 }, 
+      //   pageBreak: 'after'
+      // }, // page16
+      // {
+      //   text: 'OTRAS INFORMACIONES',
+      //   style: 'title',
+      //   alignment: 'center',
+      //   absolutePosition: { x: 0, y: 390 }, 
+      //   pageBreak: 'after'
+      // }, // page17
+      ...hasHowTo ? [
+        {
+          text: "¿CÓMO LLEGAR?",
+          style: "headerMap",
+          alignment: "center",
+          margin: [0, 50, 0, 10]
+        },
+        {
+          columns: [
+            {
+              width: "*",
+              stack: [
+                {
+                  text: [
+                    { text: "UBICACIÓN: ", bold: true },
+                    item.provider_location
+                  ],
+                  alignment: "center",
+                  margin: [0, 0, 0, 5]
+                },
+                {
+                  text: item.provider_place,
+                  italics: true,
+                  alignment: "center",
+                  margin: [0, 0, 0, 20]
+                }
+              ]
+            }
           ]
         },
-        layout: {
-          fillColor: (rowIndex) => {
-            return rowIndex === 0 ? "#1a3354" : null;
-          },
-          paddingLeft: () => 6,
-          paddingRight: () => 6,
-          paddingTop: () => 4,
-          hLineWidth: () => 0,
-          vLineWidth: () => 0,
-          paddingBottom: () => 4
-        }
-      },
-      {
-        text: "",
-        // image: 'cityImage',
-        // width: 500,
-        // margin: [0, 10, 0, 0],
-        pageBreak: "after"
-      },
-      // page12
-      {
-        text: "SOBRE LA CIUDAD",
-        style: "title",
-        alignment: "center",
-        absolutePosition: { x: 0, y: 390 },
-        pageBreak: "after"
-      },
-      // page13
-      {
-        text: "ESTADÍA & HOSPITALES",
-        style: "title",
-        alignment: "center",
-        absolutePosition: { x: 0, y: 390 },
-        pageBreak: "after"
-      },
-      // page15
-      {
-        text: "ATRACCIONES",
-        style: "title",
-        alignment: "center",
-        absolutePosition: { x: 0, y: 390 },
-        pageBreak: "after"
-      },
-      // page16
-      {
-        text: "OTRAS INFORMACIONES",
-        style: "title",
-        alignment: "center",
-        absolutePosition: { x: 0, y: 390 },
-        pageBreak: "after"
-      },
-      // page17
-      {
-        text: "¿CÓMO LLEGAR?",
-        style: "headerMap",
-        alignment: "center",
-        margin: [0, 50, 0, 10]
-      },
-      {
-        columns: [
-          {
-            width: "*",
-            stack: [
-              {
-                text: [
-                  { text: "UBICACIÓN: ", bold: true },
-                  item.provider_location
-                ],
-                alignment: "center",
-                margin: [0, 0, 0, 5]
-              },
-              {
-                text: item.provider_place,
-                italics: true,
-                alignment: "center",
-                margin: [0, 0, 0, 20]
-              }
-            ]
-          }
-        ]
-      },
-      // page18
-      ...item.provider_map ? [{
-        image: "map",
-        width: 500,
-        alignment: "center"
-      }] : [],
-      { text: "", pageBreak: "after" }
-      // page19
+        ...hasMap ? [{
+          image: "map",
+          width: 500,
+          alignment: "center"
+        }] : [],
+        { text: "", pageBreak: "after" }
+      ] : []
     ],
     images: {
-      logo: ((_b = item.provider_profile_pic) == null ? void 0 : _b.url) ? convertImageUrltoBase64(getFilePathFromUrl(item.provider_profile_pic.url)) : void 0,
+      logo: item.provider_profile_pic ? item.provider_profile_pic : void 0,
       map: item.provider_map ? convertImageUrltoBase64(getFilePathFromUrl(item.provider_map)) : void 0
     },
     styles: {
@@ -15423,7 +15566,8 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
       }
     }
   };
-  return { docDefinition };
+  const pending_list = { hasCarnets, hasLogo, hasVobs, hasEvents, hasDoctors, hasProviderInfo, hasHowTo, hasMap };
+  return { docDefinition, pending_list };
 }
 const router$1 = express.Router();
 router$1.use(isAuthenticated);
@@ -15508,7 +15652,7 @@ router$1.get("/medical-guide/:id", async function(req, res, next) {
         data2.provider.file = provider_file == null ? void 0 : provider_file.url;
         data2.provider.mapa = provider_mapa == null ? void 0 : provider_mapa.url;
       }
-      data2._files.provider = await getProfilePic({ ref_key: "t_provider", ref_id: item.provider_id });
+      data2._files.provider = await (void 0)({ ref_key: "t_provider", ref_id: item.provider_id });
     }
     const files = await getFiles({ ref_key: "t_event", ref_id: req.params.id });
     for (let i = 0; i < files.length; i++) {
@@ -15587,15 +15731,14 @@ router$1.get("/medical-guide2/:id", async function(req, res, next) {
       user
     });
     const files = await getFiles({ ref_key: "t_event", ref_id: req.params.id });
-    const { docDefinition } = await generateMedicalGuideDoc({ item, itineraries, provider, files, account, user });
+    const { docDefinition, pending_list } = await generateMedicalGuideDoc({ item, itineraries, provider, files, account, user });
     const pdfUrl = await generatePDFWithPdfmake({
       account,
       table: "t_event",
-      id: req.params.id,
       filename,
       docDefinition
     });
-    return res.status(200).json({ item, filename, pdfUrl });
+    return res.status(200).json({ item, filename, pdfUrl, pending_list });
   } catch (error) {
     next(error);
   }
@@ -15638,6 +15781,8 @@ router.use("/task", router$4);
 router.use("/lodging", router$3);
 router.use("/broker", router$2);
 router.use("/report", router$1);
+const packageJsonPath = path__default.resolve("package.json");
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 setDefaultOptions({ locale: es });
 function createServer() {
   const app = express();
@@ -15698,8 +15843,8 @@ function createServer() {
   server2.getConnections((data2) => {
     setTimeout(() => {
       io.emit("update", {
-        table: "t_version"
-        // version: packageJson.version,
+        table: "t_version",
+        version: packageJson.version
       });
     }, 3e4);
   });

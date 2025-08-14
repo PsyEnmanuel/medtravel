@@ -143,6 +143,7 @@ router.post("/", function (req, res, next) {
           }
         }
 
+        console.log(data.ref_key, data.ref_id);
         req.io.emit("update", {
           table: data.ref_key,
           id: data.ref_id

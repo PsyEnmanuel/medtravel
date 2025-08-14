@@ -43,49 +43,6 @@ router.get("/pdf2/:code", async function (req, res, next) {
 
     item.year = format(item.created, "yyyy");
 
-    item.images = {
-      logoText: _upload.convertImagetoBase64("logoText.png"),
-    };
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-
-      if (item.billed_amount_total) {
-        item.billed_amount_format = _utility.currency(item.billed_amount, item.currency);
-      }
-
-      if (item.coverage) {
-        item.coverage_format = _utility.currency(item.coverage, item.currency);
-      }
-
-      if (item.discount) {
-        item.discount_format = _utility.currency(item.discount, item.currency);
-      }
-
-      if (item.deductible) {
-        item.deductible_format = _utility.currency(item.deductible, item.currency);
-      }
-
-      if (item.copago) {
-        item.copago_format = _utility.currency(item.copago, item.currency);
-      }
-
-      if (item.covered) {
-        item.covered_format = _utility.currency(item.covered, item.currency);
-      }
-
-      if (item.insurance_payment) {
-        item.insurance_payment_format = _utility.currency(item.insurance_payment, item.currency);
-      }
-
-      if (item.insurance_responsability) {
-        item.insurance_responsability_format = _utility.currency(item.insurance_responsability, item.currency);
-      }
-
-      item.book_date_format = _date.intlDate(item.book_date);
-
-    }
-
     for (let i = 0; i < payments.length; i++) {
       const item = payments[i];
 
@@ -153,6 +110,7 @@ router.get("/pdf2/:code", async function (req, res, next) {
     const pdfUrl = await _upload.generatePDFWithPdfmake({
       account,
       table: "t_book",
+      id: item.id,
       filename,
       docDefinition,
     });
@@ -178,7 +136,7 @@ router.get("/pdf2/:code", async function (req, res, next) {
 
     await _upload.replaceFile(pdfs[0], buf);
 
-    return res.status(200).json(filename);
+    return res.status(200).json(pdfUrl);
   } catch (error) {
     next(error);
   }

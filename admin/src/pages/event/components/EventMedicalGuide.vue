@@ -15,14 +15,16 @@
     <div class="flex flex-col gap-1 mt-1" v-show="Object.entries(state.pendingList).some(([key, value]) => value.show)">
       <div class="bg-default p-1 rounded-md text-center font-bold text-xs">Pendientes</div>
       <div v-for="([key, item], index) in Object.entries(state.pendingList)" :key="key">
-        <template v-if="item.show">
-          <p :style="{ color: item.color }" v-html="item.text"></p>
-          <small v-html="item.detail"></small>
+        <div v-if="item.show" class="flex flex-nowrap gap-1 border-b border-default">
+          <div class="w-full flex flex-col">
+            <div class="text-xs uppercase pr-4 line-clamp-1">{{ item.text }}</div>
+            <small class="text-xxs uppercase pr-4" v-html="item.detail"></small>
+          </div>
           <div v-if="item.btnText">
-            <button @click="item.fun">{{ item.btnText }}</button>
+            <q-btn v-if="item.fun" class="button mb-1" flat @click="item.fun">{{ item.btnText }}</q-btn>
           </div>
           <hr />
-        </template>
+        </div>
       </div>
     </div>
     <!-- <div class="flex flex-nowrap gap-1" v-for="(item, index) in pendingList" :key="item.id">
@@ -80,6 +82,16 @@
     </div>
   </div>
 
+  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadCARNEDrawer" :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="$isDesktop ? 100 : 0">
+    <q-card class="p-2">
+      <div class=" border border-dashed w-full">
+        <UploadFileManager class="py-16 px-24" :ref_id="state.item.id" table="t_event" icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false" text="Subir CARNÉ" file_type="CARNÉ"
+          @close="state.uploadCARNEDrawer = false" />
+        <FileManager :refId="state.item.id" refKey="t_event" />
+      </div>
+    </q-card>
+  </q-dialog>
+
   <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadcentroPROVIDERDrawer">
     <q-card class="p-2 flex justify-center items-center">
       <div class=" border border-dashed w-full">
@@ -89,8 +101,10 @@
     </q-card>
   </q-dialog>
 
-  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadPROFILEPROVIDERDrawer">
-    <q-card class="p-2 flex justify-center items-center">
+
+  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadPROFILEPROVIDERDrawer" :position="$isDesktop ? 'right' : 'standard'" full-height maximized
+    :transition-duration="$isDesktop ? 100 : 0">
+    <q-card>
       <div class=" border border-dashed w-full">
         <UploadFileManager class="py-16 px-24" :ref_id="state.item.provider_id" table="t_provider" icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false"
           text="Subir FOTO PERFIL PROVEEDOR" file_type="FOTO PERFIL" @close="state.uploadPROFILEPROVIDERDrawer = false" />
@@ -107,31 +121,30 @@
     </q-card>
   </q-dialog>
 
-  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadCARNEDrawer">
+
+
+  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadVOBDrawer">
     <q-card class="p-2 flex justify-center items-center">
       <div class=" border border-dashed w-full">
-        <UploadFileManager class="py-16 px-24" :ref_id="state.item.id" table="t_event" icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false" text="Subir CARNÉ" file_type="CARNÉ"
-          @close="state.uploadCARNEDrawer = false" />
+        <UploadFileManager class="py-16 px-24" :ref_id="state.item.id" table="t_event" icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false" text="Subir VOB" file_type="VOB"
+          @close="state.uploadVOBDrawer = false" />
       </div>
     </q-card>
   </q-dialog>
 
-  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadPRESERTIFICATIONDrawer">
-    <q-card class="p-2 flex justify-center items-center">
-      <div class=" border border-dashed w-full">
-        <UploadFileManager class="py-16 px-24" :ref_id="state.item.id" table="t_event" icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false" text="Subir PRECERTIFICACIÓN"
-          file_type="PRECERTIFICACIÓN" @close="state.uploadPRESERTIFICATIONDrawer = false" />
-      </div>
-    </q-card>
-  </q-dialog>
+
+
 </template>
 
 <script setup>
 
 import { downloadResource } from 'src/helpers';
 import { VuePdf, createLoadingTask } from 'vue3-pdfjs';
-import { inject, onMounted, reactive, computed } from 'vue';
+import { inject, onMounted, reactive, computed, watch } from 'vue';
 import UploadFileManager from 'src/components/file/UploadFileManager.vue';
+import FileManager from 'src/components/file/FileManager.vue';
+import { useUpdateStore } from 'src/stores/update';
+
 const props = defineProps({ id: Number, width: String })
 const $api = inject('$api');
 const state = reactive({
@@ -160,7 +173,7 @@ const state = reactive({
       color: 'black',
       btnText: 'Subir PRECERTIFICACIÓN',
       fun() {
-        state.uploadPRESERTIFICATIONDrawer = true
+        state.uploadVOBDrawer = true
         return;
       }
     },
@@ -180,6 +193,11 @@ const state = reactive({
         state.uploadMAPAPROVIDERrawer = true
         return;
       }
+    },
+    hasItineraries: {
+      text: 'Agregar itinerarios',
+      detail: 'Listado de itinerarios correspondientes a la coordinación',
+      color: 'black'
     }
   },
   loading: true,
@@ -207,7 +225,8 @@ function prevPage() {
   state.loading = false;
 }
 
-onMounted(async () => {
+async function onInit() {
+  state.loading = true
   const { item, filename, pdfUrl, pending_list } = await $api.get(`report/medical-guide2/${props.id}`)
   state.item = item
   state.filename = filename
@@ -221,18 +240,18 @@ onMounted(async () => {
   for (const key in pending_list) {
     if (Object.prototype.hasOwnProperty.call(pending_list, key)) {
       const value = pending_list[key];
+      console.log(value, key, state.pendingList[key], state.pendingList);
       if (!value && state.pendingList[key]) {
         state.pendingList[key].show = true
       }
     }
   }
-  for (let i = 0; i < pending_list.length; i++) {
-    const value = pending_list[i];
-    if (value) {
-      state.pending_list[key]
-    }
-  }
   state.loading = false
+}
+
+onMounted(async () => {
+  await onInit()
+
 })
 
 const pendingList = computed(() => {
@@ -290,5 +309,12 @@ const style = computed(() => {
     width: props.width
   }
 })
+
+const updateStore = useUpdateStore()
+watch(() => updateStore.table.t_event, (data) => {
+  if (data.id === state.item.id) {
+    onInit()
+  }
+}, { deep: true })
 
 </script>
