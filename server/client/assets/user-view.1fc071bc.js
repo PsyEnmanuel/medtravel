@@ -1,0 +1,1 @@
+import{t as a,v as s,x as t,z as r,bg as c,S as p}from"./index.eccc4231.js";const _={__name:"user-view",props:{id:Number},setup(e){return(i,l)=>(a(),s(p,{class:"px-1.5 py-2 lg:px-5 lg:py-6"},{default:t(()=>[r(c,{id:e.id},null,8,["id"])]),_:1}))}};export{_ as default};

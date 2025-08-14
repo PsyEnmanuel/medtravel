@@ -1,0 +1,1 @@
+import{t as e,v as a,x as t,z as s,Z as c,S as _}from"./index.eccc4231.js";const l={__name:"event-index",setup(p){return(r,n)=>(e(),a(_,{class:"px-1.5 py-2 lg:px-5 lg:py-6"},{default:t(()=>[s(c)]),_:1}))}};export{l as default};

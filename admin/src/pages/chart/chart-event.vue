@@ -135,7 +135,7 @@ import UserSelect from 'src/components/select/UserSelect.vue';
 import ChartTableEvent from './components/ChartTableEvent.vue';
 import ChartPieArrObj from 'src/components/chart/ChartPieArrObj.vue';
 import ICD_GROUP from 'src/data/icd_group';
-console.log('test', ICD_GROUP);
+
 const { t } = useI18n();
 
 const options = {
@@ -240,8 +240,6 @@ function groupByGroupDesc(data) {
       grouped[group] = { value: 0, label: '' };
     }
     grouped[group].value += item.quantity;
-    console.log('group', group);
-    console.log('ICD_GROUP', ICD_GROUP);
     grouped[group].label = `[${group}] ${ICD_GROUP[group]['en']}` || '';
   }
 
