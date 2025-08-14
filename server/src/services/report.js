@@ -15,17 +15,6 @@ const BACKGROUNDS = {frontPage, carnet, imagesAndContent:content1, titlePages: c
 export async function generateMedicalGuideDoc({ item, itineraries, provider, files, account, user }) {
     let provider_files;
 
-    const pending_list = {
-      hasCarnets: false,
-      hasLogo: false,
-      hasVobs: false,
-      hasEvents: false,
-      hasDoctors: false,
-      hasProviderInfo: false,
-      hasHowTo: false,
-      hasMap: false,
-    }
-
     if (provider) {
       item.provider_description = provider.description;
       item.provider_detail = provider.detail;
@@ -210,26 +199,48 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
             }
           ]
     })
+    
+    const hasLogo = !!item.provider_profile_pic?.url;
+    const hasCarnets = (item.carnets?.length || 0 > 0);
+    const hasVobs = (item.vobs?.length || 0) > 0;
+    const hasEvents = (events_itineraries?.length || 0) > 0;
+    const hasDoctors = (doctors?.length || 0) > 0;
+    const hasProviderInfo = !!(item.provider_description || item.provider_detail || item.provider_location);
+    const hasHowTo = !!(item.provider_location || item.provider_place || !!item.provider_map);
+    const hasMap = !!item.provider_map;
 
+    const sectionTitlesMap = {
+      precertTitle: 'Pre-certificación',
+      citasTitle: 'Citas Médicas',
+      doctorTitle: 'Sobre el Doctor',
+      hospitalTitle: 'Sobre el Hospital',
+      howTo: 'Sobre la Ciudad',
+      contact: 'Contactos',
+      hospitalContent: 'Estadía y Hospital',
+      atracciones: 'Atracciones',
+      otras: 'Otras Informaciones'
+    };
+
+    const dynamicUL = [
+      hasVobs ? sectionTitlesMap.precertTitle : null,
+      hasEvents ? sectionTitlesMap.citasTitle : null,
+      hasDoctors ? sectionTitlesMap.doctorTitle : null,
+      hasProviderInfo ? sectionTitlesMap.hospitalTitle : null,
+      hasHowTo ? sectionTitlesMap.howTo : null,
+      sectionTitlesMap.contact,
+      hasProviderInfo ? sectionTitlesMap.hospitalContent : null,
+      item.atracciones?.length > 0 ? sectionTitlesMap.atracciones : null,
+      sectionTitlesMap.otras
+    ].filter(Boolean); // remove nulls
+      
     const docDefinition = {
       pageSize: "A4",
       pageMargins: [40, 150, 40, 60], 
       background: function (currentPage) {
-        const hasLogo = !!item.provider_profile_pic?.url;
-        const hasCarnets = item.carnets?.length || 0;
-        const hasVobs = (item.vobs?.length || 0) > 0;
-        const hasEvents = (events_itineraries?.length || 0) > 0;
-        const hasDoctors = (doctors?.length || 0) > 0;
-        const hasProviderInfo = !!(item.provider_description || item.provider_detail || item.provider_location);
-        const hasHowTo = !!(item.provider_location || item.provider_place);
-        const hasMap = !!item.provider_map;
-
-        let page = 1; // first page after cover (page 1)
-
-        // Helper to build ranges
+        let page = 2; // first page after front cover
         const ranges = {};
         const addRange = (key, pages) => {
-          if (pages <= 0) return null;
+          if (!pages || pages <= 0) return null;
           const start = page;
           const end = start + pages - 1;
           ranges[key] = [start, end];
@@ -281,54 +292,33 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           addRange('howTo', 1);
         }
 
-        // 10) MAP (1) if exists (your content has pageBreak:'after' on map)
-        if (hasMap) {
-          addRange('map', 1);
-        }
         // Compute the real last page AFTER all other sections are added
-        const totalPages = page + 1; // page always points to the next available page
-        const lastPage = [totalPages, totalPages];
-
-        // Small helper
+        const lastPage = page;
         const inRange = (p, range) => range && p >= range[0] && p <= range[1];
 
-        // Choose background
-        let bg = BACKGROUNDS.titlePages;
+        let bg = BACKGROUNDS.titlePages; // default fallback
 
         if (currentPage === 1) {
           bg = BACKGROUNDS.frontPage;
-        } else if (inRange(currentPage, ranges.carnets)) {
+        } else if (currentPage === lastPage) {
+          bg = BACKGROUNDS.lastPage;
+        } else if (ranges.carnets && inRange(currentPage, ranges.carnets)) {
           bg = BACKGROUNDS.carnet;
         } else if (
-          // explicitly include LOGO as images+content
-          (ranges.logo && currentPage === ranges.logo[0]) ||
-
-          // pre-cert title + vobs
-          (ranges.precertTitle && currentPage === ranges.precertTitle[0]) ||
-          inRange(currentPage, ranges.vobs) ||
-
-          // citas title + citas table
-          (ranges.citasTitle && currentPage === ranges.citasTitle[0]) ||
-          (ranges.citasTable && currentPage === ranges.citasTable[0]) ||
-
-          // contactos
-          (ranges.contactos && currentPage === ranges.contactos[0]) ||
-
-          // doctor title + content
-          (ranges.doctorTitle && currentPage === ranges.doctorTitle[0]) ||
-          (ranges.doctorContent && currentPage === ranges.doctorContent[0]) ||
-
-          // hospital title + content
-          (ranges.hospitalTitle && currentPage === ranges.hospitalTitle[0]) ||
-          (ranges.hospitalContent && currentPage === ranges.hospitalContent[0]) ||
-
-          // cómo llegar + map
-          (ranges.howTo && currentPage === ranges.howTo[0]) ||
-          (ranges.map && currentPage === ranges.map[0])
+          ['contenido', 'precertTitle', 'citasTitle', 'doctorTitle', 'hospitalTitle'].some(
+            key => ranges[key] && inRange(currentPage, ranges[key])
+          )
         ) {
+          // Section title pages
+          bg = BACKGROUNDS.titlePages;
+        } else if (
+          Object.entries(ranges).some(([key, range]) => 
+            range && !['contenido', 'precertTitle', 'citasTitle', 'doctorTitle', 'hospitalTitle', 'carnets'].includes(key) &&
+            inRange(currentPage, range)
+          )
+        ) {
+          // All other content pages
           bg = BACKGROUNDS.imagesAndContent;
-        } else if (lastPage && currentPage === lastPage[0]) {
-          bg = BACKGROUNDS.lastPage;
         }
 
         return {
@@ -339,26 +329,17 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       },
       content: [
         { text: '', pageBreak: 'after' }, // page1
-        ...(item.carnets.length ? item.carnets.map(carnet => ({ image: _upload.convertImageUrltoBase64(carnet), width: 350, alignment: 'center', pageBreak: 'after' })) : [{}]), // page2
-        ...(!!item.provider_profile_pic?.url ? [{ image: 'logo', width: 350, alignment: 'center', pageBreak: 'after' }]: []), // page3
+        ...(hasCarnets ? item.carnets.map(carnet => ({ image: _upload.convertImageUrltoBase64(carnet), width: 350, alignment: 'center', pageBreak: 'after' })) : [{}]), // page2
+        ...(hasLogo ? [{ image: 'logo', width: 350, alignment: 'center', pageBreak: 'after' }]: []), // page3
         { text:'CONTENIDO', style: "title", margin: [30,35, 0, 0] }, // page4 start
         {
           type: 'square',
           style: 'item',
-          ul: [
-            'Pre-certificación',
-            'Citas Medicas',
-            'Sobre el Doctor',
-            'Sobre el Hospital',
-            'Sobre la Ciudad',
-            'Estadía y Hospital',
-            'Atracciones',
-            'Otras Informaciones'
-          ], 
+          ul: dynamicUL, 
           margin: [30, 0, 0, 0],
           pageBreak: 'after'
         },
-        ...(item.vobs.length ? [{
+        ...(hasVobs ? [{
               text: 'PRE-CERTIFICACIÓN',
               style: 'title',
               alignment: 'center',
@@ -367,7 +348,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
             },
         ...item.vobs.map(vob => ({ image: _upload.convertImageUrltoBase64(vob), width: 350, alignment: 'center', pageBreak: 'after' }))] 
         : [{}]),
-        ...(events_itineraries.length ? [{
+        ...(hasEvents ? [{
             text: 'CITAS MÉDICAS',
             style: 'title',
             alignment: 'center',
@@ -469,7 +450,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           margin: [0, 20, 0, 0],
           pageBreak: 'after'
         },
-        ...(doctors.length ? [{ 
+        ...(hasDoctors ? [{ 
           text: 'SOBRE EL DOCTOR',
           style: 'title',
 			    alignment: 'center',
@@ -480,7 +461,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           stack: doctors, 
           pageBreak: 'after'
         }] : []),
-        ...(item.provider_description || item.provider_detail || item.provider_location ? [
+        ...(hasProviderInfo ? [
           { 
             text: 'SOBRE EL HOSPITAL',
             style: 'title',
@@ -550,7 +531,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         //   absolutePosition: { x: 0, y: 390 }, 
         //   pageBreak: 'after'
         // }, // page17
-        ...(item.provider_location || item.provider_place ? [
+        ...(hasHowTo ? [
             {
             text: '¿CÓMO LLEGAR?',
             style: 'headerMap',
@@ -578,15 +559,15 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
                   },
                 ],
               },
-            ], 
-            pageBreak: 'after'
+            ]
           },
-        ] : []),
-        ...(item.provider_map ? [{
-          image: 'map',
-          width: 500,
-          alignment: 'center'
-        }] : []), // page19
+          ...(hasMap ? [{
+            image: 'map',
+            width: 500,
+            alignment: 'center'
+          }]: []),
+          { text: '', pageBreak: 'after' }
+        ] : []), // page19
       ],
       images: {
         logo: item.provider_profile_pic?.url ? _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(item.provider_profile_pic.url)) : undefined,
@@ -661,5 +642,6 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       },
     };
 
-    return { docDefinition, pending_list }
+   const pending_list = { hasCarnets, hasLogo, hasVobs, hasEvents, hasDoctors, hasProviderInfo, hasHowTo, hasMap };
+   return { docDefinition, pending_list }
 }

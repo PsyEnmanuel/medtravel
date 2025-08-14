@@ -12,15 +12,17 @@
         <q-btn flat class="button" label="cerrar" @click="$emit('close')"></q-btn>
       </div>
     </div>
-    <div class="flex flex-col gap-1 mt-1">
+    <div class="flex flex-col gap-1 mt-1" v-show="Object.entries(state.pendingList).some(([key, value]) => value.show)">
       <div class="bg-default p-1 rounded-md text-center font-bold text-xs">Pendientes</div>
       <div v-for="([key, item], index) in Object.entries(state.pendingList)" :key="key">
-        <p :style="{ color: item.color }" v-html="item.text"></p>
-        <small v-html="item.detail"></small>
-        <div v-if="item.btnText">
-          <button @click="item.fun">{{ item.btnText }}</button>
-        </div>
-        <hr />
+        <template v-if="item.show">
+          <p :style="{ color: item.color }" v-html="item.text"></p>
+          <small v-html="item.detail"></small>
+          <div v-if="item.btnText">
+            <button @click="item.fun">{{ item.btnText }}</button>
+          </div>
+          <hr />
+        </template>
       </div>
     </div>
     <!-- <div class="flex flex-nowrap gap-1" v-for="(item, index) in pendingList" :key="item.id">
@@ -152,6 +154,7 @@ const state = reactive({
       color: 'black'
     },
     hasVob: {
+      show: false,
       text: 'Agregar PRECERTIFICACIÓN (Archivo)',
       detail: 'Tipo de Archivo <b>PRECERTIFICACIÓN</b> adjunto en la coordinación presentes en la coordinación',
       color: 'black',
@@ -168,6 +171,7 @@ const state = reactive({
       color: 'black'
     },
     hasMap: {
+      show: false,
       text: 'Agregar Foto de Ubicación Mapa del proveedor',
       detail: 'Tipo de Archivo <b>MAPA</b> adjunto en la <b>PROVEEDOR</b> presente en la coordinación',
       color: 'black',
