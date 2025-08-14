@@ -1,0 +1,1 @@
+import{t as a,G as t,z as e,a6 as _,a7 as c,U as n}from"./index.29778d79.js";const l={__name:"file-index",setup(r){return(s,o)=>(a(),t(n,null,[e(_,{ref_id:1,table:"t_account",file_type:"GENERAL"}),e(c,{refId:1,refKey:"t_account"})],64))}};export{l as default};

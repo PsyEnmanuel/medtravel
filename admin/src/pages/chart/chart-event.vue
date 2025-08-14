@@ -2,45 +2,36 @@
   <div v-if="!state.loading" class="grid lg:grid-cols-2 gap-1">
     <div class="lg:col-span-2 gap-1">
       <div class="flex mb-1">
-        <q-option-group class="flex" size="sm" v-model="state.timePeriod" toggle-color="secondary"
-          toggle-text-color="text-font" :options="options.timePeriods" type="radio" />
+        <q-option-group class="flex" size="sm" v-model="state.timePeriod" toggle-color="secondary" toggle-text-color="text-font" :options="options.timePeriods" type="radio" />
       </div>
       <div class="flex lg:flex-nowrap gap-1 justify-between">
         <div class="grid grid-cols-2 gap-2">
-          <q-input class="min-w-[150px]" dense outlined v-model="state.query.where.request_date.from"
-              mask="##-##-####">
-              <template v-slot:append>
-                  <q-icon name="event" class="cursor-pointer">
-                      <q-popup-proxy ref="proxy">
-                          <q-date flat v-model="state.query.where.request_date.from" no-unset
-                              years-in-month-view minimal @update:model-value="$refs.proxy.hide(); getStats()"
-                              mask="DD-MM-YYYY">
-                          </q-date>
-                      </q-popup-proxy>
-                  </q-icon>
-              </template>
+          <q-input class="min-w-[150px]" dense outlined v-model="state.query.where.request_date.from" mask="##-##-####">
+            <template v-slot:append>
+              <q-icon name="event" class="cursor-pointer">
+                <q-popup-proxy ref="proxy">
+                  <q-date flat v-model="state.query.where.request_date.from" no-unset years-in-month-view minimal @update:model-value="$refs.proxy.hide(); getStats()" mask="DD-MM-YYYY">
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
           </q-input>
-          <q-input class="min-w-[150px]" dense outlined v-model="state.query.where.request_date.to"
-              mask="##-##-####">
-              <template v-slot:append>
-                  <q-icon name="event" class="cursor-pointer">
-                      <q-popup-proxy ref="proxy">
-                          <q-date flat v-model="state.query.where.request_date.to" no-unset
-                              years-in-month-view minimal @update:model-value="$refs.proxy.hide(); getStats()"
-                              mask="DD-MM-YYYY">
-                          </q-date>
-                      </q-popup-proxy>
-                  </q-icon>
-              </template>
+          <q-input class="min-w-[150px]" dense outlined v-model="state.query.where.request_date.to" mask="##-##-####">
+            <template v-slot:append>
+              <q-icon name="event" class="cursor-pointer">
+                <q-popup-proxy ref="proxy">
+                  <q-date flat v-model="state.query.where.request_date.to" no-unset years-in-month-view minimal @update:model-value="$refs.proxy.hide(); getStats()" mask="DD-MM-YYYY">
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
           </q-input>
         </div>
 
-        <q-option-group class="flex" v-model="state.$event_state_id"
-          :options="options.event_state"></q-option-group>
+        <q-option-group class="flex" v-model="state.$event_state_id" :options="options.event_state"></q-option-group>
       </div>
       <div class="grid lg:grid-cols-3 my-1">
-        <UserSelect @setUser="state.query.where.user_id = $event" @clearUser="state.query.where.user_id = null"
-          :model-value="state.user_description" label="Coordinador" :unixroles="24"
+        <UserSelect @setUser="state.query.where.user_id = $event" @clearUser="state.query.where.user_id = null" :model-value="state.user_description" label="Coordinador" :unixroles="24"
           @update:model-value="getStats()" />
       </div>
       <div class="grid lg:grid-cols-2 gap-1 mb-1">
@@ -55,10 +46,9 @@
           </div>
         </div>
       </div>
-      
+
       <div class="lg:max-w-full max-w-[350px]">
-        <q-tabs v-model="state.tab" dense class="text-grey mb-1 w-full" active-color="primary"
-          indicator-color="primary" align="justify" narrow-indicator outside-arrows>
+        <q-tabs v-model="state.tab" dense class="text-grey mb-1 w-full" active-color="primary" indicator-color="primary" align="justify" narrow-indicator outside-arrows>
           <q-tab name="provider" label="Proveedores" />
           <q-tab name="diagnosis" label="Diagnósticos" />
           <q-tab name="country" label="País" />
@@ -72,11 +62,9 @@
         <q-tab-panel class="p-0" name="provider">
           <div class="grid lg:grid-cols-1 gap-1">
             <div class="flex flex-col w-full gap-1">
-              <ChartPieArrObj :key="state.update" :data="state.stats.c.providerList" name="label"
-                value="value" title="Coordinaciones por Proveedores" subtitle="Coordinaciones" />
-              <ChartTableEvent :list="state.stats.c.providerList" title="COORDINACIONES"
-                :stats="state.stats.c" type="provider_description" columnKey="provider_description"
-                hideBtn :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" />
+              <ChartPieArrObj :key="state.update" :data="state.stats.c.providerList" name="label" value="value" title="Coordinaciones por Proveedores" subtitle="Coordinaciones" />
+              <ChartTableEvent :list="state.stats.c.providerList" title="COORDINACIONES" :stats="state.stats.c" type="provider_description" columnKey="provider_description" hideBtn
+                :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" />
             </div>
           </div>
         </q-tab-panel>
@@ -84,17 +72,13 @@
           <div class="grid lg:grid-cols-1 gap-1">
             <div class="flex flex-col w-full gap-1">
               <div class="flex justify-center gap-4">
-                <q-tabs v-model="state.diagnosisBy" dense class="text-grey mb-1 w-full" active-color="primary"
-                  indicator-color="primary" align="center" narrow-indicator outside-arrows>
-                  <q-tab name="code" label="Grupo" @click="()=>getDiagnosisDataBy('code')" />
-                  <q-tab name="list" label="Código" @click="()=>getDiagnosisDataBy('list')" />
+                <q-tabs v-model="state.diagnosisBy" dense class="text-grey mb-1 w-full" active-color="primary" indicator-color="primary" align="center" narrow-indicator outside-arrows>
+                  <q-tab name="code" label="Grupo" @click="() => getDiagnosisDataBy('code')" />
+                  <q-tab name="list" label="Código" @click="() => getDiagnosisDataBy('list')" />
                 </q-tabs>
               </div>
-              <ChartPieArrObj :key="state.update" :data="state.diagnosisGraph.data" name="label"
-                value="value" :title="state.diagnosisGraph.title" subtitle="Coordinaciones" 
-                :hideLegend="true"  />
-              <ChartTableEvent :list="state.diagnosisGraph.data" title="COORDINACIONES"
-                name="Diagnóstico" :stats="state.stats.c" type="diagnosis" columnKey="diagnosis" hideBtn
+              <ChartPieArrObj :key="state.update" :data="state.diagnosisGraph.data" name="label" value="value" :title="state.diagnosisGraph.title" subtitle="Coordinaciones" :hideLegend="true" />
+              <ChartTableEvent :list="state.diagnosisGraph.data" title="COORDINACIONES" name="Diagnóstico" :stats="state.stats.c" type="diagnosis" columnKey="diagnosis" hideBtn
                 :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" :showActions="state.diagnosisBy != 'code'" />
             </div>
           </div>
@@ -102,21 +86,17 @@
         <q-tab-panel class="p-0" name="state">
           <div class="grid lg:grid-cols-1 gap-1">
             <div class="flex flex-col w-full gap-1">
-              <ChartPieArrObj :key="state.update" :data="state.stats.c.eventStateList" name="label"
-                value="value" title="Coordinaciones por Estado" subtitle="Coordinaciones" />
-              <ChartTableEvent :list="state.stats.c.eventStateList" title="COORDINACIONES"
-                name="Proveedores" :stats="state.stats.c" type="event_state" columnKey="event_state"
-                hideBtn :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" />
+              <ChartPieArrObj :key="state.update" :data="state.stats.c.eventStateList" name="label" value="value" title="Coordinaciones por Estado" subtitle="Coordinaciones" />
+              <ChartTableEvent :list="state.stats.c.eventStateList" title="COORDINACIONES" name="Proveedores" :stats="state.stats.c" type="event_state" columnKey="event_state" hideBtn
+                :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" />
             </div>
           </div>
         </q-tab-panel>
         <q-tab-panel class="p-0" name="user">
           <div class="grid lg:grid-cols-1 gap-1">
             <div class="flex flex-col w-full gap-1">
-              <ChartPieArrObj :key="state.update" :data="state.stats.c.users" name="label" value="value"
-                title="Coordinaciones por Usuario" subtitle="Coordinaciones" />
-              <ChartTableEvent :list="state.stats.c.users" title="COORDINACIONES" :stats="state.stats.c"
-                type="user_description" columnKey="user_description" name="Proveedores" hideBtn
+              <ChartPieArrObj :key="state.update" :data="state.stats.c.users" name="label" value="value" title="Coordinaciones por Usuario" subtitle="Coordinaciones" />
+              <ChartTableEvent :list="state.stats.c.users" title="COORDINACIONES" :stats="state.stats.c" type="user_description" columnKey="user_description" name="Proveedores" hideBtn
                 :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" />
             </div>
           </div>
@@ -124,10 +104,8 @@
         <q-tab-panel class="p-0" name="country">
           <div class="grid grid-cols-1 gap-1">
             <div class="flex flex-col w-full gap-1">
-              <ChartPieArrObj :key="state.update" :data="state.stats.c.countryList" name="label"
-                value="value" title="Coordinaciones por País" subtitle="Coordinaciones" />
-              <ChartTableEvent :list="state.stats.c.countryList" title="COORDINACIONES" name="Paises"
-                :stats="state.stats.c" type="country" columnKey="country" hideBtn
+              <ChartPieArrObj :key="state.update" :data="state.stats.c.countryList" name="label" value="value" title="Coordinaciones por País" subtitle="Coordinaciones" />
+              <ChartTableEvent :list="state.stats.c.countryList" title="COORDINACIONES" name="Paises" :stats="state.stats.c" type="country" columnKey="country" hideBtn
                 :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" />
             </div>
           </div>
@@ -135,11 +113,9 @@
         <q-tab-panel class="p-0" name="city">
           <div class="grid grid-cols-1 gap-1">
             <div class="flex flex-col w-full gap-1">
-              <ChartPieArrObj :key="state.update" :data="state.stats.c.cityList" name="label"
-                value="value" title="Coordinaciones por Ciudad" subtitle="Coordinaciones" />
-              <ChartTableEvent :list="state.stats.c.cityList" title="COORDINACIONES" name="Ciudades"
-                :stats="state.stats.c" type="city" columnKey="city" hideBtn
-                :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" />
+              <ChartPieArrObj :key="state.update" :data="state.stats.c.cityList" name="label" value="value" title="Coordinaciones por Ciudad" subtitle="Coordinaciones" />
+              <ChartTableEvent :list="state.stats.c.cityList" title="COORDINACIONES" name="Ciudades" :stats="state.stats.c" type="city" columnKey="city" hideBtn :event_state_id="state.$event_state_id"
+                :quantity="state.stats.c.quantity" />
             </div>
           </div>
         </q-tab-panel>
@@ -158,7 +134,8 @@ import { useI18n } from 'vue-i18n';
 import UserSelect from 'src/components/select/UserSelect.vue';
 import ChartTableEvent from './components/ChartTableEvent.vue';
 import ChartPieArrObj from 'src/components/chart/ChartPieArrObj.vue';
-import ICD_GROUP  from 'src/data/icd_group';
+import ICD_GROUP from 'src/data/icd_group';
+console.log('test', ICD_GROUP);
 const { t } = useI18n();
 
 const options = {
@@ -222,8 +199,8 @@ const state = reactive({
       user_id: null,
       $event_type_id: [],
       request_date: {
-          from: null,
-          to: null,
+        from: null,
+        to: null,
       },
       c_status: [4],
     },
@@ -263,18 +240,20 @@ function groupByGroupDesc(data) {
       grouped[group] = { value: 0, label: '' };
     }
     grouped[group].value += item.quantity;
+    console.log('group', group);
+    console.log('ICD_GROUP', ICD_GROUP);
     grouped[group].label = `[${group}] ${ICD_GROUP[group]['en']}` || '';
   }
 
   return Object.values(grouped);
 }
 
-function getDiagnosisDataBy(val){
+function getDiagnosisDataBy(val) {
   state.diagnosisBy = val
-  if(val === 'code'){
+  if (val === 'code') {
     state.diagnosisGraph = { title: 'Coordinaciones por Diagnóstico de grupo', data: state.diagnosisByGroupDesc }
   } else {
-    state.diagnosisGraph = { title: 'Coordinaciones por Diagnóstico', data:  state.stats.c.diagnosisList }
+    state.diagnosisGraph = { title: 'Coordinaciones por Diagnóstico', data: state.stats.c.diagnosisList }
   }
   ++state.update
 }
