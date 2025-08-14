@@ -15,7 +15,7 @@
                 <q-table flat :rows="listComputed" :columns="state.columns" row-key="name" dense
                     no-data-label="No hay tratamiento para esta fecha" :rows-per-page-options="[0]" wrap-cells
                     class="h-full" virtual-scroll>
-                    <template v-slot:body-cell-action="props">
+                    <template v-slot:body-cell-action="props" v-if="props.showActions">
                         <q-td :props="props" class="text-center">
                             <q-btn flat class="button-icon" size="xs" no-caps icon="fa-duotone fa-solid fa-list"
                                 @click="openDialogTable(columnKey, props.row.label, columnKey)" />
@@ -118,6 +118,10 @@ const props = defineProps({
     event_state_id: Number,
     quantity: Number,
     columns: Array,
+    showActions: {
+        type: Boolean,
+        default: true
+    },
     title: {
         type: String,
         default: 'TABLA DE COORDINACIONES'

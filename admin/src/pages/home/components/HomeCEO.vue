@@ -113,10 +113,10 @@
                   <div class="flex flex-col w-full gap-1">
                     <ChartPieArrObj :key="state.update" :data="state.diagnosisGraph.data" name="label"
                       value="value" :title="state.diagnosisGraph.title" subtitle="Coordinaciones" 
-                      :hideLegend="state.diagnosisBy == 'code'" />
+                      :hideLegend="true" />
                     <ChartTableEvent :list="state.diagnosisGraph.data" title="COORDINACIONES"
                       name="Diagnóstico" :stats="state.stats.c" type="diagnosis" columnKey="diagnosis" hideBtn
-                      :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" />
+                      :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" :showActions="state.diagnosisBy != 'code'" />
                   </div>
                 </div>
               </q-tab-panel>
