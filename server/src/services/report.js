@@ -1,7 +1,7 @@
 
 import path from "path";
 import fs from "fs";
-import { _date, _query, _upload } from "../helpers/index.js";
+import { _date, _query, _upload, _images } from "../helpers/index.js";
 
 const imagesBase64Dir = path.join(path.resolve(), "/public/base64/");
 const frontPage = fs.readFileSync(`${imagesBase64Dir}/guia1.png`).toString('base64');
@@ -27,7 +27,8 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         item.provider_file = provider_file == null ? void 0 : provider_file.url;
         item.provider_map = provider_mapa == null ? void 0 : provider_mapa.url;
       }
-      item.provider_profile_pic = await _query.getProfilePic({ ref_key: "t_provider", ref_id: item.provider_id });
+      const logoImg = await _query.getProfilePic({ ref_key: "t_provider", ref_id: item.provider_id });
+      item.provider_profile_pic = await _images.handleImageOrFile(logoImg);
     }
 
     if (itineraries.length) {
@@ -59,7 +60,8 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           itinerary.doctor_address = doctor.address;
           itinerary.doctor_description = doctor.description;
           itinerary.doctor_bio = doctor.bio;
-          itinerary.doctor_profile_pic = await _query.getProfilePic({ ref_key: "t_doctor", ref_id: itinerary.doctor_id });
+          const doctorProfile = await _query.getProfilePic({ ref_key: "t_doctor", ref_id: itinerary.doctor_id });
+          itinerary.doctor_profile_pic = await _images.handleImageOrFile(doctorProfile);
           
           if (doctor.postnominal) {
             itinerary.doctor_posnominal = JSON.parse(doctor.postnominal);
@@ -81,8 +83,8 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file.$file_type_id === 314) {
-        const url = _upload.getFilePathFromUrl(file.url);
-        carnets.push(url);
+        const img = await _images.handleImageOrFile(file);
+        carnets.push(img);
       }
       if (file.$file_type_id === 197) {
         if (file.icon === "pdf") {
@@ -168,11 +170,11 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
                 widths: [100, '*'],
                 body: [
                   [
-                    ...(doctor_profile_pic?.url ? [{
-                      image: _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(doctor_profile_pic.url)),
+                    ...(doctor_profile_pic ? [{
+                      image: doctor_profile_pic,
                       width: 100,
                       height: 120
-                    }]: []),
+                    }]: [{ text: '', image: '', width: 100, height: 120 }]),
                     {
                       stack: [
                         { text: `${doctor_description}${doctor_posnominal ? `, ${doctor_posnominal.length > 1 ? doctor_posnominal.join(', ') : doctor_posnominal[0]}` :''}`, style: 'doctor_name' },
@@ -200,7 +202,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           ]
     })
     
-    const hasLogo = !!item.provider_profile_pic?.url;
+    const hasLogo = !!item.provider_profile_pic;
     const hasCarnets = (item.carnets?.length || 0 > 0);
     const hasVobs = (item.vobs?.length || 0) > 0;
     const hasEvents = (events_itineraries?.length || 0) > 0;
@@ -328,10 +330,10 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         };
       },
       content: [
-        { text: '', pageBreak: 'after' }, // page1
-        ...(hasCarnets ? item.carnets.map(carnet => ({ image: _upload.convertImageUrltoBase64(carnet), width: 350, alignment: 'center', pageBreak: 'after' })) : [{}]), // page2
-        ...(hasLogo ? [{ image: 'logo', width: 350, alignment: 'center', pageBreak: 'after' }]: []), // page3
-        { text:'CONTENIDO', style: "title", margin: [30,35, 0, 0] }, // page4 start
+        { text: '', pageBreak: 'after' },
+        ...(hasCarnets ? item.carnets.map(carnet => ({ image: carnet, width: 350, alignment: 'center', pageBreak: 'after' })) : [{}]),
+        ...(hasLogo ? [{ image: 'logo', width: 350, alignment: 'center', pageBreak: 'after' }]: []),
+        { text:'CONTENIDO', style: "title", margin: [30,35, 0, 0] },
         {
           type: 'square',
           style: 'item',
@@ -567,10 +569,10 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
             alignment: 'center'
           }]: []),
           { text: '', pageBreak: 'after' }
-        ] : []), // page19
+        ] : []),
       ],
       images: {
-        logo: item.provider_profile_pic?.url ? _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(item.provider_profile_pic.url)) : undefined,
+        logo: item.provider_profile_pic ? item.provider_profile_pic : undefined,
         map: item.provider_map ? _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(item.provider_map)) : undefined
       },
       styles: {

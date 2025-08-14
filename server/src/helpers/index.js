@@ -8,6 +8,7 @@ import * as _upload from "./upload.js";
 import * as _role from "./role.js";
 import * as _migration from "./migration.js";
 import * as _stats from "./stats.js";
+import * as _images from "./images.js";
 
 export {
   _constant,
@@ -20,4 +21,5 @@ export {
   _role,
   _migration,
   _stats,
+  _images
 };

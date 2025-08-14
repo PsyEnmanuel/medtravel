@@ -22,7 +22,6 @@
     "ajv-errors": "^3.0.0",
     "axios": "^1.6.2",
     "bcrypt": "^5.1.1",
-    "canvas": "^2.11.2",
     "colorette": "^2.0.20",
     "config": "^3.3.9",
     "convert-excel-to-json": "^1.7.0",
