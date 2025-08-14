@@ -6,21 +6,25 @@
 import * as echarts from 'echarts';
 import { inject, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import generateGradient from 'src/data/colors'
 const { t } = useI18n()
 const props = defineProps({
+  hideLegend: {
+    type: Boolean,
+    default: false
+  },
   data: Object, title: String, name: String, subtitle: String, value: String, label: String, currency: Boolean, nolabel: Boolean, legendTruncate: {
     type: Boolean,
     default: true
   }
 })
-import generateGradient from 'src/data/colors'
 const $isDesktop = inject('$isDesktop')
 const colors = generateGradient(props.data.length)
 const $currency = inject('$currency')
 function onInit() {
   const chartDom = document.getElementById(props.title);
   const myChart = echarts.init(chartDom);
-
+  console.log(props.hideLegend)
   const config = {
     data: [],
     legend: []
@@ -71,7 +75,7 @@ function onInit() {
         }
       },
     },
-    legend: {
+    legend: props.hideLegend ? undefined: {
       orient: 'vertical',
       bottom: '0',
       right: '0',
@@ -90,7 +94,7 @@ function onInit() {
       {
         name: props.title,
         data: config.data,
-        center: $isDesktop ? ['30%', '50%'] : ['50%', '50%'],
+        center: $isDesktop ? [props.hideLegend ? '50%': '30%', '50%'] : ['50%', '50%'],
         type: 'pie',
         radius: ['40%', '70%'],
         smooth: true,

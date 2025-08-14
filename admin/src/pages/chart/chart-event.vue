@@ -91,7 +91,8 @@
                 </q-tabs>
               </div>
               <ChartPieArrObj :key="state.update" :data="state.diagnosisGraph.data" name="label"
-                value="value" :title="state.diagnosisGraph.title" subtitle="Coordinaciones" />
+                value="value" :title="state.diagnosisGraph.title" subtitle="Coordinaciones" 
+                :hideLegend="state.diagnosisBy == 'list'"  />
               <ChartTableEvent :list="state.diagnosisGraph.data" title="COORDINACIONES"
                 name="Diagnóstico" :stats="state.stats.c" type="diagnosis" columnKey="diagnosis" hideBtn
                 :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" />
@@ -261,9 +262,8 @@ function groupByGroupDesc(data) {
     if (!grouped[group]) {
       grouped[group] = { value: 0, label: '' };
     }
-
     grouped[group].value += item.quantity;
-    grouped[group].label = ICD_GROUP[group]['es'] || '';
+    grouped[group].label = `[${code}] ${ICD_GROUP[group]['en']}` || '';
   }
 
   return Object.values(grouped);
