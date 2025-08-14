@@ -24,7 +24,6 @@ const $currency = inject('$currency')
 function onInit() {
   const chartDom = document.getElementById(props.title);
   const myChart = echarts.init(chartDom);
-  console.log(props.hideLegend)
   const config = {
     data: [],
     legend: []

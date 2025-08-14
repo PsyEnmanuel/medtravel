@@ -92,7 +92,7 @@
               </div>
               <ChartPieArrObj :key="state.update" :data="state.diagnosisGraph.data" name="label"
                 value="value" :title="state.diagnosisGraph.title" subtitle="Coordinaciones" 
-                :hideLegend="state.diagnosisBy == 'list'"  />
+                :hideLegend="state.diagnosisBy == 'code'"  />
               <ChartTableEvent :list="state.diagnosisGraph.data" title="COORDINACIONES"
                 name="Diagnóstico" :stats="state.stats.c" type="diagnosis" columnKey="diagnosis" hideBtn
                 :event_state_id="state.$event_state_id" :quantity="state.stats.c.quantity" />
@@ -205,7 +205,7 @@ const state = reactive({
   update: 1,
   day,
   stats: {},
-  diagnosisBy: 'list',
+  diagnosisBy: 'code',
   diagnosisGraph: { title: 'Coordinaciones por Diagnóstico', data: [] },
   diagnosisByGroupDesc: [],
   diagnosis: [],
@@ -263,7 +263,7 @@ function groupByGroupDesc(data) {
       grouped[group] = { value: 0, label: '' };
     }
     grouped[group].value += item.quantity;
-    grouped[group].label = `[${code}] ${ICD_GROUP[group]['en']}` || '';
+    grouped[group].label = `[${group}] ${ICD_GROUP[group]['en']}` || '';
   }
 
   return Object.values(grouped);
