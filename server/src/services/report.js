@@ -15,6 +15,7 @@ const BACKGROUNDS = { frontPage, carnet, imagesAndContent: content1, titlePages:
 export async function generateMedicalGuideDoc({ item, itineraries, provider, files, account, user }) {
   let provider_files;
   let hasDoctorsLogo = true;
+  let hasProviderFile = true;
 
   if (provider) {
     item.provider_description = provider.description;
@@ -27,6 +28,9 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       const [provider_mapa] = provider_files.filter((i) => i.$file_type_id === 380);
       item.provider_file = provider_file == null ? void 0 : provider_file.url;
       item.provider_map = provider_mapa == null ? void 0 : provider_mapa.url;
+      if (!item.provider_file) {
+        hasProviderFile = false
+      }
     }
     const ProviderLogoImg = await _query.getProfilePic({ ref_key: "t_provider", ref_id: item.provider_id });
     if (ProviderLogoImg) {
@@ -652,6 +656,6 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
     },
   };
 
-  const pending_list = { hasCarnets, hasProviderLogo, hasVobs, hasEvents, hasDoctors, hasProviderInfo, hasHowTo, hasMap, hasDoctorsLogo };
+  const pending_list = { hasCarnets, hasProviderLogo, hasVobs, hasEvents, hasDoctors, hasProviderInfo, hasHowTo, hasMap, hasDoctorsLogo, hasProviderFile };
   return { docDefinition, pending_list }
 }
