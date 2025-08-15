@@ -169,7 +169,6 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       doctor_bio,
       doctor_speciality
     } = itinerary;
-    console.log(doctor_description);
     return [
       {
         table: {
@@ -207,7 +206,6 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       }
     ]
   })
-  console.dir(doctors, { depth: null });
   const hasProviderLogo = !!item.provider_profile_pic;
   const hasCarnets = (item.carnets?.length || 0 > 0);
   const hasVobs = (item.vobs?.length || 0) > 0;
@@ -299,8 +297,6 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       if (hasHowTo) {
         addRange('howTo', 1);
       }
-
-
 
       // Compute the real last page AFTER all other sections are added
       const lastPage = page;
@@ -467,10 +463,10 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         absolutePosition: { x: 0, y: 390 },
         pageBreak: 'after'
       },
-      {
-        stack: doctors,
+      doctors.map(doctor => ({
+        stack: doctor,
         pageBreak: 'after'
-      }] : []),
+      }))] : []),
       ...(hasProviderInfo ? [
         {
           text: 'SOBRE EL HOSPITAL',
