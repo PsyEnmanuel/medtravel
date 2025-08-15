@@ -182,8 +182,8 @@ export function generateConciliation({ item, items }) {
                 { text: 'https://www.momatos.com/contactanos y enviarnos una consulta.', style: 'text' },
                 { text: 'También puede contactarnos en nuestra línea de Servicio al Cliente al:', style: 'text' },
                 { text: '(809) 620-0000', style: 'phone' },
-                { text: 'o consulte su número local en nuestra página web:', style: 'text' },
-                { text: 'https://www.momatos.com/contactanos', style: 'text' }
+                { text: 'o consulte nuestra página web:', style: 'text' },
+                { text: 'https://www.momatos.com', style: 'text' }
               ]
             }
           ]
@@ -217,7 +217,7 @@ export function generateConciliation({ item, items }) {
         headerTitle: { fontSize: 14, bold: true },
         sectionTitle: { fontSize: 9, bold: true, margin: [0, 5, 0, 1] },
         text: { fontSize: 9 },
-        phone: { fontSize: 10, bold: true },
+        phone: { fontSize: 9, bold: true },
         footerNote: { fontSize: 9, bold: true },
         footerText: { fontSize: 8 },
         th: { color: "black", bold: true, lineHeight: 0.7 },

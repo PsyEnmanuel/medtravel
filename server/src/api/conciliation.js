@@ -16,7 +16,7 @@ const table = "t_book";
 
 router.use(isAuthenticated);
 
-router.get("/pdf2/:code", async function (req, res, next) {
+router.get("/pdf/:code", async function (req, res, next) {
   try {
     const user = res.locals.user;
     const account = res.locals.account;
@@ -142,7 +142,7 @@ router.get("/pdf2/:code", async function (req, res, next) {
   }
 });
 
-router.get("/pdf/:code", async function (req, res, next) {
+router.get("/pdf2/:code", async function (req, res, next) {
   try {
     const user = res.locals.user;
     const account = res.locals.account;

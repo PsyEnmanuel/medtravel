@@ -12,10 +12,10 @@
         <q-btn flat class="button" label="cerrar" @click="$emit('close')"></q-btn>
       </div>
     </div>
-    <div class="flex flex-col gap-1 mt-1" v-show="Object.entries(state.pendingList).some(([key, value]) => value.show)">
+    <div class="flex flex-col gap-1 mt-1" v-if="pendingListComputedShow">
       <div class="bg-default p-1 rounded-md text-center font-bold text-xs">Pendientes</div>
-      <div v-for="([key, item], index) in Object.entries(state.pendingList)" :key="key">
-        <div v-if="item.show" class="flex flex-nowrap gap-1 border-b border-default">
+      <div v-for="(item, key) in state.pendingList" :key="key">
+        <div v-if="!!item.show" class="flex flex-nowrap gap-1 border-b border-default">
           <div class="w-full flex flex-col">
             <div class="text-xs uppercase pr-4 line-clamp-1">{{ item.text }}</div>
             <small class="text-xxs uppercase pr-4" v-html="item.detail"></small>
@@ -92,6 +92,15 @@
     </q-card>
   </q-dialog>
 
+  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadPROVIDERLOGOrawer" :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="$isDesktop ? 100 : 0">
+    <q-card>
+      <div class=" border border-dashed w-full">
+        <UploadFileManager class="py-16 px-24" :ref_id="state.item.provider_id" table="t_provider" icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false"
+          text="Subir FOTO PERFIL PROVEEDOR" file_type="FOTO PERFIL" @close="state.uploadPROVIDERLOGOrawer = false" />
+      </div>
+    </q-card>
+  </q-dialog>
+
   <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadcentroPROVIDERDrawer">
     <q-card class="p-2 flex justify-center items-center">
       <div class=" border border-dashed w-full">
@@ -102,15 +111,7 @@
   </q-dialog>
 
 
-  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadPROFILEPROVIDERDrawer" :position="$isDesktop ? 'right' : 'standard'" full-height maximized
-    :transition-duration="$isDesktop ? 100 : 0">
-    <q-card>
-      <div class=" border border-dashed w-full">
-        <UploadFileManager class="py-16 px-24" :ref_id="state.item.provider_id" table="t_provider" icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false"
-          text="Subir FOTO PERFIL PROVEEDOR" file_type="FOTO PERFIL" @close="state.uploadPROFILEPROVIDERDrawer = false" />
-      </div>
-    </q-card>
-  </q-dialog>
+
 
   <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadMAPAPROVIDERrawer">
     <q-card class="p-2 flex justify-center items-center">
@@ -157,6 +158,17 @@ const state = reactive({
       btnText: 'Subir CARNÉ',
       fun() {
         state.uploadCARNEDrawer = true
+        return;
+      }
+    },
+    hasProviderLogo: {
+      show: false,
+      text: 'Agregar Foto de Perfil de proveedor (Foto)',
+      detail: 'Se refiere a el tipo de archivo <b>PERFIL</b> de el proveedor',
+      color: 'black',
+      btnText: 'Subir Logo de Proveedor',
+      fun() {
+        state.uploadPROVIDERLOGOrawer = true
         return;
       }
     },
@@ -209,6 +221,10 @@ const state = reactive({
   currentPage: 1
 })
 
+const pendingListComputedShow = computed(() => {
+  return Object.values(state.pendingList).some(item => item.show === true);
+})
+
 function nextPage() {
   state.loading = true;
   if (state.currentPage < state.numOfPages) {
@@ -240,9 +256,8 @@ async function onInit() {
   for (const key in pending_list) {
     if (Object.prototype.hasOwnProperty.call(pending_list, key)) {
       const value = pending_list[key];
-      console.log(value, key, state.pendingList[key], state.pendingList);
-      if (!value && state.pendingList[key]) {
-        state.pendingList[key].show = true
+      if (state.pendingList[key]) {
+        state.pendingList[key].show = !value
       }
     }
   }
@@ -265,7 +280,7 @@ const pendingList = computed(() => {
       color: 'black',
       btnText: 'Subir FOTO PERFIL PROVEEDOR',
       fun() {
-        state.uploadPROFILEPROVIDERDrawer = true
+        state.uploadPROVIDERLOGOrawer = true
         return;
       }
     })
@@ -313,6 +328,11 @@ const style = computed(() => {
 const updateStore = useUpdateStore()
 watch(() => updateStore.table.t_event, (data) => {
   if (data.id === state.item.id) {
+    onInit()
+  }
+}, { deep: true })
+watch(() => updateStore.table.t_provider, (data) => {
+  if (data.id === state.item.provider_id) {
     onInit()
   }
 }, { deep: true })
