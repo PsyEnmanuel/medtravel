@@ -101,11 +101,13 @@
     </q-card>
   </q-dialog>
 
-  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadcentroPROVIDERDrawer">
-    <q-card class="p-2 flex justify-center items-center">
+  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadCENTERPROVIDERDrawer" :position="$isDesktop ? 'right' : 'standard'" full-height maximized
+    :transition-duration="$isDesktop ? 100 : 0">
+    <q-card class="p-2">
       <div class=" border border-dashed w-full">
         <UploadFileManager class="py-16 px-24" :ref_id="state.item.provider_id" table="t_provider" icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false"
-          text="Subir FOTO DE CENTRO PROVEEDOR" file_type="GUÍA MÉDICA" @close="state.uploadcentroPROVIDERDrawer = false" />
+          text="Subir FOTO DE CENTRO PROVEEDOR" file_type="CENTRO" @close="state.uploadCENTERPROVIDERDrawer = false" />
+        <FileManager :refId="state.item.provider_id" refKey="t_provider" />
       </div>
     </q-card>
   </q-dialog>
@@ -172,13 +174,18 @@ const state = reactive({
         return;
       }
     },
-    hasDoctors: {
+    hasProviderFile: {
       show: false,
-      text: 'Agregar informacion de médicos',
-      detail: 'Se refiere a la informacion de los médicos presentes en la coordinación',
-      color: 'black'
+      text: 'Agregar Foto de centro de proveedor (TIPO CENTRO)',
+      detail: 'Se refiere a la foto de <b>CENTRO</b> del proveedor presente en la coordinación',
+      color: 'black',
+      btnText: 'Subir FOTO CENTRO PROVEEDOR',
+      fun() {
+        state.uploadCENTERPROVIDERDrawer = true
+        return;
+      }
     },
-    hasDoctorsLogo: {
+    hasDoctors: {
       show: false,
       text: 'Agregar imagenes de médicos',
       detail: 'Se refiere a la foto de <b>PERFIL</b> de los médicos presentes en la coordinación',
@@ -298,7 +305,7 @@ const pendingList = computed(() => {
       color: 'black',
       btnText: 'Subir FOTO CENTRO PROVEEDOR',
       fun() {
-        state.uploadcentroPROVIDERDrawer = true
+        state.uploadCENTERPROVIDERDrawer = true
         return;
       }
     })

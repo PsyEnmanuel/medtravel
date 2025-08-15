@@ -24,10 +24,11 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
     item.provider_place = `${provider.description}, ${provider.country}, ${provider.city}`;
     provider_files = await _query.getFiles({ ref_key: "t_provider", ref_id: item.provider_id });
     if (provider_files == null ? void 0 : provider_files.length) {
-      const [provider_file] = provider_files.filter((i) => i.$file_type_id === 198);
+      const [provider_file] = provider_files.filter((i) => i.$file_type_id === 404);
       const [provider_mapa] = provider_files.filter((i) => i.$file_type_id === 380);
       item.provider_file = provider_file == null ? void 0 : _upload.getFilePathFromUrl(provider_file.url);
       item.provider_map = provider_mapa == null ? void 0 : provider_mapa.url;
+
       if (!item.provider_file) {
         hasProviderFile = false
       }
