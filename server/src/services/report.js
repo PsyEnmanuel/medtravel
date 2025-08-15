@@ -26,7 +26,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       const [provider_file] = provider_files.filter((i) => i.$file_type_id === 198);
       const [provider_mapa] = provider_files.filter((i) => i.$file_type_id === 380);
       item.provider_file = provider_file == null ? void 0 : await _images.handleImageOrFile(provider_file);
-      item.provider_map = provider_mapa == null ? void 0 : provider_mapa.url;
+      item.provider_map = provider_mapa == null ? void 0 : await _images.handleImageOrFile(provider_mapa);
     }
     const ProviderLogoImg = await _query.getProfilePic({ ref_key: "t_provider", ref_id: item.provider_id });
     if (ProviderLogoImg) {
@@ -581,7 +581,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
     ],
     images: {
       logo: item.provider_profile_pic ? item.provider_profile_pic : undefined,
-      map: item.provider_map ? _upload.convertImageUrltoBase64(_upload.getFilePathFromUrl(item.provider_map)) : undefined
+      map: item.provider_map ? item.provider_map : undefined
     },
     styles: {
       title: {
