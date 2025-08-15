@@ -1345,8 +1345,8 @@ function generateConciliation({ item, items }) {
                 { text: "https://www.momatos.com/contactanos y enviarnos una consulta.", style: "text" },
                 { text: "También puede contactarnos en nuestra línea de Servicio al Cliente al:", style: "text" },
                 { text: "(809) 620-0000", style: "phone" },
-                { text: "o consulte su número local en nuestra página web:", style: "text" },
-                { text: "https://www.momatos.com/contactanos", style: "text" }
+                { text: "o consulte nuestra página web:", style: "text" },
+                { text: "https://www.momatos.com", style: "text" }
               ]
             }
           ]
@@ -1379,7 +1379,7 @@ function generateConciliation({ item, items }) {
         headerTitle: { fontSize: 14, bold: true },
         sectionTitle: { fontSize: 9, bold: true, margin: [0, 5, 0, 1] },
         text: { fontSize: 9 },
-        phone: { fontSize: 10, bold: true },
+        phone: { fontSize: 9, bold: true },
         footerNote: { fontSize: 9, bold: true },
         footerText: { fontSize: 8 },
         th: { color: "black", bold: true, lineHeight: 0.7 },
@@ -11231,7 +11231,7 @@ router$i.delete("/", async function(req, res) {
 const router$h = express.Router();
 const table$d = "t_book";
 router$h.use(isAuthenticated);
-router$h.get("/pdf2/:code", async function(req, res, next) {
+router$h.get("/pdf/:code", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const account = res.locals.account;
@@ -11329,7 +11329,7 @@ router$h.get("/pdf2/:code", async function(req, res, next) {
     next(error);
   }
 });
-router$h.get("/pdf/:code", async function(req, res, next) {
+router$h.get("/pdf2/:code", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const account = res.locals.account;
@@ -14966,6 +14966,8 @@ const BACKGROUNDS = { frontPage, carnet, imagesAndContent: content1, titlePages:
 async function generateMedicalGuideDoc({ item, itineraries, provider, files, account, user }) {
   var _a, _b, _c;
   let provider_files;
+  let hasDoctorsLogo = true;
+  let hasProviderFile = true;
   if (provider) {
     item.provider_description = provider.description;
     item.provider_detail = provider.detail;
@@ -14973,13 +14975,18 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
     item.provider_place = `${provider.description}, ${provider.country}, ${provider.city}`;
     provider_files = await getFiles({ ref_key: "t_provider", ref_id: item.provider_id });
     if (provider_files == null ? void 0 : provider_files.length) {
-      const [provider_file] = provider_files.filter((i) => i.$file_type_id === 198);
+      const [provider_file] = provider_files.filter((i) => i.$file_type_id === 404);
       const [provider_mapa] = provider_files.filter((i) => i.$file_type_id === 380);
-      item.provider_file = provider_file == null ? void 0 : provider_file.url;
-      item.provider_map = provider_mapa == null ? void 0 : provider_mapa.url;
+      item.provider_file = provider_file == null ? void 0 : await handleImageOrFile(provider_file);
+      item.provider_map = provider_mapa == null ? void 0 : await handleImageOrFile(provider_mapa);
+      if (!item.provider_file) {
+        hasProviderFile = false;
+      }
     }
-    const logoImg = await getProfilePic({ ref_key: "t_provider", ref_id: item.provider_id });
-    item.provider_profile_pic = await handleImageOrFile(logoImg);
+    const ProviderLogoImg = await getProfilePic({ ref_key: "t_provider", ref_id: item.provider_id });
+    if (ProviderLogoImg) {
+      item.provider_profile_pic = await handleImageOrFile(ProviderLogoImg);
+    }
   }
   if (itineraries.length) {
     for (let itinerary of itineraries) {
@@ -15010,7 +15017,11 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
         itinerary.doctor_description = doctor.description;
         itinerary.doctor_bio = doctor.bio;
         const doctorProfile = await getProfilePic({ ref_key: "t_doctor", ref_id: itinerary.doctor_id });
-        itinerary.doctor_profile_pic = await handleImageOrFile(doctorProfile);
+        if (doctorProfile) {
+          itinerary.doctor_profile_pic = await handleImageOrFile(doctorProfile);
+        } else {
+          hasDoctorsLogo = false;
+        }
         if (doctor.postnominal) {
           itinerary.doctor_posnominal = JSON.parse(doctor.postnominal);
         } else {
@@ -15119,8 +15130,8 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
               }] : [{ text: "", image: "", width: 100, height: 120 }],
               {
                 stack: [
-                  { text: `${doctor_description}${doctor_posnominal ? `, ${doctor_posnominal.length > 1 ? doctor_posnominal.join(", ") : doctor_posnominal[0]}` : ""}`, style: "doctor_name" },
-                  { text: doctor_speciality ? doctor_speciality.length > 1 ? doctor_speciality.map((s) => s.description).join(", ") : doctor_speciality[0].description : "", style: "doctor_title" }
+                  { text: `${doctor_description}${doctor_posnominal ? `, ${doctor_posnominal.length > 1 ? doctor_posnominal.join(", ").toUpperCase() : doctor_posnominal[0].toUpperCase()}` : ""}`, style: "doctor_name" },
+                  { text: doctor_speciality ? doctor_speciality.length > 1 ? doctor_speciality.map((s) => s.description).join(", ").toUpperCase() : doctor_speciality[0].description.toUpperCase() : "", style: "doctor_title" }
                 ],
                 margin: [10, 40, 0, 0]
               }
@@ -15144,11 +15155,11 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
       }
     ];
   });
-  const hasLogo = !!item.provider_profile_pic;
+  const hasProviderLogo = !!item.provider_profile_pic;
   const hasCarnets = ((_a = item.carnets) == null ? void 0 : _a.length) || 0 > 0;
   const hasVobs = (((_b = item.vobs) == null ? void 0 : _b.length) || 0) > 0;
-  const hasEvents = ((events_itineraries == null ? void 0 : events_itineraries.length) || 0) > 0;
   const hasDoctors = ((doctors == null ? void 0 : doctors.length) || 0) > 0;
+  const hasEvents = ((events_itineraries == null ? void 0 : events_itineraries.length) || 0) > 0;
   const hasProviderInfo = !!(item.provider_description || item.provider_detail || item.provider_location);
   const hasHowTo = !!(item.provider_location || item.provider_place || !!item.provider_map);
   const hasMap = !!item.provider_map;
@@ -15175,9 +15186,9 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
     sectionTitlesMap.otras
   ].filter(Boolean);
   const docDefinition = {
-    pageSize: "A4",
+    pageSize: "LETTER",
     pageMargins: [40, 150, 40, 60],
-    background: function(currentPage) {
+    background: function(currentPage, pageSize) {
       var _a2;
       let page = 2;
       const ranges = {};
@@ -15193,7 +15204,7 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
       if (hasCarnets) {
         addRange("carnets", (_a2 = item.carnets) == null ? void 0 : _a2.length);
       }
-      if (hasLogo) {
+      if (hasProviderLogo) {
         addRange("logo", 1);
       }
       addRange("contenido", 1);
@@ -15208,7 +15219,7 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
       addRange("contactos", 1);
       if (hasDoctors) {
         addRange("doctorTitle", 1);
-        addRange("doctorContent", 1);
+        addRange("doctorContent", doctors.length);
       }
       if (hasProviderInfo) {
         addRange("hospitalTitle", 1);
@@ -15230,8 +15241,19 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
         (key) => ranges[key] && inRange(currentPage, ranges[key])
       )) {
         bg = BACKGROUNDS.titlePages;
+      } else if (["hospitalContent"].some((key) => ranges[key] && inRange(currentPage, ranges[key]))) {
+        if (item.provider_file) {
+          return {
+            image: "provider_center",
+            width: pageSize.width,
+            height: 300,
+            absolutePosition: { x: 0, y: 0 }
+          };
+        } else {
+          bg = BACKGROUNDS.imagesAndContent;
+        }
       } else if (Object.entries(ranges).some(
-        ([key, range]) => range && !["contenido", "precertTitle", "citasTitle", "doctorTitle", "hospitalTitle", "carnets"].includes(key) && inRange(currentPage, range)
+        ([key, range]) => range && !["contenido", "precertTitle", "citasTitle", "doctorTitle", "hospitalTitle", "hospitalContent", "carnets"].includes(key) && inRange(currentPage, range)
       )) {
         bg = BACKGROUNDS.imagesAndContent;
       }
@@ -15244,7 +15266,7 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
     content: [
       { text: "", pageBreak: "after" },
       ...hasCarnets ? item.carnets.map((carnet2) => ({ image: carnet2, width: 350, alignment: "center", pageBreak: "after" })) : [{}],
-      ...hasLogo ? [{ image: "logo", width: 350, alignment: "center", pageBreak: "after" }] : [],
+      ...hasProviderLogo ? [{ image: "logo", width: 350, alignment: "center", pageBreak: "after" }] : [],
       { text: "CONTENIDO", style: "title", margin: [30, 35, 0, 0] },
       {
         type: "square",
@@ -15380,10 +15402,10 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
           absolutePosition: { x: 0, y: 390 },
           pageBreak: "after"
         },
-        {
-          stack: doctors,
+        doctors.map((doctor) => ({
+          stack: doctor,
           pageBreak: "after"
-        }
+        }))
       ] : [],
       ...hasProviderInfo ? [
         {
@@ -15394,40 +15416,44 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
           pageBreak: "after"
         },
         {
-          text: item.provider_description,
-          style: "item",
-          bold: true,
-          margin: [0, 0, 0, 10]
-        },
-        {
-          text: item.provider_detail,
-          style: "body"
-        },
-        {
-          margin: [0, 15, 0, 5],
-          table: {
-            widths: ["auto", "*"],
-            body: [
-              [
-                { text: "UBICACIÓN:", style: "locationLabel" },
-                { text: item.provider_location, style: "locationValue" }
-              ]
-            ]
-          },
-          layout: {
-            fillColor: (rowIndex) => {
-              return rowIndex === 0 ? "#1a3354" : null;
+          margin: [0, 170, 0, 0],
+          stack: [
+            {
+              text: item.provider_description,
+              style: "item",
+              lineHeight: 0.8,
+              bold: true
             },
-            paddingLeft: () => 6,
-            paddingRight: () => 6,
-            paddingTop: () => 4,
-            hLineWidth: () => 0,
-            vLineWidth: () => 0,
-            paddingBottom: () => 4
-          },
-          pageBreak: "after"
+            {
+              text: item.provider_detail,
+              style: "body"
+            },
+            {
+              table: {
+                widths: ["auto", "*"],
+                body: [
+                  [
+                    { text: "UBICACIÓN:", style: "locationLabel" },
+                    { text: item.provider_location, style: "locationValue" }
+                  ]
+                ]
+              },
+              layout: {
+                fillColor: (rowIndex) => {
+                  return rowIndex === 0 ? "#1a3354" : null;
+                },
+                paddingLeft: () => 6,
+                paddingRight: () => 6,
+                paddingTop: () => 4,
+                hLineWidth: () => 0,
+                vLineWidth: () => 0,
+                paddingBottom: () => 4
+              }
+            }
+          ]
         }
       ] : [],
+      { text: "", pageBreak: "after" },
       // {
       //   text: 'SOBRE LA CIUDAD',
       //   style: 'title',
@@ -15488,15 +15514,16 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
         },
         ...hasMap ? [{
           image: "map",
-          width: 500,
+          fit: [500, 300],
           alignment: "center"
         }] : [],
         { text: "", pageBreak: "after" }
       ] : []
     ],
     images: {
+      provider_center: item.provider_file ? item.provider_file : void 0,
       logo: item.provider_profile_pic ? item.provider_profile_pic : void 0,
-      map: item.provider_map ? convertImageUrltoBase64(getFilePathFromUrl(item.provider_map)) : void 0
+      map: item.provider_map ? item.provider_map : void 0
     },
     styles: {
       title: {
@@ -15548,7 +15575,7 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
       },
       paragraph: {
         font: "OpenSans",
-        fontSize: 13,
+        fontSize: 10,
         color: "#20375c"
       },
       locationLabel: {
@@ -15566,7 +15593,7 @@ async function generateMedicalGuideDoc({ item, itineraries, provider, files, acc
       }
     }
   };
-  const pending_list = { hasCarnets, hasLogo, hasVobs, hasEvents, hasDoctors, hasProviderInfo, hasHowTo, hasMap };
+  const pending_list = { hasCarnets, hasProviderLogo, hasVobs, hasEvents, hasDoctors, hasProviderInfo, hasHowTo, hasMap, hasDoctorsLogo, hasProviderFile };
   return { docDefinition, pending_list };
 }
 const router$1 = express.Router();

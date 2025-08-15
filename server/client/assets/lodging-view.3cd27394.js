@@ -1,1 +1,0 @@
-import{t as a,v as s,x as t,z as c,be as r,S as i}from"./index.eccc4231.js";const n={__name:"lodging-view",props:{id:Number},setup(e){return(l,o)=>(a(),s(i,{class:"px-1.5 py-2 lg:px-5 lg:py-6"},{default:t(()=>[c(r,{id:e.id},null,8,["id"])]),_:1}))}};export{n as default};
