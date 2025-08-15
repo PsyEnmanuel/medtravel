@@ -579,6 +579,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         ...(hasMap ? [{
           image: 'map',
           width: 500,
+          height: 300,
           alignment: 'center'
         }] : []),
         { text: '', pageBreak: 'after' }
