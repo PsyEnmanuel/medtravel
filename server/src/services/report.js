@@ -25,7 +25,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
     if (provider_files == null ? void 0 : provider_files.length) {
       const [provider_file] = provider_files.filter((i) => i.$file_type_id === 198);
       const [provider_mapa] = provider_files.filter((i) => i.$file_type_id === 380);
-      item.provider_file = provider_file == null ? void 0 : _upload.getFilePathFromUrl(provider_file.url);
+      item.provider_file = provider_file == null ? void 0 : await _images.handleImageOrFile(provider_file);
       item.provider_map = provider_mapa == null ? void 0 : provider_mapa.url;
     }
     const ProviderLogoImg = await _query.getProfilePic({ ref_key: "t_provider", ref_id: item.provider_id });
@@ -490,7 +490,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           style: 'body',
         },
         {
-          margin: [0, 15, 0, 5],
+          margin: [0, 15, 0, 0],
           table: {
             widths: ['auto', '*'],
             body: [
@@ -512,7 +512,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
             paddingBottom: () => 4
           },
         }] : []),
-         ...(item.provider_file ? [{ image: item.provider_file, width: 350, alignment: 'center', pageBreak: 'after' }] : [{text:'', pageBreak: 'after'}]),
+         ...(item.provider_file ? [{ image: item.provider_file, width: 516, alignment: 'center', pageBreak: 'after' }] : [{text:'', pageBreak: 'after'}]),
       // {
       //   text: 'SOBRE LA CIUDAD',
       //   style: 'title',
