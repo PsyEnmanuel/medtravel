@@ -14,7 +14,7 @@
     </div>
     <div class="flex flex-col gap-1 mt-1" v-if="pendingListComputedShow">
       <div class="bg-default p-1 rounded-md text-center font-bold text-xs">Pendientes</div>
-      <div v-for="(item, key) in state.pendingList" :key="key">
+      <div v-for="(item, key) in pendingListComputed" :key="key">
         <div v-if="!!item.show" class="flex flex-nowrap gap-1 border-b border-default">
           <div class="w-full flex flex-col">
             <div class="text-xs uppercase pr-4 line-clamp-1">{{ item.text }}</div>
@@ -93,10 +93,11 @@
   </q-dialog>
 
   <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadPROVIDERLOGOrawer" :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="$isDesktop ? 100 : 0">
-    <q-card>
+    <q-card class="p-2">
       <div class=" border border-dashed w-full">
         <UploadFileManager class="py-16 px-24" :ref_id="state.item.provider_id" table="t_provider" icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false"
           text="Subir FOTO PERFIL PROVEEDOR" file_type="FOTO PERFIL" @close="state.uploadPROVIDERLOGOrawer = false" />
+        <FileManager :refId="state.item.provider_id" refKey="t_provider" />
       </div>
     </q-card>
   </q-dialog>
@@ -115,22 +116,24 @@
 
 
 
-  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadMAPAPROVIDERrawer">
-    <q-card class="p-2 flex justify-center items-center">
+  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadMAPAPROVIDERrawer" :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="$isDesktop ? 100 : 0">
+    <q-card class="p-2">
       <div class=" border border-dashed w-full">
         <UploadFileManager class="py-16 px-24" :ref_id="state.item.provider_id" table="t_provider" icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false"
           text="Subir FOTO MAPA PROVEEDOR" file_type="MAPA" @close="state.uploadMAPAPROVIDERrawer = false" />
+        <FileManager :refId="state.item.provider_id" refKey="t_provider" />
       </div>
     </q-card>
   </q-dialog>
 
 
 
-  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadVOBDrawer">
+  <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadVOBDrawer" :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="$isDesktop ? 100 : 0">
     <q-card class="p-2 flex justify-center items-center">
       <div class=" border border-dashed w-full">
         <UploadFileManager class="py-16 px-24" :ref_id="state.item.id" table="t_event" icon="fa-duotone fa-solid fa-camera-retro" :avaliable_file_text="false" text="Subir VOB" file_type="VOB"
           @close="state.uploadVOBDrawer = false" />
+        <FileManager :refId="state.item.id" refKey="t_event" />
       </div>
     </q-card>
   </q-dialog>
@@ -185,18 +188,18 @@ const state = reactive({
         return;
       }
     },
-    hasDoctors: {
+    hasDoctorsLogo: {
       show: false,
       text: 'Agregar imagenes de médicos',
       detail: 'Se refiere a la foto de <b>PERFIL</b> de los médicos presentes en la coordinación',
       color: 'black'
     },
-    hasVob: {
+    hasVobs: {
       show: false,
-      text: 'Agregar PRECERTIFICACIÓN (Archivo)',
-      detail: 'Tipo de Archivo <b>PRECERTIFICACIÓN</b> adjunto en la coordinación presentes en la coordinación',
+      text: 'Agregar VOB (Archivo)',
+      detail: 'Tipo de Archivo <b>VOB</b> adjunto en la coordinación presentes en la coordinación',
       color: 'black',
-      btnText: 'Subir PRECERTIFICACIÓN',
+      btnText: 'Subir VOB',
       fun() {
         state.uploadVOBDrawer = true
         return;
@@ -236,6 +239,12 @@ const state = reactive({
 
 const pendingListComputedShow = computed(() => {
   return Object.values(state.pendingList).some(item => item.show === true);
+})
+
+const pendingListComputed = computed(() => {
+  return Object.fromEntries(
+    Object.entries(state.pendingList).filter(([_, value]) => value.show === true)
+  );
 })
 
 function nextPage() {
@@ -280,56 +289,6 @@ async function onInit() {
 onMounted(async () => {
   await onInit()
 
-})
-
-const pendingList = computed(() => {
-  const list = []
-  if (!state.item._files) { return list }
-
-  if (!state.item?._files.provider) {
-    list.push({
-      text: 'Agregar Foto de perfil de proveedor',
-      detail: 'Se refiere a la foto de <b>PERFIL</b> del proveedor presente en la coordinación',
-      color: 'black',
-      btnText: 'Subir FOTO PERFIL PROVEEDOR',
-      fun() {
-        state.uploadPROVIDERLOGOrawer = true
-        return;
-      }
-    })
-  }
-  if (!state.item?.provider.file) {
-    list.push({
-      text: 'Agregar Foto de centro de proveedor (TIPO GUÍA MÉDICA)',
-      detail: 'Se refiere a la foto de <b>CENTRO</b> del proveedor presente en la coordinación',
-      color: 'black',
-      btnText: 'Subir FOTO CENTRO PROVEEDOR',
-      fun() {
-        state.uploadCENTERPROVIDERDrawer = true
-        return;
-      }
-    })
-  }
-  if (!state.item?.provider.mapa) {
-    list.push({
-      text: 'Agregar Foto de Ubicación Mapa del proveedor',
-      detail: 'Tipo de Archivo <b>MAPA</b> adjunto en la <b>PROVEEDOR</b> presente en la coordinación',
-      color: 'black',
-      btnText: 'Subir FOTO MAPA PROVEEDOR',
-      fun() {
-        state.uploadMAPAPROVIDERrawer = true
-        return;
-      }
-    })
-  }
-  if (!state.item?.itineraries?.length) {
-    list.push({
-      text: 'Agregar itinerarios',
-      detail: 'Listado de itinerarios correspondientes a la coordinación',
-      color: 'black'
-    })
-  }
-  return list;
 })
 
 const style = computed(() => {
