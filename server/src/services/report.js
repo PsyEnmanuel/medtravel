@@ -284,7 +284,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       // 7) SOBRE EL DOCTOR: title (1) + content (1) if present
       if (hasDoctors) {
         addRange('doctorTitle', 1);
-        addRange('doctorContent', 1);
+        addRange('doctorContent', doctors.length);
       }
 
       // 8) SOBRE EL HOSPITAL: title (1) + content (1) if provider info exists
