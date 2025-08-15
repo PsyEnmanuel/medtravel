@@ -174,6 +174,12 @@ const state = reactive({
     },
     hasDoctors: {
       show: false,
+      text: 'Agregar informacion de médicos',
+      detail: 'Se refiere a la informacion de los médicos presentes en la coordinación',
+      color: 'black'
+    },
+    hasDoctorsLogo: {
+      show: false,
       text: 'Agregar imagenes de médicos',
       detail: 'Se refiere a la foto de <b>PERFIL</b> de los médicos presentes en la coordinación',
       color: 'black'

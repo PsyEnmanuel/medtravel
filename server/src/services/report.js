@@ -14,6 +14,7 @@ const BACKGROUNDS = { frontPage, carnet, imagesAndContent: content1, titlePages:
 
 export async function generateMedicalGuideDoc({ item, itineraries, provider, files, account, user }) {
   let provider_files;
+  let hasDoctorsLogo = true;
 
   if (provider) {
     item.provider_description = provider.description;
@@ -65,6 +66,8 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         const doctorProfile = await _query.getProfilePic({ ref_key: "t_doctor", ref_id: itinerary.doctor_id });
         if (doctorProfile) {
           itinerary.doctor_profile_pic = await _images.handleImageOrFile(doctorProfile);
+        } else {
+          hasDoctorsLogo = false
         }
 
         if (doctor.postnominal) {
@@ -161,6 +164,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
     ]
   });
 
+
   const doctors = itineraries.filter(itinerary_doctor => itinerary_doctor.doctor_description).map(itinerary => {
     const {
       doctor_profile_pic,
@@ -182,8 +186,8 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
               }] : [{ text: '', image: '', width: 100, height: 120 }]),
               {
                 stack: [
-                  { text: `${doctor_description}${doctor_posnominal ? `, ${doctor_posnominal.length > 1 ? doctor_posnominal.join(', ') : doctor_posnominal[0]}` : ''}`, style: 'doctor_name' },
-                  { text: doctor_speciality ? doctor_speciality.length > 1 ? doctor_speciality.map(s => s.description).join(', ') : doctor_speciality[0].description : '', style: 'doctor_title' }
+                  { text: `${doctor_description}${doctor_posnominal ? `, ${doctor_posnominal.length > 1 ? doctor_posnominal.join(', ').toUpperCase() : doctor_posnominal[0].toUpperCase()}` : ''}`, style: 'doctor_name' },
+                  { text: doctor_speciality ? doctor_speciality.length > 1 ? doctor_speciality.map(s => s.description).join(', ').toUpperCase() : doctor_speciality[0].description.toUpperCase() : '', style: 'doctor_title' }
                 ],
                 margin: [10, 40, 0, 0]
               }
@@ -209,8 +213,8 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
   const hasProviderLogo = !!item.provider_profile_pic;
   const hasCarnets = (item.carnets?.length || 0 > 0);
   const hasVobs = (item.vobs?.length || 0) > 0;
-  const hasEvents = (events_itineraries?.length || 0) > 0;
   const hasDoctors = (doctors?.length || 0) > 0;
+  const hasEvents = (events_itineraries?.length || 0) > 0;
   const hasProviderInfo = !!(item.provider_description || item.provider_detail || item.provider_location);
   const hasHowTo = !!(item.provider_location || item.provider_place || !!item.provider_map);
   const hasMap = !!item.provider_map;
@@ -648,6 +652,6 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
     },
   };
 
-  const pending_list = { hasCarnets, hasProviderLogo, hasVobs, hasEvents, hasDoctors, hasProviderInfo, hasHowTo, hasMap };
+  const pending_list = { hasCarnets, hasProviderLogo, hasVobs, hasEvents, hasDoctors, hasProviderInfo, hasHowTo, hasMap, hasDoctorsLogo };
   return { docDefinition, pending_list }
 }
