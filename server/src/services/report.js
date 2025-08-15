@@ -26,7 +26,7 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
     if (provider_files == null ? void 0 : provider_files.length) {
       const [provider_file] = provider_files.filter((i) => i.$file_type_id === 198);
       const [provider_mapa] = provider_files.filter((i) => i.$file_type_id === 380);
-      item.provider_file = provider_file == null ? void 0 : provider_file.url;
+      item.provider_file = provider_file == null ? void 0 : _upload.getFilePathFromUrl(provider_file.url);
       item.provider_map = provider_mapa == null ? void 0 : provider_mapa.url;
       if (!item.provider_file) {
         hasProviderFile = false
@@ -515,8 +515,8 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
             vLineWidth: () => 0,
             paddingBottom: () => 4
           },
-          pageBreak: 'after'
         }] : []),
+         ...(item.provider_file ? [{ image: item.provider_file, width: 350, alignment: 'center', pageBreak: 'after' }] : [{text:'', pageBreak: 'after'}]),
       // {
       //   text: 'SOBRE LA CIUDAD',
       //   style: 'title',
