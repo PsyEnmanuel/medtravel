@@ -326,30 +326,32 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
       ) {
         // Section title pages
         bg = BACKGROUNDS.titlePages;
-      } else if (
+      } else if (['hospitalContent'].some(key => ranges[key] && inRange(currentPage, ranges[key]))) {
+        if(item.provider_file){
+          return {
+            image: 'provider_center',
+            width: pageSize.width,
+            height: 300,
+            absolutePosition: { x: 0, y: 0 }
+          };
+        } else {
+          bg = BACKGROUNDS.imagesAndContent;
+        }
+      }  else if (
         Object.entries(ranges).some(([key, range]) =>
-          range && !['contenido', 'precertTitle', 'citasTitle', 'doctorTitle', 'hospitalTitle', 'carnets'].includes(key) &&
+          range && !['contenido', 'precertTitle', 'citasTitle', 'doctorTitle', 'hospitalTitle', 'hospitalContent', 'carnets'].includes(key) &&
           inRange(currentPage, range)
         )
       ) {
         // All other content pages
         bg = BACKGROUNDS.imagesAndContent;
       }
-
-      if (currentPage === 11) {
-        return {
-          image: 'provider_center',
-          width: pageSize.width,
-          height: 300,
-          absolutePosition: { x: 0, y: 0 }
-        };
-      } else {
-        return {
-          image: `data:image/png;base64,${bg}`,
-          width: 595,
-          height: 842
-        };
-      }
+    
+      return {
+        image: `data:image/png;base64,${bg}`,
+        width: 595,
+        height: 842
+      };
 
     },
     content: [
