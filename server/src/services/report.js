@@ -249,9 +249,9 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
   ].filter(Boolean); // remove nulls
 
   const docDefinition = {
-    pageSize: "A4",
+    pageSize: "LETTER",
     pageMargins: [40, 150, 40, 60],
-    background: function (currentPage) {
+    background: function (currentPage, pageSize) {
       let page = 2; // first page after front cover
       const ranges = {};
       const addRange = (key, pages) => {
@@ -336,11 +336,21 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         bg = BACKGROUNDS.imagesAndContent;
       }
 
-      return {
-        image: `data:image/png;base64,${bg}`,
-        width: 595,
-        height: 842
-      };
+      if (currentPage === 11) {
+        return {
+          image: 'provider_center',
+          width: pageSize.width,
+          height: 300,
+          absolutePosition: { x: 0, y: 0 }
+        };
+      } else {
+        return {
+          image: `data:image/png;base64,${bg}`,
+          width: 595,
+          height: 842
+        };
+      }
+
     },
     content: [
       { text: '', pageBreak: 'after' },
@@ -485,39 +495,45 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
           pageBreak: 'after'
         },
         {
-          text: item.provider_description,
-          style: 'item',
-          bold: true,
-          margin: [0, 0, 0, 10],
-        },
-        {
-          text: item.provider_detail,
-          style: 'body',
-        },
-        {
-          margin: [0, 15, 0, 0],
-          table: {
-            widths: ['auto', '*'],
-            body: [
-              [
-                { text: 'UBICACIÓN:', style: 'locationLabel' },
-                { text: item.provider_location, style: 'locationValue' }
-              ]
-            ]
-          },
-          layout: {
-            fillColor: (rowIndex) => {
-              return rowIndex === 0 ? '#1a3354' : null;
+
+          margin: [0, 170, 0, 0],
+          stack: [
+            {
+              text: item.provider_description,
+              style: 'item',
+              lineHeight: 0.8,
+              bold: true,
             },
-            paddingLeft: () => 6,
-            paddingRight: () => 6,
-            paddingTop: () => 4,
-            hLineWidth: () => 0,
-            vLineWidth: () => 0,
-            paddingBottom: () => 4
-          },
-        }] : []),
-         ...(item.provider_file ? [{ image: item.provider_file, width: 516, alignment: 'center', pageBreak: 'after' }] : [{text:'', pageBreak: 'after'}]),
+            {
+              text: item.provider_detail,
+              style: 'body',
+            },
+            {
+              table: {
+                widths: ['auto', '*'],
+                body: [
+                  [
+                    { text: 'UBICACIÓN:', style: 'locationLabel' },
+                    { text: item.provider_location, style: 'locationValue' }
+                  ]
+                ]
+              },
+              layout: {
+                fillColor: (rowIndex) => {
+                  return rowIndex === 0 ? '#1a3354' : null;
+                },
+                paddingLeft: () => 6,
+                paddingRight: () => 6,
+                paddingTop: () => 4,
+                hLineWidth: () => 0,
+                vLineWidth: () => 0,
+                paddingBottom: () => 4
+              },
+            }
+          ]
+        },
+      ] : []),
+      { text: '', pageBreak: 'after' },
       // {
       //   text: 'SOBRE LA CIUDAD',
       //   style: 'title',
@@ -578,14 +594,14 @@ export async function generateMedicalGuideDoc({ item, itineraries, provider, fil
         },
         ...(hasMap ? [{
           image: 'map',
-          width: 500,
-          height: 300,
+          fit: [500, 300],
           alignment: 'center'
         }] : []),
         { text: '', pageBreak: 'after' }
       ] : []),
     ],
     images: {
+      provider_center: item.provider_file ? item.provider_file : undefined,
       logo: item.provider_profile_pic ? item.provider_profile_pic : undefined,
       map: item.provider_map ? item.provider_map : undefined
     },
