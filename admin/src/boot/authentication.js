@@ -31,7 +31,6 @@ export default boot(({ app, router }) => {
           const asyncRoute = asyncRoutes[i];
           if (
             me?.menu.indexOf(asyncRoute.name) !== -1 ||
-            me?.unixroles & 1 ||
             asyncRoute.name === "NotFound"
           ) {
             router.addRoute(asyncRoute);

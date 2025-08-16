@@ -119,7 +119,6 @@ const state = reactive({
         groupBy: ['t_role.id'],
         where: {
             c_status: 4,
-            "ne:id": 1
         }
     },
     columns: [

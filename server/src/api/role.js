@@ -41,7 +41,7 @@ router.get("/:id", async function (req, res, next) {
 
     item.created_format = _date.intlDateTime(item.created);
     item.menu = JSON.parse(item.menu);
-    
+
     return res.status(200).json(item);
   } catch (error) {
     next(error);
@@ -52,6 +52,8 @@ router.post("/", async function (req, res, next) {
   try {
     const user = res.locals.user;
     const data = req.body;
+
+    data.menu = [...new Set(data.menu)];
 
     const response = await _query.insert({
       user,
@@ -83,6 +85,8 @@ router.put("/:id", async function (req, res) {
   try {
     const user = res.locals.user;
     const data = req.body;
+
+    data.menu = [...new Set(data.menu)];
 
     var response = await _query.update({
       id: req.params.id,

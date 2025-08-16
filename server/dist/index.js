@@ -6565,6 +6565,7 @@ router$y.post("/", async function(req, res, next) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
+    data2.menu = [...new Set(data2.menu)];
     const response2 = await insert({
       user,
       table: table$q,
@@ -6592,6 +6593,7 @@ router$y.put("/:id", async function(req, res) {
   try {
     const user = res.locals.user;
     const data2 = req.body;
+    data2.menu = [...new Set(data2.menu)];
     var response2 = await update({
       id: req.params.id,
       user,

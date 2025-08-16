@@ -38,14 +38,12 @@ export default {
   lodging: "/hospedaje",
   lodging_consult: "consultar",
 
-
   event: "/coordinaciones",
   event_consult: "consultar",
 
   pending_group: "/pendientes-grupo",
-  pending: "/pendientes",
-  pending_event: "coordinaciones",
-  pending_conciliation: "conicliaciones",
+  pending_event: "/pendientes/coordinaciones",
+  pending_conciliation: "/pendientes/conicliaciones",
 
   conciliation_group: "/conciliaciones-grupo",
   conciliation: "/conciliaciones",

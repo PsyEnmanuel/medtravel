@@ -113,9 +113,6 @@
     </q-card>
   </q-dialog>
 
-
-
-
   <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadMAPAPROVIDERrawer" :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="$isDesktop ? 100 : 0">
     <q-card class="p-2">
       <div class=" border border-dashed w-full">
@@ -125,8 +122,6 @@
       </div>
     </q-card>
   </q-dialog>
-
-
 
   <q-dialog class="q-pa-none left-0" no-refocus v-model="state.uploadVOBDrawer" :position="$isDesktop ? 'right' : 'standard'" full-height maximized :transition-duration="$isDesktop ? 100 : 0">
     <q-card class="p-2 flex justify-center items-center">

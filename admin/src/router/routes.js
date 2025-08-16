@@ -300,34 +300,32 @@ export const asyncRoutes = [
       {
         path: "",
         name: "pending_group_index",
-        component: () => import("pages/setting/speciality/speciality-index.vue"),
+        component: () => import("pages/pending/pending-index.vue"),
       }
     ]
   },
   {
-    path: `${path.pending}/${path.pending_event}`,
+    path: path.pending_event,
     name: "pending_event",
     component: MainLayout,
-    meta: { title: "events", nav: 2, icon: 'fa-duotone fa-solid fa-calendar-lines' },
+    meta: { title: "events", nav: 1, icon: 'fa-duotone fa-solid fa-calendar-lines' },
     children: [
       {
         path: "",
-        name: "pending_events",
-        meta: { title: "events" },
+        name: "pending_event_index",
         component: () => import("pages/pending/pending-event.vue"),
       },
     ],
   },
   {
-    path: `${path.pending}/${path.pending_conciliation}`,
+    path: path.pending_conciliation,
     name: "pending_conciliation",
     component: MainLayout,
-    meta: { title: "conciliations", nav: 2, icon: 'fa-duotone fa-solid fa-books' },
+    meta: { title: "conciliations", nav: 1, icon: 'fa-duotone fa-solid fa-books' },
     children: [
       {
         path: "",
-        name: "pending_conciliations",
-        meta: { title: "conciliations" },
+        name: "pending_conciliation_index",
         component: () => import("pages/pending/pending-conciliation.vue"),
       },
     ],

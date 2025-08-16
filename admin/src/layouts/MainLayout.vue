@@ -431,7 +431,6 @@ function useNavLinks(router) {
 
   for (const route of routes) {
     if (route.meta?.nav === 1) {
-
       const data = {
         title: route.meta.title,
         icon: route.meta.icon,
